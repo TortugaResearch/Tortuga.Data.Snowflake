@@ -42,6 +42,43 @@ The connection string builder (in the tests, not `SnowflakeDbConnectionStringBui
 
 At this point all remaining tests are passing. 
 
+### Fixing the build script
+
+Consider this section of `Snowflake.Data.Tests.csproj`
+
+```
+  <Target Name="CopyCustomContent" AfterTargets="AfterBuild">
+	<Copy SourceFiles="parameters.json" DestinationFolder="$(OutDir)" />
+	<Copy SourceFiles="App.config" DestinationFolder="$(OutDir)" />
+  </Target>
+```
+
+Does it work? Yes, mostly.
+Should you do it this way? No.
+
+Set the "Copy to Output Directory" flag so that other developers will understand your intentions.
+
+```
+  <ItemGroup>
+	<None Update="App.config">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</None>
+	<None Update="parameters.json">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</None>
+  </ItemGroup>
+```
+
+And while we're at it, remove this silliness.
+
+```
+  <ItemGroup>
+	<Folder Include="Properties\" />
+  </ItemGroup>
+```
+
+It doesn't hurt anything, but it makes a non-existent folder appear in the solution explorer.
+
 ## Round 1 - Formatting
 * General code formatting with CodeMaid and `.editorconfig`
 * C# 10 features enabled
