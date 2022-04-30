@@ -2,91 +2,89 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using Tortuga.Data.Snowflake;
+using System.Data;
 using Tortuga.Data.Snowflake.Core;
 using Tortuga.Data.Snowflake.Log;
-using System.Data;
 
-namespace Tortuga.Data.Snowflake.Tests.Mock
+namespace Tortuga.Data.Snowflake.Tests.Mock;
+
+class MockSnowflakeDbConnection : SnowflakeDbConnection
 {
-    class MockSnowflakeDbConnection : SnowflakeDbConnection
-    {
-        private SFLogger logger = SFLoggerFactory.GetLogger<MockSnowflakeDbConnection>();
+	private SFLogger logger = SFLoggerFactory.GetLogger<MockSnowflakeDbConnection>();
 
-        private IMockRestRequester _restRequester;
+	private IMockRestRequester _restRequester;
 
-        public MockSnowflakeDbConnection(IMockRestRequester requester)
-        {
-            _restRequester = requester;
-        }
+	public MockSnowflakeDbConnection(IMockRestRequester requester)
+	{
+		_restRequester = requester;
+	}
 
-        public MockSnowflakeDbConnection()
-        {
-            // Default requester
-            _restRequester = new MockRetryUntilRestTimeoutRestRequester();
-        }
+	public MockSnowflakeDbConnection()
+	{
+		// Default requester
+		_restRequester = new MockRetryUntilRestTimeoutRestRequester();
+	}
 
-        public override void Open()
-        {
-            logger.Debug("Open Connection.");
-            SetMockSession();
-            try
-            {
-                SfSession.Open();
-            }
-            catch (Exception e)
-            {
-                // Otherwise when Dispose() is called, the close request would timeout.
-                _connectionState = System.Data.ConnectionState.Closed;
-                logger.Error("Unable to connect", e);
-                throw;
-            }
-            OnSessionEstablished();
-        }
+	public override void Open()
+	{
+		logger.Debug("Open Connection.");
+		SetMockSession();
+		try
+		{
+			SfSession.Open();
+		}
+		catch (Exception e)
+		{
+			// Otherwise when Dispose() is called, the close request would timeout.
+			_connectionState = System.Data.ConnectionState.Closed;
+			logger.Error("Unable to connect", e);
+			throw;
+		}
+		OnSessionEstablished();
+	}
 
-        public override Task OpenAsync(CancellationToken cancellationToken)
-        {
-            registerConnectionCancellationCallback(cancellationToken);
+	public override Task OpenAsync(CancellationToken cancellationToken)
+	{
+		registerConnectionCancellationCallback(cancellationToken);
 
-            SetMockSession();
+		SetMockSession();
 
-            return SfSession.OpenAsync(cancellationToken).ContinueWith(
-                previousTask =>
-                {
-                    if (previousTask.IsFaulted)
-                    {
-                        // Exception from SfSession.OpenAsync
-                        Exception sfSessionEx = previousTask.Exception;
-                        _connectionState = ConnectionState.Closed;
-                        logger.Error("Unable to connect", sfSessionEx.InnerException);
-                        throw //sfSessionEx.InnerException;
-                        new SnowflakeDbException(sfSessionEx.InnerException, SFError.INTERNAL_ERROR, "Unable to connect");
-                    }
-                    if (previousTask.IsCanceled)
-                    {
-                        _connectionState = ConnectionState.Closed;
-                        logger.Debug("Connection canceled");
-                    }
-                    else
-                    {
-                        OnSessionEstablished();
-                    }
-                },
-                cancellationToken);
-        }
+		return SfSession.OpenAsync(cancellationToken).ContinueWith(
+			previousTask =>
+			{
+				if (previousTask.IsFaulted)
+				{
+					// Exception from SfSession.OpenAsync
+					Exception sfSessionEx = previousTask.Exception;
+					_connectionState = ConnectionState.Closed;
+					logger.Error("Unable to connect", sfSessionEx.InnerException);
+					throw //sfSessionEx.InnerException;
+					new SnowflakeDbException(sfSessionEx.InnerException, SFError.INTERNAL_ERROR, "Unable to connect");
+				}
+				if (previousTask.IsCanceled)
+				{
+					_connectionState = ConnectionState.Closed;
+					logger.Debug("Connection canceled");
+				}
+				else
+				{
+					OnSessionEstablished();
+				}
+			},
+			cancellationToken);
+	}
 
-        private void SetMockSession()
-        {
-            SfSession = new SFSession(ConnectionString, Password, _restRequester);
+	private void SetMockSession()
+	{
+		SfSession = new SFSession(ConnectionString, Password, _restRequester);
 
-            _connectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
+		_connectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
 
-            _connectionState = ConnectionState.Connecting;
-        }
+		_connectionState = ConnectionState.Connecting;
+	}
 
-        private void OnSessionEstablished()
-        {
-            _connectionState = ConnectionState.Open;
-        }
-    }
+	private void OnSessionEstablished()
+	{
+		_connectionState = ConnectionState.Open;
+	}
 }

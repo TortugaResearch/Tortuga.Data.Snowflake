@@ -87,3 +87,17 @@ It doesn't hurt anything, but it makes a non-existent folder appear in the solut
 * Remove unused namespaces
 
 The members in the classes cannot be sorted. This causes the `TestSimpleLargeResultSet` test to fail. The reason has not yet been determined, but most likely has something to do with serialization.
+
+## Round 2 - File Scoped Namespaces
+
+Part of the readability issue in this project is that the statements are so long that they needed to be broken over multiple lines. 
+
+By using `namespace Snowflake.Data.Core.Authenticator;` instead of,
+
+```
+namespace Snowflake.Data.Core.Authenticator;
+{
+```
+
+we remove a level of indentation. Four spaces don’t sound like much, but it can be enough to get everything onto one line. Especially when combined with other techniques that we'll be discussing later.
+

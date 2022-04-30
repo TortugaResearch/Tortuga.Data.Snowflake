@@ -4,9 +4,8 @@
 
 using System.Data.Common;
 
-namespace Tortuga.Data.Snowflake
+namespace Tortuga.Data.Snowflake;
+
+public class SnowflakeDbConnectionStringBuilder : DbConnectionStringBuilder
 {
-	public class SnowflakeDbConnectionStringBuilder : DbConnectionStringBuilder
-	{
-	}
 }

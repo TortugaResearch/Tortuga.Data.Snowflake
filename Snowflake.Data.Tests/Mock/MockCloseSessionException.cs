@@ -2,72 +2,67 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-namespace Tortuga.Data.Snowflake.Tests.Mock
+using Tortuga.Data.Snowflake.Core;
+
+namespace Tortuga.Data.Snowflake.Tests.Mock;
+
+class MockCloseSessionException : IMockRestRequester
 {
-    using Tortuga.Data.Snowflake;
-    using Tortuga.Data.Snowflake.Core;
-    using System.Net.Http;
-    using System.Threading;
-    using System.Threading.Tasks;
+	static internal readonly int SESSION_CLOSE_ERROR = 390111;
 
-    class MockCloseSessionException : IMockRestRequester
-    {
-        static internal readonly int SESSION_CLOSE_ERROR = 390111;
+	public T Get<T>(IRestRequest request)
+	{
+		return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None)).Result;
+	}
 
-        public T Get<T>(IRestRequest request)
-        {
-            return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None)).Result;
-        }
+	public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+	{
+		return Task.FromResult<T>((T)(object)null);
+	}
 
-        public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<T>((T)(object)null);
-        }
+	public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
+	{
+		return Task.FromResult<HttpResponseMessage>(null);
+	}
 
-        public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<HttpResponseMessage>(null);
-        }
+	public HttpResponseMessage Get(IRestRequest request)
+	{
+		return null;
+	}
 
-        public HttpResponseMessage Get(IRestRequest request)
-        {
-            return null;
-        }
+	public T Post<T>(IRestRequest postRequest)
+	{
+		return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None)).Result;
+	}
 
-        public T Post<T>(IRestRequest postRequest)
-        {
-            return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None)).Result;
-        }
+	public Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
+	{
+		SFRestRequest sfRequest = (SFRestRequest)postRequest;
+		if (sfRequest.jsonBody is LoginRequest)
+		{
+			LoginResponse authnResponse = new LoginResponse
+			{
+				data = new LoginResponseData()
+				{
+					token = "session_token",
+					masterToken = "master_token",
+					authResponseSessionInfo = new SessionInfo(),
+					nameValueParameter = new List<NameValueParameter>()
+				},
+				success = true
+			};
 
-        public Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
-        {
-            SFRestRequest sfRequest = (SFRestRequest)postRequest;
-            if (sfRequest.jsonBody is LoginRequest)
-            {
-                LoginResponse authnResponse = new LoginResponse
-                {
-                    data = new LoginResponseData()
-                    {
-                        token = "session_token",
-                        masterToken = "master_token",
-                        authResponseSessionInfo = new SessionInfo(),
-                        nameValueParameter = new List<NameValueParameter>()
-                    },
-                    success = true
-                };
+			// login request return success
+			return Task.FromResult<T>((T)(object)authnResponse);
+		}
+		else
+		{
+			throw new SnowflakeDbException("", SESSION_CLOSE_ERROR, "Mock generated error", null);
+		}
+	}
 
-                // login request return success
-                return Task.FromResult<T>((T)(object)authnResponse);
-            }
-            else
-            {
-                throw new SnowflakeDbException("", SESSION_CLOSE_ERROR, "Mock generated error", null);
-            }
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
-            // Nothing to do
-        }
-    }
+	public void setHttpClient(HttpClient httpClient)
+	{
+		// Nothing to do
+	}
 }

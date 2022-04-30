@@ -5,26 +5,25 @@
 using System.Configuration;
 using System.Xml;
 
-namespace Tortuga.Data.Snowflake.Configuration
+namespace Tortuga.Data.Snowflake.Configuration;
+
+/// <summary>
+///     Develop In progress
+/// </summary>
+public class SFConfigurationSectionHandler : IConfigurationSectionHandler
 {
-    /// <summary>
-    ///     Develop In progress
-    /// </summary>
-    public class SFConfigurationSectionHandler : IConfigurationSectionHandler
-    {
-        static SFConfigurationSectionHandler()
-        { }
+	static SFConfigurationSectionHandler()
+	{ }
 
-        public SFConfigurationSectionHandler()
-        { }
+	public SFConfigurationSectionHandler()
+	{ }
 
-        #region IConfigurationSectionHandler Memebers
+	#region IConfigurationSectionHandler Memebers
 
-        object IConfigurationSectionHandler.Create(object parent, object configContext, XmlNode section)
-        {
-            return null;
-        }
+	object IConfigurationSectionHandler.Create(object parent, object configContext, XmlNode section)
+	{
+		return null;
+	}
 
-        #endregion IConfigurationSectionHandler Memebers
-    }
+	#endregion IConfigurationSectionHandler Memebers
 }

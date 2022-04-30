@@ -7,91 +7,90 @@ using System.Data.Common;
 using Tortuga.Data.Snowflake.Core;
 using Tortuga.Data.Snowflake.Log;
 
-namespace Tortuga.Data.Snowflake
+namespace Tortuga.Data.Snowflake;
+
+public class SnowflakeDbTransaction : DbTransaction
 {
-	public class SnowflakeDbTransaction : DbTransaction
+	private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbTransaction>();
+
+	private IsolationLevel isolationLevel;
+
+	private SnowflakeDbConnection connection;
+
+	private bool disposed = false;
+
+	public SnowflakeDbTransaction(IsolationLevel isolationLevel, SnowflakeDbConnection connection)
 	{
-		private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbTransaction>();
-
-		private IsolationLevel isolationLevel;
-
-		private SnowflakeDbConnection connection;
-
-		private bool disposed = false;
-
-		public SnowflakeDbTransaction(IsolationLevel isolationLevel, SnowflakeDbConnection connection)
+		logger.Debug("Begin transaction.");
+		if (isolationLevel != IsolationLevel.ReadCommitted)
 		{
-			logger.Debug("Begin transaction.");
-			if (isolationLevel != IsolationLevel.ReadCommitted)
-			{
-				throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
-			}
-
-			this.isolationLevel = isolationLevel;
-			this.connection = connection;
-
-			using (IDbCommand command = connection.CreateCommand())
-			{
-				command.CommandText = "BEGIN";
-				command.ExecuteNonQuery();
-			}
+			throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
 		}
 
-		public override IsolationLevel IsolationLevel
+		this.isolationLevel = isolationLevel;
+		this.connection = connection;
+
+		using (IDbCommand command = connection.CreateCommand())
 		{
-			get
-			{
-				return isolationLevel;
-			}
+			command.CommandText = "BEGIN";
+			command.ExecuteNonQuery();
 		}
+	}
 
-		protected override DbConnection DbConnection
+	public override IsolationLevel IsolationLevel
+	{
+		get
 		{
-			get
-			{
-				return connection;
-			}
+			return isolationLevel;
 		}
+	}
 
-		public override void Commit()
+	protected override DbConnection DbConnection
+	{
+		get
 		{
-			logger.Debug("Commit transaction.");
-			using (IDbCommand command = connection.CreateCommand())
-			{
-				command.CommandText = "COMMIT";
-				command.ExecuteNonQuery();
-			}
+			return connection;
 		}
+	}
 
-		public override void Rollback()
+	public override void Commit()
+	{
+		logger.Debug("Commit transaction.");
+		using (IDbCommand command = connection.CreateCommand())
 		{
-			logger.Debug("Rollback transaction.");
-			using (IDbCommand command = connection.CreateCommand())
-			{
-				command.CommandText = "ROLLBACK";
-				command.ExecuteNonQuery();
-			}
+			command.CommandText = "COMMIT";
+			command.ExecuteNonQuery();
 		}
+	}
 
-		protected override void Dispose(bool disposing)
+	public override void Rollback()
+	{
+		logger.Debug("Rollback transaction.");
+		using (IDbCommand command = connection.CreateCommand())
 		{
-			if (disposed)
-				return;
-
-			// Rollback the uncommitted transaction when the connection is open
-			if (connection != null && connection.IsOpen())
-			{
-				// When there is no uncommitted transaction, Snowflake would just ignore the rollback request;
-				this.Rollback();
-			}
-			disposed = true;
-
-			base.Dispose(disposing);
+			command.CommandText = "ROLLBACK";
+			command.ExecuteNonQuery();
 		}
+	}
 
-		~SnowflakeDbTransaction()
+	protected override void Dispose(bool disposing)
+	{
+		if (disposed)
+			return;
+
+		// Rollback the uncommitted transaction when the connection is open
+		if (connection != null && connection.IsOpen())
 		{
-			Dispose(false);
+			// When there is no uncommitted transaction, Snowflake would just ignore the rollback request;
+			this.Rollback();
 		}
+		disposed = true;
+
+		base.Dispose(disposing);
+	}
+
+	~SnowflakeDbTransaction()
+	{
+		Dispose(false);
 	}
 }

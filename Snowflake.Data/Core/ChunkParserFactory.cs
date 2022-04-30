@@ -4,20 +4,19 @@
 
 using Tortuga.Data.Snowflake.Configuration;
 
-namespace Tortuga.Data.Snowflake.Core
+namespace Tortuga.Data.Snowflake.Core;
+
+class ChunkParserFactory
 {
-    class ChunkParserFactory
-    {
-        public static IChunkParser GetParser(Stream stream)
-        {
-            if (!SFConfiguration.Instance().UseV2JsonParser)
-            {
-                return new ChunkDeserializer(stream);
-            }
-            else
-            {
-                return new ChunkStreamingParser(stream);
-            }
-        }
-    }
+	public static IChunkParser GetParser(Stream stream)
+	{
+		if (!SFConfiguration.Instance().UseV2JsonParser)
+		{
+			return new ChunkDeserializer(stream);
+		}
+		else
+		{
+			return new ChunkStreamingParser(stream);
+		}
+	}
 }

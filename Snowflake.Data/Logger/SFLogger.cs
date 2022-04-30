@@ -2,33 +2,32 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-namespace Tortuga.Data.Snowflake.Log
+namespace Tortuga.Data.Snowflake.Log;
+
+interface SFLogger
 {
-    interface SFLogger
-    {
-        bool IsDebugEnabled();
+	bool IsDebugEnabled();
 
-        bool IsInfoEnabled();
+	bool IsInfoEnabled();
 
-        bool IsWarnEnabled();
+	bool IsWarnEnabled();
 
-        bool IsErrorEnabled();
+	bool IsErrorEnabled();
 
-        bool IsFatalEnabled();
+	bool IsFatalEnabled();
 
-        void Debug(string msg, Exception ex = null);
+	void Debug(string msg, Exception ex = null);
 
-        void Info(string msg, Exception ex = null);
+	void Info(string msg, Exception ex = null);
 
-        void Warn(string msg, Exception ex = null);
+	void Warn(string msg, Exception ex = null);
 
-        void Error(string msg, Exception ex = null);
+	void Error(string msg, Exception ex = null);
 
-        void Fatal(string msg, Exception ex = null);
-    }
+	void Fatal(string msg, Exception ex = null);
+}
 
-    enum LoggingEvent
-    {
-        DEBUG, INFO, WARN, ERROR, FATAL
-    }
+enum LoggingEvent
+{
+	DEBUG, INFO, WARN, ERROR, FATAL
 }
