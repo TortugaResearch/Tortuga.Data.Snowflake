@@ -3,4 +3,4 @@
  */
 
 using System.Runtime.CompilerServices;
-[assembly: InternalsVisibleTo("Snowflake.Data.Tests")]
+[assembly: InternalsVisibleTo("Tortuga.Data.Snowflake.Tests")]

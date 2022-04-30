@@ -8,7 +8,8 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Snowflake.Data.Core {
+namespace Tortuga.Data.Snowflake.Core
+{
     using System;
     
     
