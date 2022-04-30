@@ -79,12 +79,20 @@ And while we're at it, remove this silliness.
 
 It doesn't hurt anything, but it makes a non-existent folder appear in the solution explorer.
 
-## Round 1 - Formatting
+## Round 1 - Formatting and Namespace Setup
 * General code formatting with CodeMaid and `.editorconfig`
 * C# 10 features enabled
 * Implicit using statements turned on
 * Change the namespaces to use the `Tortuga` prefix.
 * Remove unused namespaces
+
+### using statements
+
+A lot of files have unused `using` statements and other basic formatting issues. Having an accurate list of `using` statements is helpful when trying to determine what a class does. So we're going to fix that.
+
+The new Implicit Usings feature is going to be turned on at the same time. This means we don't need to see general purpose using statements that we don't care about such as `using System;` and `using System.Collections.Generic`. 
+
+### Member Sorting
 
 The members in the classes cannot be sorted. This causes the `TestSimpleLargeResultSet` test to fail. The reason has not yet been determined, but most likely has something to do with serialization.
 
@@ -101,3 +109,17 @@ namespace Snowflake.Data.Core.Authenticator;
 
 we remove a level of indentation. Four spaces don’t sound like much, but it can be enough to get everything onto one line. Especially when combined with other techniques that we'll be discussing later.
 
+At the same time, we'll do another round of cleaning for the files that have two sets of using statements. 
+
+```
+using System.Data;
+using System.Data.Common;
+using System.Globalization;
+using System.Text;
+
+namespace Snowflake.Data.Tests
+{
+	using NUnit.Framework;
+	using Snowflake.Data.Client;
+	using Snowflake.Data.Core;
+```
