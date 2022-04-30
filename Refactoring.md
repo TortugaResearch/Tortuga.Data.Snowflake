@@ -12,6 +12,69 @@ This is the refactoring log for `Tortuga.Data.Snowflake`. It starts with version
 * Delete tests marked as ignored.
 * General cleanup of project files.
 
+### Framework Version
+
 Tests failed with .NET 4.6.2 with a platform not supported exception, so the minimum version was left at 4.7.2.
 
+
+### Unit Tests
+
+After adding a `parameters.json` file, all tests are still failing with this error message. 
+
+```
+	OneTimeSetUp: System.IO.FileNotFoundException : Could not find file 'C:\WINDOWS\system32\parameters.json'.
+```
+
+The problem is in this line of code:
+
+```
+StreamReader reader = new StreamReader("parameters.json");
+```
+
+An application's current directory is not guaranteed, so tests should use absolute paths. 
+
+```
+var path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "parameters.json");
+StreamReader reader = new StreamReader(path);
+```
+
+The connection string builder (in the tests, not `SnowflakeDbConnectionStringBuilder`) also needed to be changed to ignore the warehouse and role parameters.
+
 At this point all remaining tests are passing. 
+
+### Fixing the build script
+
+Consider this section of `Snowflake.Data.Tests.csproj`
+
+```
+  <Target Name="CopyCustomContent" AfterTargets="AfterBuild">
+	<Copy SourceFiles="parameters.json" DestinationFolder="$(OutDir)" />
+	<Copy SourceFiles="App.config" DestinationFolder="$(OutDir)" />
+  </Target>
+```
+
+Does it work? Yes, mostly.
+Should you do it this way? No.
+
+Set the "Copy to Output Directory" flag so that other developers will understand your intentions.
+
+```
+  <ItemGroup>
+	<None Update="App.config">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</None>
+	<None Update="parameters.json">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</None>
+  </ItemGroup>
+```
+
+And while we're at it, remove this silliness.
+
+```
+  <ItemGroup>
+	<Folder Include="Properties\" />
+  </ItemGroup>
+```
+
+It doesn't hurt anything, but it makes a non-existent folder appear in the solution explorer.
