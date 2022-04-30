@@ -2,18 +2,12 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.IO.Compression;
-using System.IO;
+using Tortuga.Data.Snowflake.Log;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
+using System.IO.Compression;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Snowflake.Data.Log;
 
-namespace Snowflake.Data.Core
+namespace Tortuga.Data.Snowflake.Core
 {
     /// <summary>
     ///     Downloader implementation that will be blocked if main thread consume falls behind
@@ -25,9 +19,9 @@ namespace Snowflake.Data.Core
         private List<SFResultChunk> chunks;
 
         private string qrmk;
-        
+
         private int nextChunkToDownloadIndex;
-        
+
         // External cancellation token, used to stop donwload
         private CancellationToken externalCancellationToken;
 
@@ -39,9 +33,9 @@ namespace Snowflake.Data.Core
 
         private readonly SFBaseResultSet ResultSet;
 
-        public SFBlockingChunkDownloader(int colCount, 
-            List<ExecResponseChunk>chunkInfos, string qrmk, 
-            Dictionary<string, string> chunkHeaders, 
+        public SFBlockingChunkDownloader(int colCount,
+            List<ExecResponseChunk> chunkInfos, string qrmk,
+            Dictionary<string, string> chunkHeaders,
             CancellationToken cancellationToken,
             SFBaseResultSet ResultSet)
         {
@@ -55,7 +49,7 @@ namespace Snowflake.Data.Core
             externalCancellationToken = cancellationToken;
 
             var idx = 0;
-            foreach(ExecResponseChunk chunkInfo in chunkInfos)
+            foreach (ExecResponseChunk chunkInfo in chunkInfos)
             {
                 this.chunks.Add(new SFResultChunk(chunkInfo.url, chunkInfo.rowCount, colCount, idx++));
             }
@@ -72,7 +66,7 @@ namespace Snowflake.Data.Core
         }
 
         private BlockingCollection<Task<IResultChunk>> _downloadTasks;
-        
+
         private void FillDownloads()
         {
             _downloadTasks = new BlockingCollection<Task<IResultChunk>>(prefetchThreads);
@@ -94,7 +88,7 @@ namespace Snowflake.Data.Core
                 _downloadTasks.CompleteAdding();
             });
         }
-        
+
         public Task<IResultChunk> GetNextChunkAsync()
         {
             if (_downloadTasks.IsCompleted)
@@ -106,7 +100,7 @@ namespace Snowflake.Data.Core
                 return _downloadTasks.Take();
             }
         }
-        
+
         private async Task<IResultChunk> DownloadChunkAsync(DownloadContext downloadContext)
         {
             logger.Info($"Start donwloading chunk #{downloadContext.chunkIndex}");
@@ -114,7 +108,7 @@ namespace Snowflake.Data.Core
 
             chunk.downloadState = DownloadState.IN_PROGRESS;
 
-            S3DownloadRequest downloadRequest = 
+            S3DownloadRequest downloadRequest =
                 new S3DownloadRequest()
                 {
                     Url = new UriBuilder(chunk.url).Uri,
@@ -125,9 +119,8 @@ namespace Snowflake.Data.Core
                     chunkHeaders = downloadContext.chunkHeaders
                 };
 
-
             var httpResponse = await _RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false);
-            Stream stream = Task.Run(async() => await (httpResponse.Content.ReadAsStreamAsync()).ConfigureAwait(false)).Result;
+            Stream stream = Task.Run(async () => await (httpResponse.Content.ReadAsStreamAsync()).ConfigureAwait(false)).Result;
             IEnumerable<string> encoding;
             //TODO this shouldn't be required.
             if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out encoding))
@@ -146,13 +139,12 @@ namespace Snowflake.Data.Core
             return chunk;
         }
 
-        
         /// <summary>
-        ///     Content from s3 in format of 
+        ///     Content from s3 in format of
         ///     ["val1", "val2", null, ...],
         ///     ["val3", "val4", null, ...],
         ///     ...
-        ///     To parse it as a json, we need to preappend '[' and append ']' to the stream 
+        ///     To parse it as a json, we need to preappend '[' and append ']' to the stream
         /// </summary>
         /// <param name="content"></param>
         /// <param name="resultChunk"></param>
@@ -161,7 +153,7 @@ namespace Snowflake.Data.Core
             Stream openBracket = new MemoryStream(Encoding.UTF8.GetBytes("["));
             Stream closeBracket = new MemoryStream(Encoding.UTF8.GetBytes("]"));
 
-            Stream concatStream = new ConcatenatedStream(new Stream[3] { openBracket, content, closeBracket});
+            Stream concatStream = new ConcatenatedStream(new Stream[3] { openBracket, content, closeBracket });
 
             IChunkParser parser = ChunkParserFactory.GetParser(concatStream);
             parser.ParseChunk(resultChunk);

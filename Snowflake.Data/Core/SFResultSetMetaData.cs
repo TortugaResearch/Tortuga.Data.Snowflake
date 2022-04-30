@@ -2,13 +2,11 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Collections.Generic;
+using Tortuga.Data.Snowflake;
+using Tortuga.Data.Snowflake.Log;
 using System.Data;
-using Snowflake.Data.Log;
-using Snowflake.Data.Client;
 
-namespace Snowflake.Data.Core
+namespace Tortuga.Data.Snowflake.Core
 {
     class SFResultSetMetaData
     {
@@ -31,7 +29,7 @@ namespace Snowflake.Data.Core
         internal readonly SFStatementType statementType;
 
         internal readonly List<Tuple<SFDataType, Type>> columnTypes;
-        
+
         /// <summary>
         ///     This map is used to cache column name to column index. Index is 0-based.
         /// </summary>
@@ -43,14 +41,15 @@ namespace Snowflake.Data.Core
             columnCount = rowTypes.Count;
             statementType = findStatementTypeById(queryExecResponseData.statementTypeId);
             columnTypes = InitColumnTypes();
-            
+
             foreach (NameValueParameter parameter in queryExecResponseData.parameters)
             {
-                switch(parameter.name)
+                switch (parameter.name)
                 {
                     case "DATE_OUTPUT_FORMAT":
                         dateOutputFormat = parameter.value;
                         break;
+
                     case "TIME_OUTPUT_FORMAT":
                         timeOutputFormat = parameter.value;
                         break;
@@ -69,7 +68,7 @@ namespace Snowflake.Data.Core
         private List<Tuple<SFDataType, Type>> InitColumnTypes()
         {
             List<Tuple<SFDataType, Type>> types = new List<Tuple<SFDataType, Type>>();
-            for(int i=0; i<columnCount; i++)
+            for (int i = 0; i < columnCount; i++)
             {
                 var column = rowTypes[i];
                 var dataType = GetSFDataType(column.type);
@@ -95,18 +94,18 @@ namespace Snowflake.Data.Core
                 int indexCounter = 0;
                 foreach (ExecResponseRowType rowType in rowTypes)
                 {
-                    if (String.Compare(rowType.name, targetColumnName, false ) == 0 )
+                    if (String.Compare(rowType.name, targetColumnName, false) == 0)
                     {
                         logger.Info($"Found colun name {targetColumnName} under index {indexCounter}");
                         columnNameToIndexCache[targetColumnName] = indexCounter;
                         return indexCounter;
                     }
-                    indexCounter++; 
+                    indexCounter++;
                 }
             }
             return -1;
         }
-        
+
         internal SFDataType getColumnTypeByIndex(int targetIndex)
         {
             if (targetIndex < 0 || targetIndex >= columnCount)
@@ -134,7 +133,7 @@ namespace Snowflake.Data.Core
                 return rslt;
 
             throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
-                $"Unknow column type: {type}"); 
+                $"Unknow column type: {type}");
         }
 
         private Type GetNativeTypeForColumn(SFDataType sfType, ExecResponseRowType col)
@@ -143,30 +142,37 @@ namespace Snowflake.Data.Core
             {
                 case SFDataType.FIXED:
                     return col.scale == 0 ? typeof(long) : typeof(decimal);
+
                 case SFDataType.REAL:
                     return typeof(double);
+
                 case SFDataType.TEXT:
                 case SFDataType.VARIANT:
                 case SFDataType.OBJECT:
-                case SFDataType.ARRAY:    
+                case SFDataType.ARRAY:
                     return typeof(string);
+
                 case SFDataType.DATE:
                 case SFDataType.TIME:
                 case SFDataType.TIMESTAMP_NTZ:
                     return typeof(DateTime);
+
                 case SFDataType.TIMESTAMP_LTZ:
                 case SFDataType.TIMESTAMP_TZ:
                     return typeof(DateTimeOffset);
+
                 case SFDataType.BINARY:
                     return typeof(byte[]);
+
                 case SFDataType.BOOLEAN:
                     return typeof(bool);
+
                 default:
                     throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
                         $"Unknow column type: {sfType}");
             }
         }
-        
+
         internal Type getCSharpTypeByIndex(int targetIndex)
         {
             if (targetIndex < 0 || targetIndex >= columnCount)
@@ -175,7 +181,7 @@ namespace Snowflake.Data.Core
             }
 
             SFDataType sfType = getColumnTypeByIndex(targetIndex);
-            return GetNativeTypeForColumn(sfType, rowTypes[targetIndex]);  
+            return GetNativeTypeForColumn(sfType, rowTypes[targetIndex]);
         }
 
         internal string getColumnNameByIndex(int targetIndex)
@@ -229,28 +235,35 @@ namespace Snowflake.Data.Core
     internal enum SFStatementType
     {
         [SFStatementTypeAttr(typeId = 0x0000)]
-        UNKNOWN, 
+        UNKNOWN,
 
         [SFStatementTypeAttr(typeId = 0x1000)]
         SELECT,
-        
+
         /// <remark>
-        ///     Data Manipulation Language 
+        ///     Data Manipulation Language
         /// </remark>
         [SFStatementTypeAttr(typeId = 0x3000)]
         DML,
+
         [SFStatementTypeAttr(typeId = 0x3000 + 0x100)]
         INSERT,
+
         [SFStatementTypeAttr(typeId = 0x3000 + 0x200)]
         UPDATE,
+
         [SFStatementTypeAttr(typeId = 0x3000 + 0x300)]
         DELETE,
+
         [SFStatementTypeAttr(typeId = 0x3000 + 0x400)]
         MERGE,
+
         [SFStatementTypeAttr(typeId = 0x3000 + 0x500)]
         MULTI_INSERT,
+
         [SFStatementTypeAttr(typeId = 0x3000 + 0x600)]
         COPY,
+
         [SFStatementTypeAttr(typeId = 0x3000 + 0x700)]
         COPY_UNLOAD,
 
@@ -259,18 +272,25 @@ namespace Snowflake.Data.Core
         /// </remark>
         [SFStatementTypeAttr(typeId = 0x4000)]
         SCL,
+
         [SFStatementTypeAttr(typeId = 0x4000 + 0x100)]
         ALTER_SESSION,
+
         [SFStatementTypeAttr(typeId = 0x4000 + 0x300)]
         USE,
+
         [SFStatementTypeAttr(typeId = 0x4000 + 0x300 + 0x10)]
         USE_DATABASE,
+
         [SFStatementTypeAttr(typeId = 0x4000 + 0x300 + 0x20)]
         USE_SCHEMA,
+
         [SFStatementTypeAttr(typeId = 0x4000 + 0x300 + 0x30)]
         USE_WAREHOUSE,
+
         [SFStatementTypeAttr(typeId = 0x4000 + 0x400)]
         SHOW,
+
         [SFStatementTypeAttr(typeId = 0x4000 + 0x500)]
         DESCRIBE,
 
@@ -278,7 +298,7 @@ namespace Snowflake.Data.Core
         ///     Transaction Command Language
         /// </remark>
         [SFStatementTypeAttr(typeId = 0x5000)]
-        TCL, 
+        TCL,
 
         /// <remark>
         ///     Data Definition Language

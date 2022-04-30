@@ -2,19 +2,14 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using Snowflake.Data.Client;
-using Snowflake.Data.Core.FileTransfer;
-using Snowflake.Data.Log;
-using System;
-using System.Collections.Generic;
-using System.IO;
+using Tortuga.Data.Snowflake;
+using Tortuga.Data.Snowflake.Core.FileTransfer;
+using Tortuga.Data.Snowflake.Log;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Snowflake.Data.Core
+namespace Tortuga.Data.Snowflake.Core
 {
     /// <summary>
     /// The status of the file to be uploaded/downloaded.
@@ -90,7 +85,7 @@ namespace Snowflake.Data.Core
         /// The type of transfer either UPLOAD or DOWNLOAD.
         /// </summary>
         private readonly CommandTypes CommandType;
-        
+
         /// <summary>
         /// The file metadata. Applies to all files being uploaded/downloaded
         /// </summary>
@@ -109,6 +104,7 @@ namespace Snowflake.Data.Core
         /// List of metadata for small and large files.
         /// </summary>
         private List<SFFileMetadata> FilesMetas = new List<SFFileMetadata>();
+
         private List<SFFileMetadata> SmallFilesMetas = new List<SFFileMetadata>();
         private List<SFFileMetadata> LargeFilesMetas = new List<SFFileMetadata>();
 
@@ -255,7 +251,7 @@ namespace Snowflake.Data.Core
                     TransferMetadata.rowSet[index, 7] = null;
                 }
             }
-            
+
             return new SFResultSet(TransferMetadata, new SFStatement(Session), externalCancellationToken);
         }
 
@@ -284,7 +280,6 @@ namespace Snowflake.Data.Core
                 Logger.Debug("End uploading small files");
             }
         }
-
 
         /// <summary>
         /// Download files sequentially or in parallel.
@@ -340,7 +335,7 @@ namespace Snowflake.Data.Core
 
                         fileMeta.stageInfo = response.data.stageInfo;
                         fileMeta.presignedUrl = response.data.stageInfo.presignedUrl;
-                    }                    
+                    }
                 }
                 else if (CommandTypes.DOWNLOAD == CommandType)
                 {
@@ -349,7 +344,7 @@ namespace Snowflake.Data.Core
                         FilesMetas[index].presignedUrl = TransferMetadata.presignedUrls[index];
                     }
                 }
-            }            
+            }
         }
 
         /// <summary>
@@ -480,8 +475,8 @@ namespace Snowflake.Data.Core
         }
 
         /// <summary>
-        /// Expand the expand the wildcards if any to generate the list of paths for all files 
-        /// matched by the wildcards. Also replace 
+        /// Expand the expand the wildcards if any to generate the list of paths for all files
+        /// matched by the wildcards. Also replace
         /// Get the absolute path for the file.
         /// </summary>
         /// <param name="location">The path to expand</param>
@@ -500,7 +495,6 @@ namespace Snowflake.Data.Core
 
                 location = location.Replace("~", homePath);
             }
-
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -574,9 +568,9 @@ namespace Snowflake.Data.Core
                         * "*.txt", the number of characters in the specified extension affects the
                         * search as follows:
                         * - If the specified extension is exactly three characters long, the method
-                        * returns files with extensions that begin with the specified extension. 
+                        * returns files with extensions that begin with the specified extension.
                         * For example, "*.xls" returns both "book.xls" and "book.xlsx".
-                        * - In all other cases, the method returns files that exactly match the 
+                        * - In all other cases, the method returns files that exactly match the
                         * specified extension. For example, "*.ai" returns "file.ai" but not "file.aif".
                         */
                     string[] potentialMatches =
@@ -628,7 +622,6 @@ namespace Snowflake.Data.Core
 
             return filePaths;
         }
-
 
         /// <summary>
         /// Compress a file using the given file metadata (file path, compression type, etc...) and
@@ -812,7 +805,7 @@ namespace Snowflake.Data.Core
                 // Compress the file if needed
                 if (fileMetadata.requireCompress)
                 {
-                    compressFileWithGzip(fileMetadata);                
+                    compressFileWithGzip(fileMetadata);
                 }
 
                 // Calculate the digest
@@ -840,7 +833,6 @@ namespace Snowflake.Data.Core
 
             return fileMetadata;
         }
-
 
         /// <summary>
         /// Download a single file.
@@ -890,7 +882,6 @@ namespace Snowflake.Data.Core
             Directory.CreateDirectory(tempDirectory);
             return tempDirectory;
         }
-
 
         /// <summary>
         /// Get the storage client type.

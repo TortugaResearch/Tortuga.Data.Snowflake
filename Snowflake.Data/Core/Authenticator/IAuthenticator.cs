@@ -2,13 +2,10 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Snowflake.Data.Client;
-using Snowflake.Data.Log;
+using Tortuga.Data.Snowflake;
+using Tortuga.Data.Snowflake.Log;
 
-namespace Snowflake.Data.Core.Authenticator
+namespace Tortuga.Data.Snowflake.Core.Authenticator
 {
     /// <summary>
     /// Interface for Authenticator
@@ -39,6 +36,7 @@ namespace Snowflake.Data.Core.Authenticator
         SNOWFLAKE,
         OKTA,
     }
+
     /// <summary>
     /// A base implementation for all authenticators to create and send a login request.
     /// </summary>
@@ -129,12 +127,13 @@ namespace Snowflake.Data.Core.Authenticator
         }
     }
 
-        /// <summary>
-        /// Authenticator Factory to build authenticators
-        /// </summary>
-        internal class AuthenticatorFactory
+    /// <summary>
+    /// Authenticator Factory to build authenticators
+    /// </summary>
+    internal class AuthenticatorFactory
     {
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<AuthenticatorFactory>();
+
         /// <summary>
         /// Generate the authenticator given the session
         /// </summary>

@@ -2,9 +2,7 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System.IO;
-
-namespace Snowflake.Data.Core.FileTransfer
+namespace Tortuga.Data.Snowflake.Core.FileTransfer
 {
     internal class WrappedContentInfo
     {
@@ -40,7 +38,7 @@ namespace Snowflake.Data.Core.FileTransfer
     }
 
     /// <summary>
-    /// The interface for the storage clients. 
+    /// The interface for the storage clients.
     /// </summary>
     interface ISFRemoteStorageClient
     {
@@ -53,7 +51,7 @@ namespace Snowflake.Data.Core.FileTransfer
         /// Encrypt then upload one file.
         /// </summary>
         FileHeader GetFileHeader(SFFileMetadata fileMetadata);
-        
+
         /// <summary>
         /// Attempt upload of a file and retry if fails.
         /// </summary>

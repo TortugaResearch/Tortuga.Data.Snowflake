@@ -2,15 +2,11 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
 using Newtonsoft.Json;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using Snowflake.Data.Client;
-using Snowflake.Data.Log;
+using Tortuga.Data.Snowflake;
+using Tortuga.Data.Snowflake.Log;
 
-namespace Snowflake.Data.Core
+namespace Tortuga.Data.Snowflake.Core
 {
     /// <summary>
     /// The RestRequester is responsible to send out a rest request and receive response
@@ -38,7 +34,7 @@ namespace Snowflake.Data.Core
     internal class RestRequester : IRestRequester
     {
         private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequester>();
-        
+
         protected HttpClient _HttpClient;
 
         public RestRequester(HttpClient httpClient)
@@ -70,12 +66,12 @@ namespace Snowflake.Data.Core
         public async Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
             using (HttpResponseMessage response = await GetAsync(request, cancellationToken).ConfigureAwait(false))
-            { 
+            {
                 var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
             }
         }
-        
+
         public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
         {
             return SendAsync(HttpMethod.Get, request, cancellationToken);
@@ -96,7 +92,7 @@ namespace Snowflake.Data.Core
         }
 
         protected virtual async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message,
-                                                              TimeSpan restTimeout, 
+                                                              TimeSpan restTimeout,
                                                               CancellationToken externalCancellationToken)
         {
             // merge multiple cancellation token
@@ -119,7 +115,7 @@ namespace Snowflake.Data.Core
                     }
                     catch (Exception e)
                     {
-                        // Disposing of the response if not null now that we don't need it anymore 
+                        // Disposing of the response if not null now that we don't need it anymore
                         response?.Dispose();
                         throw restRequestTimeout.IsCancellationRequested ? new SnowflakeDbException(SFError.REQUEST_TIMEOUT) : e;
                     }

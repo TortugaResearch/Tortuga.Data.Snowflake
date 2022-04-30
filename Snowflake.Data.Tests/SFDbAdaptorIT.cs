@@ -2,12 +2,11 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-namespace Snowflake.Data.Tests
+namespace Tortuga.Data.Snowflake.Tests
 {
     using NUnit.Framework;
-    using Snowflake.Data.Client;
+    using Tortuga.Data.Snowflake;
     using System.Data;
-    using System;
     using System.Runtime.InteropServices;
 
     [TestFixture]

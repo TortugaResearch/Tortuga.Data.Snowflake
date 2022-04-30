@@ -4,7 +4,7 @@
 
 using System.Text;
 
-namespace Snowflake.Data.Core
+namespace Tortuga.Data.Snowflake.Core
 {
     internal class SFResultChunk : IResultChunk
     {
@@ -17,9 +17,9 @@ namespace Snowflake.Data.Core
         public string url { get; set; }
 
         public DownloadState downloadState { get; set; }
-        public int ChunkIndex { get;  }
+        public int ChunkIndex { get; }
 
-        public readonly object syncPrimitive; 
+        public readonly object syncPrimitive;
 
         public SFResultChunk(string[,] rowSet)
         {

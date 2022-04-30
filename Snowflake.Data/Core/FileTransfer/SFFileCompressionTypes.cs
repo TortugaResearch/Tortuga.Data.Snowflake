@@ -2,12 +2,7 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using Snowflake.Data.Client;
-using System;
-using System.Collections.Generic;
-using System.IO;
-
-namespace Snowflake.Data.Core.FileTransfer
+namespace Tortuga.Data.Snowflake.Core.FileTransfer
 {
     internal class SFFileCompressionTypes
     {
@@ -65,8 +60,10 @@ namespace Snowflake.Data.Core.FileTransfer
         private const string NONE_EXTENSION = "";
 
         private static readonly byte[][] gzip_magics = new[] { GZIP_MAGIC };
+
         private static readonly byte[][] deflate_magics =
             new[] { DEFLATE_MAGIC_LOW, DEFLATE_MAGIC_DEFAULT, DEFLATE_MAGIC_BEST };
+
         private static readonly byte[][] bzip2_magics = new[] { BZIP2_MAGIC };
         private static readonly byte[][] orc_magics = new[] { ORC_MAGIC };
         private static readonly byte[][] parquet_magics = new[] { PARQUET_MAGIC };
@@ -183,7 +180,6 @@ namespace Snowflake.Data.Core.FileTransfer
 
         public static readonly SFFileCompressionType NONE =
             new SFFileCompressionType(NONE_EXTENSION, NONE_NAME, true);
-
 
         static readonly IReadOnlyList<SFFileCompressionType> compressionTypes =
             new List<SFFileCompressionType> {

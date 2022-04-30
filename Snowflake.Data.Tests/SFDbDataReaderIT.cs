@@ -2,18 +2,16 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Linq;
-using System.Data.Common;
 using System.Data;
+using System.Data.Common;
 using System.Globalization;
 using System.Text;
 
-namespace Snowflake.Data.Tests
+namespace Tortuga.Data.Snowflake.Tests
 {
-    using Snowflake.Data.Client;
-    using Snowflake.Data.Core;
     using NUnit.Framework;
+    using Tortuga.Data.Snowflake;
+    using Tortuga.Data.Snowflake.Core;
 
     [TestFixture]
     class SFDbDataReaderIT : SFBaseTest
@@ -95,7 +93,7 @@ namespace Snowflake.Data.Tests
 
                 cmd.CommandText = "select * from testgetnumber";
                 IDataReader reader = cmd.ExecuteReader();
-                
+
                 Assert.IsTrue(reader.Read());
                 Assert.AreEqual(numInt, reader.GetInt32(0));
 
@@ -114,7 +112,6 @@ namespace Snowflake.Data.Tests
 
                 conn.Close();
             }
-
         }
 
         [Test]
@@ -133,7 +130,7 @@ namespace Snowflake.Data.Tests
                 float numFloat = (float)1.23;
                 double numDouble = (double)1.2345678;
 
-                string insertCommand = "insert into testgetdouble values (?),(?)" ;
+                string insertCommand = "insert into testgetdouble values (?),(?)";
                 cmd.CommandText = insertCommand;
 
                 var p1 = cmd.CreateParameter();
@@ -153,11 +150,10 @@ namespace Snowflake.Data.Tests
 
                 cmd.CommandText = "select * from testgetdouble";
                 IDataReader reader = cmd.ExecuteReader();
-                
+
                 Assert.IsTrue(reader.Read());
                 Assert.AreEqual(numFloat, reader.GetFloat(0));
                 Assert.AreEqual((decimal)numFloat, reader.GetDecimal(0));
-
 
                 Assert.IsTrue(reader.Read());
                 Assert.AreEqual(numDouble, reader.GetDouble(0));
@@ -185,7 +181,6 @@ namespace Snowflake.Data.Tests
             testGetDateAndOrTime(inputTimeStr, null, SFDataType.DATE);
         }
 
-
         [Test]
         [TestCase(null, null)]
         [TestCase(null, 3)]
@@ -206,7 +201,7 @@ namespace Snowflake.Data.Tests
         [TestCase("11:22:33.4455667")]
         [TestCase("23:59:59.9999999")]
         [TestCase("16:20:00.6666666")]
-        [TestCase("00:00:00.0000000")] 
+        [TestCase("00:00:00.0000000")]
         [TestCase("00:00:00")]
         [TestCase("23:59:59.1")]
         [TestCase("23:59:59.12")]
@@ -279,7 +274,7 @@ namespace Snowflake.Data.Tests
                 //Console.WriteLine(cmd.CommandText);
                 int count = cmd.ExecuteNonQuery();
 
-                string insertCommand = "insert into testGetTimeSpanAllDatTypes(C1, C10, C11, C12) select 1, "+
+                string insertCommand = "insert into testGetTimeSpanAllDatTypes(C1, C10, C11, C12) select 1, " +
                 "PARSE_JSON('{ \"key1\": \"value1\", \"key2\": \"value2\" }')" +
                  ", PARSE_JSON(' { \"outer_key1\": { \"inner_key1A\": \"1a\", \"inner_key1B\": NULL }, '||' \"outer_key2\": { \"inner_key2\": 2 } '||' } ')," +
                  " ARRAY_CONSTRUCT(1, 2, 3, NULL)";
@@ -305,19 +300,18 @@ namespace Snowflake.Data.Tests
                 {
                     try
                     {
-                        
                         ((SnowflakeDbDataReader)reader).GetTimeSpan(i);
                         Assert.Fail("Data should not be converted to TIME");
                     }
                     catch (SnowflakeDbException e)
                     {
-                        Assert.AreEqual(270003, e.ErrorCode); 
+                        Assert.AreEqual(270003, e.ErrorCode);
                     }
                 }
 
                 // Null value
                 // Null value can not be converted to TimeSpan because it is a non-nullable type
-                
+
                 try
                 {
                     ((SnowflakeDbDataReader)reader).GetTimeSpan(12);
@@ -332,7 +326,7 @@ namespace Snowflake.Data.Tests
                 TimeSpan timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(13);
 
                 reader.Close();
-                
+
                 cmd.CommandText = "drop table if exists testGetTimeSpanAllDatTypes";
                 count = cmd.ExecuteNonQuery();
 
@@ -359,7 +353,7 @@ namespace Snowflake.Data.Tests
                 conn.Open();
 
                 IDbCommand cmd = conn.CreateCommand();
-                cmd.CommandText = $"create or replace table testGetDateAndOrTime(cola {dataType}{ (precision == null ? string.Empty : $"({precision})" )});";
+                cmd.CommandText = $"create or replace table testGetDateAndOrTime(cola {dataType}{ (precision == null ? string.Empty : $"({precision})")});";
                 int count = cmd.ExecuteNonQuery();
                 Assert.AreEqual(0, count);
 
@@ -374,9 +368,11 @@ namespace Snowflake.Data.Tests
                     case SFDataType.TIME:
                         p1.DbType = DbType.Time;
                         break;
+
                     case SFDataType.DATE:
                         p1.DbType = DbType.Date;
                         break;
+
                     case SFDataType.TIMESTAMP_LTZ:
                     case SFDataType.TIMESTAMP_TZ:
                     case SFDataType.TIMESTAMP_NTZ:
@@ -391,7 +387,7 @@ namespace Snowflake.Data.Tests
 
                 cmd.CommandText = "select * from testGetDateAndOrTime";
                 IDataReader reader = cmd.ExecuteReader();
-                
+
                 Assert.IsTrue(reader.Read());
 
                 // For time, we getDateTime on the column and ignore date part
@@ -444,13 +440,12 @@ namespace Snowflake.Data.Tests
         [TestCase("1982-01-18 16:20:00.6666666", 3)]
         //[TestCase("1969-07-21 02:56:15.1234567", null)] //parsing fails with dates with second fractions before the unix epoch
         [TestCase("1969-07-21 02:56:15.0000000", 1)] //dates w/o second fractions before the unix epoch are fine
-        //[TestCase("1900-09-03 12:12:12.1212121", null)] // fails
+                                                     //[TestCase("1900-09-03 12:12:12.1212121", null)] // fails
         [TestCase("1900-09-03 12:12:12.0000000", 1)]
         public void testGetTimestampNTZ(string inputTimeStr, int? precision)
         {
             testGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIMESTAMP_NTZ);
         }
-
 
         [Test]
         public void testGetTimestampTZ()
@@ -481,7 +476,7 @@ namespace Snowflake.Data.Tests
 
                 cmd.CommandText = "select * from testgettimestamptz";
                 IDataReader reader = cmd.ExecuteReader();
-                
+
                 Assert.IsTrue(reader.Read());
                 DateTimeOffset dtOffset = (DateTimeOffset)reader.GetValue(0);
                 reader.Close();
@@ -494,7 +489,6 @@ namespace Snowflake.Data.Tests
 
                 conn.Close();
             }
-
         }
 
         [Test]
@@ -527,7 +521,7 @@ namespace Snowflake.Data.Tests
 
                 cmd.CommandText = "select * from testgettimestampltz";
                 IDataReader reader = cmd.ExecuteReader();
-                
+
                 Assert.IsTrue(reader.Read());
                 DateTimeOffset dtOffset = (DateTimeOffset)reader.GetValue(0);
                 reader.Close();
@@ -569,7 +563,7 @@ namespace Snowflake.Data.Tests
 
                 cmd.CommandText = "select * from testgetboolean";
                 IDataReader reader = cmd.ExecuteReader();
-                
+
                 Assert.IsTrue(reader.Read());
                 Assert.IsTrue(reader.GetBoolean(0));
                 reader.Close();
@@ -600,11 +594,11 @@ namespace Snowflake.Data.Tests
                 double testDouble = 1.2345678;
                 string insertCommand = $"insert into testgetbinary values (?, '{testChars}',{testDouble.ToString()})";
                 cmd.CommandText = insertCommand;
-                
+
                 var p1 = cmd.CreateParameter();
                 p1.ParameterName = "1";
                 p1.DbType = DbType.Binary;
-                p1.Value = testBytes; 
+                p1.Value = testBytes;
                 cmd.Parameters.Add(p1);
 
                 count = cmd.ExecuteNonQuery();
@@ -612,7 +606,7 @@ namespace Snowflake.Data.Tests
 
                 cmd.CommandText = "select * from testgetbinary";
                 IDataReader reader = cmd.ExecuteReader();
-                
+
                 Assert.IsTrue(reader.Read());
                 // Auto type conversion
                 Assert.IsTrue(testBytes.SequenceEqual((byte[])reader.GetValue(0)));
@@ -650,7 +644,7 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(read, toReadLength);
                 Assert.IsTrue(testSubBytes.SequenceEqual(sub));
 
-                // Read subset 'GET_BINARAY'  from actual 'TEST_GET_BINARAY' data 
+                // Read subset 'GET_BINARAY'  from actual 'TEST_GET_BINARAY' data
                 // and copy inside existing buffer replacing Xs
                 toReadLength = 11;
                 byte[] testSubBytesWithTargetOffset = Encoding.UTF8.GetBytes("OFFSET GET_BINARAY EXTRA");
@@ -667,7 +661,7 @@ namespace Snowflake.Data.Tests
                 //** Invalid data offsets **/
                 try
                 {
-                    // Data offset > data length 
+                    // Data offset > data length
                     reader.GetBytes(0, 25, sub, 7, toReadLength);
                     Assert.Fail();
                 }
@@ -690,7 +684,7 @@ namespace Snowflake.Data.Tests
                 //** Invalid buffer offsets **//
                 try
                 {
-                    // Buffer offset > buffer length 
+                    // Buffer offset > buffer length
                     reader.GetBytes(0, 6, sub, 25, toReadLength);
                     Assert.Fail();
                 }
@@ -711,7 +705,7 @@ namespace Snowflake.Data.Tests
                 }
 
                 //** Null buffer **//
-                // If null, this method returns the size required of the array in order to fit all 
+                // If null, this method returns the size required of the array in order to fit all
                 // of the specified data.
                 read = reader.GetBytes(0, 6, null, 0, toReadLength);
                 Assert.AreEqual(testBytes.Length, read);
@@ -750,7 +744,6 @@ namespace Snowflake.Data.Tests
                 p1.DbType = DbType.Binary;
                 p1.Value = testBytes;
                 cmd.Parameters.Add(p1);
-
 
                 count = cmd.ExecuteNonQuery();
                 Assert.AreEqual(1, count);
@@ -796,8 +789,7 @@ namespace Snowflake.Data.Tests
                 Assert.AreEqual(read, toReadLength);
                 Assert.IsTrue(testSubChars.SequenceEqual(sub));
 
-
-                // Read subset 'GET_CHARS'  from actual 'TEST_GET_CHARS' data 
+                // Read subset 'GET_CHARS'  from actual 'TEST_GET_CHARS' data
                 // and copy inside existing buffer replacing Xs
                 char[] testSubCharsWithTargetOffset = "OFFSET GET_CHARS EXTRA".ToArray<char>();
                 toReadLength = 9;
@@ -814,7 +806,7 @@ namespace Snowflake.Data.Tests
                 //** Invalid data offsets **//
                 try
                 {
-                    // Data offset > data length 
+                    // Data offset > data length
                     reader.GetChars(0, 25, sub, 7, toReadLength);
                     Assert.Fail();
                 }
@@ -837,7 +829,7 @@ namespace Snowflake.Data.Tests
                 //** Invalid buffer offsets **//
                 try
                 {
-                    // Buffer offset > buffer length 
+                    // Buffer offset > buffer length
                     reader.GetChars(0, 6, sub, 25, toReadLength);
                     Assert.Fail();
                 }
@@ -858,7 +850,7 @@ namespace Snowflake.Data.Tests
                 }
 
                 //** Null buffer **//
-                // If null, this method returns the size required of the array in order to fit all 
+                // If null, this method returns the size required of the array in order to fit all
                 // of the specified data.
                 read = reader.GetChars(0, 6, null, 0, toReadLength);
                 Assert.AreEqual(testChars.Length, read);
@@ -898,12 +890,11 @@ namespace Snowflake.Data.Tests
                 p1.Value = testBytes;
                 cmd.Parameters.Add(p1);
 
-
                 count = cmd.ExecuteNonQuery();
                 Assert.AreEqual(1, count);
 
                 cmd.CommandText = "select * from testGetChars";
-                DbDataReader reader = (DbDataReader) cmd.ExecuteReader();
+                DbDataReader reader = (DbDataReader)cmd.ExecuteReader();
 
                 Assert.IsTrue(reader.Read());
 
@@ -938,7 +929,6 @@ namespace Snowflake.Data.Tests
                     Assert.IsTrue(col3ToBytes.SequenceEqual(buf));
                 }
 
-
                 reader.Close();
 
                 cmd.CommandText = "drop table if exists testGetChars";
@@ -948,7 +938,6 @@ namespace Snowflake.Data.Tests
                 conn.Close();
             }
         }
-
 
         [Test]
         public void testGetValueIndexOutOfBound()
@@ -961,7 +950,7 @@ namespace Snowflake.Data.Tests
                 IDbCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "select 1";
                 IDataReader reader = cmd.ExecuteReader();
-                
+
                 Assert.IsTrue(reader.Read());
 
                 try
@@ -969,7 +958,7 @@ namespace Snowflake.Data.Tests
                     reader.GetInt16(-1);
                     Assert.Fail();
                 }
-                catch(SnowflakeDbException e)
+                catch (SnowflakeDbException e)
                 {
                     Assert.AreEqual(270002, e.ErrorCode);
                 }
@@ -979,7 +968,7 @@ namespace Snowflake.Data.Tests
                     reader.GetInt16(1);
                     Assert.Fail();
                 }
-                catch(SnowflakeDbException e)
+                catch (SnowflakeDbException e)
                 {
                     Assert.AreEqual(270002, e.ErrorCode);
                 }
@@ -1024,13 +1013,13 @@ namespace Snowflake.Data.Tests
 
                         reader.Close();
                         Assert.IsTrue(reader.IsClosed);
-                        
+
                         try
                         {
                             reader.Read();
                             Assert.Fail();
                         }
-                        catch(SnowflakeDbException e)
+                        catch (SnowflakeDbException e)
                         {
                             Assert.AreEqual(270010, e.ErrorCode);
                         }
@@ -1040,7 +1029,7 @@ namespace Snowflake.Data.Tests
                             reader.GetInt16(0);
                             Assert.Fail();
                         }
-                        catch(SnowflakeDbException e)
+                        catch (SnowflakeDbException e)
                         {
                             Assert.AreEqual(270010, e.ErrorCode);
                         }
@@ -1084,7 +1073,7 @@ namespace Snowflake.Data.Tests
                 }
 
                 conn.Close();
-            } 
+            }
         }
 
         [Test]
@@ -1116,7 +1105,7 @@ namespace Snowflake.Data.Tests
 
                 cmd.CommandText = "select * from testgetguid";
                 IDataReader reader = cmd.ExecuteReader();
-                
+
                 Assert.IsTrue(reader.Read());
                 Assert.AreEqual(val, reader.GetGuid(0));
 
@@ -1136,7 +1125,6 @@ namespace Snowflake.Data.Tests
 
                 conn.Close();
             }
-         
         }
 
         [Test]
@@ -1192,7 +1180,7 @@ namespace Snowflake.Data.Tests
                 cmd.CommandText = "create or replace table testCopy (cola string)";
                 cmd.ExecuteNonQuery();
 
-                cmd.CommandText = "copy into testCopy from @emptyStage";                
+                cmd.CommandText = "copy into testCopy from @emptyStage";
                 using (var rdr = cmd.ExecuteReader())
                 {
                     // Can read the first row

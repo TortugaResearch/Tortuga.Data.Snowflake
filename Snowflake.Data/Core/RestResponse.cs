@@ -2,23 +2,20 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Snowflake.Data.Client;
-using Snowflake.Data.Core.FileTransfer;
+using Tortuga.Data.Snowflake;
 
-namespace Snowflake.Data.Core
+namespace Tortuga.Data.Snowflake.Core
 {
     abstract class BaseRestResponse
     {
         [JsonProperty(PropertyName = "message")]
         internal String message { get; set; }
-        
+
         [JsonProperty(PropertyName = "code", NullValueHandling = NullValueHandling.Ignore)]
         internal int code { get; set; }
-        
+
         [JsonProperty(PropertyName = "success")]
         internal bool success { get; set; }
 
@@ -26,10 +23,9 @@ namespace Snowflake.Data.Core
         {
             if (!success)
             {
-                SnowflakeDbException e = new SnowflakeDbException("",code, message, "");
+                SnowflakeDbException e = new SnowflakeDbException("", code, message, "");
                 throw e;
             }
-
         }
     }
 
@@ -58,16 +54,18 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "data")]
         internal AuthenticatorResponseData data { get; set; }
     }
+
     internal class LoginResponse : BaseRestResponse
     {
         [JsonProperty(PropertyName = "data")]
         internal LoginResponseData data { get; set; }
     }
 
-    internal class RenewSessionResponse : BaseRestResponse {
-		[JsonProperty(PropertyName = "data")]
-		internal RenewSessionResponseData data { get; set; }
-	}
+    internal class RenewSessionResponse : BaseRestResponse
+    {
+        [JsonProperty(PropertyName = "data")]
+        internal RenewSessionResponseData data { get; set; }
+    }
 
     internal class LoginResponseData
     {
@@ -85,8 +83,7 @@ namespace Snowflake.Data.Core
 
         [JsonProperty(PropertyName = "sessionInfo", NullValueHandling = NullValueHandling.Ignore)]
         internal SessionInfo authResponseSessionInfo { get; set; }
-
-   }
+    }
 
     internal class AuthenticatorResponseData
     {
@@ -100,24 +97,23 @@ namespace Snowflake.Data.Core
         internal string proofKey { get; set; }
     }
 
+    internal class RenewSessionResponseData
+    {
+        [JsonProperty(PropertyName = "sessionToken", NullValueHandling = NullValueHandling.Ignore)]
+        internal string sessionToken { get; set; }
 
-	internal class RenewSessionResponseData {
+        [JsonProperty(PropertyName = "validityInSecondsST", NullValueHandling = NullValueHandling.Ignore)]
+        internal Int16 sessionTokenValidityInSeconds { get; set; }
 
-		[JsonProperty(PropertyName = "sessionToken", NullValueHandling = NullValueHandling.Ignore)]
-		internal string sessionToken { get; set; }
+        [JsonProperty(PropertyName = "masterToken", NullValueHandling = NullValueHandling.Ignore)]
+        internal string masterToken { get; set; }
 
-		[JsonProperty(PropertyName = "validityInSecondsST", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int16 sessionTokenValidityInSeconds { get; set; }
+        [JsonProperty(PropertyName = "validityInSecondsMT", NullValueHandling = NullValueHandling.Ignore)]
+        internal Int16 masterTokenValidityInSeconds { get; set; }
 
-		[JsonProperty(PropertyName = "masterToken", NullValueHandling = NullValueHandling.Ignore)]
-		internal string masterToken { get; set; }
-
-		[JsonProperty(PropertyName = "validityInSecondsMT", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int16 masterTokenValidityInSeconds { get; set; }
-
-		[JsonProperty(PropertyName = "sessionId", NullValueHandling = NullValueHandling.Ignore)]
-		internal Int64 sessionId { get; set; }
-	}
+        [JsonProperty(PropertyName = "sessionId", NullValueHandling = NullValueHandling.Ignore)]
+        internal Int64 sessionId { get; set; }
+    }
 
     internal class SessionInfo
     {
@@ -239,7 +235,7 @@ namespace Snowflake.Data.Core
         [JsonProperty(PropertyName = "nullable")]
         internal bool nullable { get; set; }
     }
-    
+
     internal class ExecResponseChunk
     {
         [JsonProperty(PropertyName = "url")]
@@ -392,4 +388,4 @@ namespace Snowflake.Data.Core
             throw new NotImplementedException();
         }
     }
-} 
+}

@@ -2,10 +2,10 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-namespace Snowflake.Data.Tests
+namespace Tortuga.Data.Snowflake.Tests
 {
-    using Snowflake.Data.Core;
     using NUnit.Framework;
+    using Tortuga.Data.Snowflake.Core;
 
     [TestFixture]
     class SFSessionTest
@@ -19,6 +19,5 @@ namespace Snowflake.Data.Tests
             sfSession.Open();
             sfSession.close(); // no exception is raised.
         }
-
     }
 }

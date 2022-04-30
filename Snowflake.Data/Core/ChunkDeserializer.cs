@@ -2,11 +2,9 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System.IO;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace Snowflake.Data.Core
+namespace Tortuga.Data.Snowflake.Core
 {
     class ChunkDeserializer : IChunkParser
     {

@@ -2,14 +2,15 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-namespace Snowflake.Data.Tests
+namespace Tortuga.Data.Snowflake.Tests
 {
-    using Snowflake.Data.Core;
     using NUnit.Framework;
+    using Tortuga.Data.Snowflake.Core;
 
     /**
      * Mock rest request test
      */
+
     [TestFixture]
     class SFStatementTest
     {

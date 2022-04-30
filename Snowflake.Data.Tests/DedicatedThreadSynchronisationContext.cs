@@ -1,15 +1,12 @@
 ﻿using NUnit.Framework;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
 
-namespace Snowflake.Data.Tests
+namespace Tortuga.Data.Snowflake.Tests
 {
     /*
      * This class will not deadlock, but it will cause tests to fail if the Send or Post methods have been called during a test
      */
+
     public sealed class MockSynchronizationContext : SynchronizationContext
     {
         int callCount = 0;
@@ -42,11 +39,12 @@ namespace Snowflake.Data.Tests
     /*
      * This can be used to test what happens when a library metod is called from a SyncronizationContext.
      * If there are any deadlocks in the code, this will trigger the deadlock.
-     * 
-     * Usage: 
+     *
+     * Usage:
      *      DedicatedThreadSynchronisationContext.RunInContext(_ => TestSimpleLargeResultSet());
-     * 
+     *
      */
+
     public sealed class DedicatedThreadSynchronisationContext : SynchronizationContext, IDisposable
     {
         public DedicatedThreadSynchronisationContext()
@@ -69,7 +67,7 @@ namespace Snowflake.Data.Tests
             m_queue.Add(new KeyValuePair<SendOrPostCallback, object>(d, state));
         }
 
-        /// <summary> As 
+        /// <summary> As
         public override void Send(SendOrPostCallback d, object state)
         {
             using (var handledEvent = new ManualResetEvent(false))
@@ -81,7 +79,7 @@ namespace Snowflake.Data.Tests
 
         public int WorkerThreadId { get { return m_thread.ManagedThreadId; } }
 
-        // This will run the callback in a synchronizationContext that is equivalent to a GUI or ASP.Net program 
+        // This will run the callback in a synchronizationContext that is equivalent to a GUI or ASP.Net program
         // If there are any async problems in the method, this code will provoke the deadlock.
         public static void RunInContext(SendOrPostCallback d)
         {

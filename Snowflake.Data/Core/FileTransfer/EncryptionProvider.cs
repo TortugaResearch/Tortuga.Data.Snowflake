@@ -1,12 +1,10 @@
-﻿using System.IO;
-using System;
-using Snowflake.Data.Log;
+﻿using Tortuga.Data.Snowflake.Log;
 using System.Security.Cryptography;
 
-namespace Snowflake.Data.Core.FileTransfer
+namespace Tortuga.Data.Snowflake.Core.FileTransfer
 {
     /// <summary>
-    /// The encryption materials. 
+    /// The encryption materials.
     /// </summary>
     internal class MaterialDescriptor
     {
@@ -18,12 +16,13 @@ namespace Snowflake.Data.Core.FileTransfer
     }
 
     /// <summary>
-    /// The encryptor/decryptor for PUT/GET files. 
+    /// The encryptor/decryptor for PUT/GET files.
     /// </summary>
     class EncryptionProvider
     {
         // The default block size for AES
         private const int AES_BLOCK_SIZE = 128;
+
         private const int blockSize = AES_BLOCK_SIZE / 8;  // in bytes
 
         /// <summary>
@@ -63,7 +62,7 @@ namespace Snowflake.Data.Core.FileTransfer
 
             // Encrypt file key
             byte[] encryptedFileKey = encryptFileKey(decodedMasterKey, keyData);
-            
+
             // Store encryption metadata information
             MaterialDescriptor matDesc = new MaterialDescriptor
             {
@@ -90,13 +89,13 @@ namespace Snowflake.Data.Core.FileTransfer
         /// <returns>The encrypted key.</returns>
         static private byte[] encryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
         {
-            Aes aes = Aes.Create();            
+            Aes aes = Aes.Create();
             aes.Key = masterKey;
             aes.Mode = CipherMode.ECB;
             aes.Padding = PaddingMode.PKCS7;
 
             MemoryStream cipherStream = new MemoryStream();
-            CryptoStream cryptoStream = new CryptoStream(cipherStream, aes.CreateEncryptor(), CryptoStreamMode.Write);            
+            CryptoStream cryptoStream = new CryptoStream(cipherStream, aes.CreateEncryptor(), CryptoStreamMode.Write);
             cryptoStream.Write(unencryptedFileKey, 0, unencryptedFileKey.Length);
             cryptoStream.FlushFinalBlock();
 
@@ -115,7 +114,7 @@ namespace Snowflake.Data.Core.FileTransfer
             byte[] key,
             byte[] iv)
         {
-            Aes aes = Aes.Create();            
+            Aes aes = Aes.Create();
             aes.Key = key;
             aes.Mode = CipherMode.CBC;
             aes.Padding = PaddingMode.PKCS7;
@@ -123,12 +122,12 @@ namespace Snowflake.Data.Core.FileTransfer
 
             MemoryStream targetStream = new MemoryStream();
             CryptoStream cryptoStream = new CryptoStream(targetStream, aes.CreateEncryptor(), CryptoStreamMode.Write);
-            
+
             byte[] inFileBytes = File.ReadAllBytes(inFile);
             cryptoStream.Write(inFileBytes, 0, inFileBytes.Length);
             cryptoStream.FlushFinalBlock();
 
-            return targetStream.ToArray();                   
+            return targetStream.ToArray();
         }
 
         /// <summary>
@@ -213,11 +212,11 @@ namespace Snowflake.Data.Core.FileTransfer
             MemoryStream targetStream = new MemoryStream();
             CryptoStream cryptoStream = new CryptoStream(targetStream, aes.CreateDecryptor(), CryptoStreamMode.Write);
 
-            using(Stream inStream = File.OpenRead(inFile))
+            using (Stream inStream = File.OpenRead(inFile))
             {
                 byte[] buffer = new byte[2048];
                 int bytesRead;
-                while((bytesRead = inStream.Read(buffer, 0, buffer.Length)) > 0)
+                while ((bytesRead = inStream.Read(buffer, 0, buffer.Length)) > 0)
                 {
                     cryptoStream.Write(buffer, 0, bytesRead);
                 }

@@ -2,11 +2,11 @@
  * Copyright (c) 2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using Snowflake.Data.Core;
-using System.Security;
 using NUnit.Framework;
+using Tortuga.Data.Snowflake.Core;
+using System.Security;
 
-namespace Snowflake.Data.Tests
+namespace Tortuga.Data.Snowflake.Tests
 {
     /// <summary>
     /// The purpose of these testcases is to test if the connections string

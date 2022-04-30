@@ -4,7 +4,7 @@
 
 using System.Data.Common;
 
-namespace Snowflake.Data.Client
+namespace Tortuga.Data.Snowflake
 {
     public sealed class SnowflakeDbFactory : DbProviderFactory
     {

@@ -2,9 +2,7 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-
-namespace Snowflake.Data.Configuration
+namespace Tortuga.Data.Snowflake.Configuration
 {
     public class SFConfiguration
     {

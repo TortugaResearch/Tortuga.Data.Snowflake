@@ -2,23 +2,9 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.IO.Compression;
-using System.IO;
-using System.Collections;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Net.Http;
-using Newtonsoft.Json;
-using System.Diagnostics;
-using Newtonsoft.Json.Serialization;
-using Snowflake.Data.Log;
+using Tortuga.Data.Snowflake.Log;
 
-namespace Snowflake.Data.Core
+namespace Tortuga.Data.Snowflake.Core
 {
     class SFBlockingChunkDownloaderV3 : IChunkDownloader
     {
@@ -64,7 +50,7 @@ namespace Snowflake.Data.Core
             this.taskQueues = new List<Task<IResultChunk>>();
             externalCancellationToken = cancellationToken;
 
-            for (int i=0; i<prefetchSlot; i++)
+            for (int i = 0; i < prefetchSlot; i++)
             {
                 SFReusableChunk reusableChunk = new SFReusableChunk(colCount);
                 reusableChunk.Reset(chunkInfos[nextChunkToDownloadIndex], nextChunkToDownloadIndex);
@@ -88,7 +74,6 @@ namespace Snowflake.Data.Core
             String val = (String)sessionParameters[SFSessionParameter.CLIENT_PREFETCH_THREADS];
             return Int32.Parse(val);
         }
-
 
         /*public Task<IResultChunk> GetNextChunkAsync()
         {
@@ -131,7 +116,7 @@ namespace Snowflake.Data.Core
             //logger.Info($"Start donwloading chunk #{downloadContext.chunkIndex}");
             SFReusableChunk chunk = downloadContext.chunk;
 
-            S3DownloadRequest downloadRequest = 
+            S3DownloadRequest downloadRequest =
                 new S3DownloadRequest()
                 {
                     Url = new UriBuilder(chunk.Url).Uri,
@@ -154,11 +139,11 @@ namespace Snowflake.Data.Core
         }
 
         /// <summary>
-        ///     Content from s3 in format of 
+        ///     Content from s3 in format of
         ///     ["val1", "val2", null, ...],
         ///     ["val3", "val4", null, ...],
         ///     ...
-        ///     To parse it as a json, we need to preappend '[' and append ']' to the stream 
+        ///     To parse it as a json, we need to preappend '[' and append ']' to the stream
         /// </summary>
         /// <param name="content"></param>
         /// <param name="resultChunk"></param>

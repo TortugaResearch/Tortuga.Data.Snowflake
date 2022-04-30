@@ -4,7 +4,7 @@
 
 using log4net;
 
-namespace Snowflake.Data.Log
+namespace Tortuga.Data.Snowflake.Log
 {
     class SFLoggerFactory
     {
@@ -32,7 +32,7 @@ namespace Snowflake.Data.Log
         }
 
         public static void Instance(SFLogger customLogger)
-        {            
+        {
             logger = customLogger;
         }
 
@@ -56,5 +56,4 @@ namespace Snowflake.Data.Log
             }
         }
     }
-
 }

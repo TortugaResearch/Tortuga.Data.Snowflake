@@ -2,11 +2,7 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Snowflake.Data.Log
+namespace Tortuga.Data.Snowflake.Log
 {
     interface SFLogger
     {
@@ -35,5 +31,4 @@ namespace Snowflake.Data.Log
     {
         DEBUG, INFO, WARN, ERROR, FATAL
     }
-
 }

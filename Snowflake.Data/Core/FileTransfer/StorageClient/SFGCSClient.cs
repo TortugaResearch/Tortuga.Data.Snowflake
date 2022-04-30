@@ -2,19 +2,12 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading.Tasks;
 using Google.Apis.Auth.OAuth2;
 using Newtonsoft.Json;
-using Snowflake.Data.Log;
-using System.Linq;
-using Newtonsoft.Json.Linq;
+using Tortuga.Data.Snowflake.Log;
+using System.Net.Http.Headers;
 
-namespace Snowflake.Data.Core.FileTransfer.StorageClient
+namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient
 {
     /// <summary>
     /// The GCS client used to transfer files to the remote Google Cloud Storage.
@@ -25,6 +18,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// GCS header values.
         /// </summary>
         private const string GCS_METADATA_PREFIX = "x-goog-meta-";
+
         private const string GCS_METADATA_SFC_DIGEST = GCS_METADATA_PREFIX + "sfc-digest";
         private const string GCS_METADATA_MATDESC_KEY = GCS_METADATA_PREFIX + "matdesc";
         private const string GCS_METADATA_ENCRYPTIONDATAPROP = GCS_METADATA_PREFIX + "encryptiondata";
@@ -115,7 +109,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
                 fileMetadata.resultStatus == ResultStatus.DOWNLOADED.ToString())
             {
-                return new FileHeader{
+                return new FileHeader
+                {
                     digest = fileMetadata.sha256Digest,
                     contentLength = fileMetadata.srcFileSize,
                     encryptionMetadata = fileMetadata.encryptionMetadata

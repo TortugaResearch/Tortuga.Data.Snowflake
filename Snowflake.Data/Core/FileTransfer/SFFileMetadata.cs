@@ -2,106 +2,103 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-using static Snowflake.Data.Core.FileTransfer.SFFileCompressionTypes;
+using static Tortuga.Data.Snowflake.Core.FileTransfer.SFFileCompressionTypes;
 
-namespace Snowflake.Data.Core.FileTransfer
+namespace Tortuga.Data.Snowflake.Core.FileTransfer
 {
-    public class SFEncryptionMetadata
-    {
-        /// Initialization vector
-        public string iv { set; get; }
+	public class SFEncryptionMetadata
+	{
+		/// Initialization vector
+		public string iv { set; get; }
 
-        /// File key
-        public string key { set; get; }
+		/// File key
+		public string key { set; get; }
 
-        /// Encryption material descriptor
-        public string matDesc { set; get; }
-    }
+		/// Encryption material descriptor
+		public string matDesc { set; get; }
+	}
 
-    /// <summary>
-    /// Metadata used by the remote storage client to upload or download a file/stream.
-    /// </summary>
-    internal class SFFileMetadata
-    {
-        /// Original source file path (full path)
-        public string srcFilePath { set; get; }
-        
-        /// Original path or temp path when compression is enabled (full path)
-        public string realSrcFilePath { set; get; }
+	/// <summary>
+	/// Metadata used by the remote storage client to upload or download a file/stream.
+	/// </summary>
+	internal class SFFileMetadata
+	{
+		/// Original source file path (full path)
+		public string srcFilePath { set; get; }
 
-        /// Original source file name
-        public string srcFileName { set; get; }
+		/// Original path or temp path when compression is enabled (full path)
+		public string realSrcFilePath { set; get; }
 
-        /// Original source file size
-        public long srcFileSize { set; get; }
+		/// Original source file name
+		public string srcFileName { set; get; }
 
-        /// Temp file if compressed is required, otherwise same as src file
-        public string srcFileToUpload { set; get; }
+		/// Original source file size
+		public long srcFileSize { set; get; }
 
-        /// Temp file size if compressed is required, otherwise same as src file
-        public long srcFileToUploadSize { set; get; }
+		/// Temp file if compressed is required, otherwise same as src file
+		public string srcFileToUpload { set; get; }
 
-        /// Destination file name (no path)
-        public string destFileName { set; get; }
+		/// Temp file size if compressed is required, otherwise same as src file
+		public long srcFileToUploadSize { set; get; }
 
-        /// Destination file size
-        public long destFileSize { set; get; }
+		/// Destination file name (no path)
+		public string destFileName { set; get; }
 
-        /// Absolute path to the destination (including the filename. /tmp/small_test_file.csv.gz)
-        public string destPath { set; get; }
+		/// Destination file size
+		public long destFileSize { set; get; }
 
-        /// Absolute path to the local location of the downloaded file
-        public string localLocation { set; get; }
+		/// Absolute path to the destination (including the filename. /tmp/small_test_file.csv.gz)
+		public string destPath { set; get; }
 
-        /// Destination file size
-        public long uploadSize { set; get; }
+		/// Absolute path to the local location of the downloaded file
+		public string localLocation { set; get; }
 
-        /// Stage info of the file
-        public PutGetStageInfo stageInfo { get; set; }
+		/// Destination file size
+		public long uploadSize { set; get; }
 
-        /// True if require gzip compression
-        public bool requireCompress { set; get; }
+		/// Stage info of the file
+		public PutGetStageInfo stageInfo { get; set; }
 
-        /// Upload and overwrite if file exists
-        public bool overwrite { set; get; }
+		/// True if require gzip compression
+		public bool requireCompress { set; get; }
 
-        /// Encryption material
-        public PutGetEncryptionMaterial encryptionMaterial { set; get; }
+		/// Upload and overwrite if file exists
+		public bool overwrite { set; get; }
 
-        /// Encryption metadata
-        public SFEncryptionMetadata encryptionMetadata { set; get; }
+		/// Encryption material
+		public PutGetEncryptionMaterial encryptionMaterial { set; get; }
 
-        /// File message digest (after compression if required)
-        public string sha256Digest { set; get; }
+		/// Encryption metadata
+		public SFEncryptionMetadata encryptionMetadata { set; get; }
 
-        /// Source compression 
-        public SFFileCompressionType sourceCompression { set; get; }
+		/// File message digest (after compression if required)
+		public string sha256Digest { set; get; }
 
-        /// Target compression
-        public SFFileCompressionType targetCompression { set; get; }
+		/// Source compression
+		public SFFileCompressionType sourceCompression { set; get; }
 
-        /// Pre-signed url.
-        public string presignedUrl { set; get; }
+		/// Target compression
+		public SFFileCompressionType targetCompression { set; get; }
 
-        /// The number of chunks to download in parallel.
-        public int parallel { get; set; }
+		/// Pre-signed url.
+		public string presignedUrl { set; get; }
 
-        /// The outcome of the transfer.
-        public string resultStatus { get; set; }
+		/// The number of chunks to download in parallel.
+		public int parallel { get; set; }
 
-        /// The temporary directory to store files to upload/download.
-        public string tmpDir { get; set; }
-        
-        /// Storage client to use for uploading/downloading files.
-        public ISFRemoteStorageClient client { get; set; }
+		/// The outcome of the transfer.
+		public string resultStatus { get; set; }
 
-        /// Last error returned from client request.
-        public Exception lastError { get; set; }
+		/// The temporary directory to store files to upload/download.
+		public string tmpDir { get; set; }
 
-        /// Last specified max concurrency to use.
-        public int lastMaxConcurrency { get; set; }
-    }
+		/// Storage client to use for uploading/downloading files.
+		public ISFRemoteStorageClient client { get; set; }
+
+		/// Last error returned from client request.
+		public Exception lastError { get; set; }
+
+		/// Last specified max concurrency to use.
+		public int lastMaxConcurrency { get; set; }
+	}
 }

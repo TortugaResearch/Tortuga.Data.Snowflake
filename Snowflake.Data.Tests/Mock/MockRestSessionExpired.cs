@@ -2,19 +2,13 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Threading;
-using System.Net.Http;
-
-namespace Snowflake.Data.Tests.Mock
+namespace Tortuga.Data.Snowflake.Tests.Mock
 {
-    using Snowflake.Data.Core;
+    using Tortuga.Data.Snowflake.Core;
 
     class MockRestSessionExpired : IMockRestRequester
     {
-        static private readonly String EXPIRED_SESSION_TOKEN="session_expired_token";
+        static private readonly String EXPIRED_SESSION_TOKEN = "session_expired_token";
 
         static private readonly String TOKEN_FMT = "Snowflake Token=\"{0}\"";
 
@@ -24,7 +18,9 @@ namespace Snowflake.Data.Tests.Mock
 
         public string SecondTimeRequestID;
 
-        public MockRestSessionExpired() { }
+        public MockRestSessionExpired()
+        {
+        }
 
         public Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
@@ -132,7 +128,7 @@ namespace Snowflake.Data.Tests.Mock
         {
             return null;
         }
-        
+
         private string ExtractRequestID(string queries)
         {
             int start = queries.IndexOf("requestId=");

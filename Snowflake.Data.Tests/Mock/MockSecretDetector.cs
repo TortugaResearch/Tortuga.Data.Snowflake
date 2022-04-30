@@ -2,13 +2,12 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using Snowflake.Data.Log;
+using Tortuga.Data.Snowflake.Log;
 
-namespace Snowflake.Data.Tests.Mock
+namespace Tortuga.Data.Snowflake.Tests.Mock
 {
     class MockSecretDetector
-    {        
+    {
         public static SecretDetector.Mask MaskSecrets(string text)
         {
             SecretDetector.Mask result = new SecretDetector.Mask();

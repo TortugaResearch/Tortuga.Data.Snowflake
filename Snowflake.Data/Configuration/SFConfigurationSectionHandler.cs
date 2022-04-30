@@ -2,11 +2,10 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System.Collections;
 using System.Configuration;
 using System.Xml;
 
-namespace Snowflake.Data.Configuration
+namespace Tortuga.Data.Snowflake.Configuration
 {
     /// <summary>
     ///     Develop In progress
@@ -20,11 +19,12 @@ namespace Snowflake.Data.Configuration
         { }
 
         #region IConfigurationSectionHandler Memebers
+
         object IConfigurationSectionHandler.Create(object parent, object configContext, XmlNode section)
         {
             return null;
         }
-        #endregion
-    }
 
+        #endregion IConfigurationSectionHandler Memebers
+    }
 }

@@ -2,18 +2,14 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using Azure.Storage.Blobs;
-using Snowflake.Data.Log;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using Azure;
+using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Newtonsoft.Json;
+using Tortuga.Data.Snowflake.Log;
 
-namespace Snowflake.Data.Core.FileTransfer.StorageClient
+namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient
 {
-
     /// <summary>
     /// The azure client used to transfer files to the remote Azure storage.
     /// </summary>

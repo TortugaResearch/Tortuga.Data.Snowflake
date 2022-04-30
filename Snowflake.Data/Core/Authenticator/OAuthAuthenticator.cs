@@ -1,11 +1,6 @@
-﻿using Snowflake.Data.Log;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using Tortuga.Data.Snowflake.Log;
 
-namespace Snowflake.Data.Core.Authenticator
+namespace Tortuga.Data.Snowflake.Core.Authenticator
 {
     /// <summary>
     /// OAuthenticator is used when using  an OAuth token for authentication.

@@ -2,14 +2,12 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using Snowflake.Data.Core.FileTransfer.StorageClient;
-using System;
-using System.IO;
+using Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 
-namespace Snowflake.Data.Core.FileTransfer
+namespace Tortuga.Data.Snowflake.Core.FileTransfer
 {
     /// <summary>
-    /// The class containing file header information. 
+    /// The class containing file header information.
     /// </summary>
     internal class FileHeader
     {
@@ -19,25 +17,26 @@ namespace Snowflake.Data.Core.FileTransfer
     }
 
     /// <summary>
-    /// The interface for the storage clients. 
+    /// The interface for the storage clients.
     /// </summary>
     class SFRemoteStorageUtil
     {
         /// <summary>
-        /// Strings to indicate specific storage type. 
+        /// Strings to indicate specific storage type.
         /// </summary>
         const string S3_FS = "S3";
+
         const string AZURE_FS = "AZURE";
         const string GCS_FS = "GCS";
         const string LOCAL_FS = "LOCAL_FS";
 
         /// <summary>
-        /// Amount of concurrency to use by default. 
+        /// Amount of concurrency to use by default.
         /// </summary>
         const int DEFAULT_CONCURRENCY = 1;
 
         /// <summary>
-        /// Maximum amount of times to retry. 
+        /// Maximum amount of times to retry.
         /// </summary>
         const int DEFAULT_MAX_RETRY = 5;
 
@@ -192,7 +191,7 @@ namespace Snowflake.Data.Core.FileTransfer
                     }
                 }
                 // Break out of loop if file is successfully uploaded or already exists
-                if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() || 
+                if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
                     fileMetadata.resultStatus == ResultStatus.SKIPPED.ToString())
                 {
                     breakFlag = true;

@@ -2,12 +2,9 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System.IO;
-using System.Collections.Specialized;
-using System.Configuration;
-using Snowflake.Data.Configuration;
+using Tortuga.Data.Snowflake.Configuration;
 
-namespace Snowflake.Data.Core
+namespace Tortuga.Data.Snowflake.Core
 {
     class ChunkParserFactory
     {
@@ -20,7 +17,7 @@ namespace Snowflake.Data.Core
             else
             {
                 return new ChunkStreamingParser(stream);
-            }  
+            }
         }
     }
 }

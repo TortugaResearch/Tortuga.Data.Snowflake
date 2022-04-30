@@ -2,15 +2,12 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using Snowflake.Data.Client;
-using Snowflake.Data.Core;
-using Snowflake.Data.Log;
-using System;
+using Tortuga.Data.Snowflake;
+using Tortuga.Data.Snowflake.Core;
+using Tortuga.Data.Snowflake.Log;
 using System.Data;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Snowflake.Data.Tests.Mock
+namespace Tortuga.Data.Snowflake.Tests.Mock
 {
     class MockSnowflakeDbConnection : SnowflakeDbConnection
     {
@@ -58,8 +55,8 @@ namespace Snowflake.Data.Tests.Mock
                 {
                     if (previousTask.IsFaulted)
                     {
-                    // Exception from SfSession.OpenAsync
-                    Exception sfSessionEx = previousTask.Exception;
+                        // Exception from SfSession.OpenAsync
+                        Exception sfSessionEx = previousTask.Exception;
                         _connectionState = ConnectionState.Closed;
                         logger.Error("Unable to connect", sfSessionEx.InnerException);
                         throw //sfSessionEx.InnerException;
@@ -76,7 +73,6 @@ namespace Snowflake.Data.Tests.Mock
                     }
                 },
                 cancellationToken);
-
         }
 
         private void SetMockSession()

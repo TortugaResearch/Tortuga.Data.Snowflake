@@ -2,17 +2,11 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Web;
-using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
-using Snowflake.Data.Client;
-using Snowflake.Data.Log;
-using System.Threading;
-using System.Threading.Tasks;
+using Tortuga.Data.Snowflake;
+using Tortuga.Data.Snowflake.Log;
 using System.Text;
 
-namespace Snowflake.Data.Core
+namespace Tortuga.Data.Snowflake.Core
 {
     class SFStatement
     {
@@ -39,8 +33,8 @@ namespace Snowflake.Data.Core
         private readonly IRestRequester _restRequester;
 
         private CancellationTokenSource _timeoutTokenSource;
-        
-        // Merged cancellation token source for all cancellation signal. 
+
+        // Merged cancellation token source for all cancellation signal.
         // Cancel callback will be registered under token issued by this source.
         private CancellationTokenSource _linkedCancellationTokenSource;
 
@@ -57,7 +51,6 @@ namespace Snowflake.Data.Core
         {
             lock (_requestIdLock)
             {
-                
                 if (_requestId != null)
                 {
                     logger.Info("Another query is running.");
@@ -153,7 +146,7 @@ namespace Snowflake.Data.Core
             this._timeoutTokenSource = timeout > 0 ? new CancellationTokenSource(timeout * 1000) :
                                                      new CancellationTokenSource(Timeout.InfiniteTimeSpan);
         }
-        
+
         /// <summary>
         ///     Register cancel callback. Two factors: either external cancellation token passed down from upper
         ///     layer or timeout reached. Whichever comes first would trigger query cancellation.
@@ -244,7 +237,7 @@ namespace Snowflake.Data.Core
                 ClearQueryRequestId();
             }
         }
-        
+
         internal SFBaseResultSet Execute(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
         {
             // Trim the sql query and check if this is a PUT/GET command

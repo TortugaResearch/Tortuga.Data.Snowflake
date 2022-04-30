@@ -2,18 +2,14 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Net.Http;
-
-namespace Snowflake.Data.Tests.Mock
+namespace Tortuga.Data.Snowflake.Tests.Mock
 {
-    using Snowflake.Data.Core;
+    using Tortuga.Data.Snowflake.Core;
 
     class MockServiceName : IMockRestRequester
     {
         public const string INIT_SERVICE_NAME = "init";
+
         public Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
             var message = request.ToRequestMessage(HttpMethod.Post);
@@ -51,7 +47,6 @@ namespace Snowflake.Data.Tests.Mock
             }
             else if (sfRequest.jsonBody is QueryRequest)
             {
-
                 QueryExecResponse queryExecResponse = new QueryExecResponse
                 {
                     success = true,
@@ -75,8 +70,6 @@ namespace Snowflake.Data.Tests.Mock
             {
                 return Task.FromResult<T>((T)(object)null);
             }
-
-       
         }
 
         public T Post<T>(IRestRequest postRequest)

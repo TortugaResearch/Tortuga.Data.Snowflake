@@ -2,10 +2,9 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System.Threading;
-using Snowflake.Data.Configuration;
+using Tortuga.Data.Snowflake.Configuration;
 
-namespace Snowflake.Data.Core
+namespace Tortuga.Data.Snowflake.Core
 {
     class ChunkDownloaderFactory
     {
@@ -26,6 +25,7 @@ namespace Snowflake.Data.Core
                     responseData.chunkHeaders,
                     cancellationToken,
                     resultSet);
+
                 case 2:
                     return new SFChunkDownloaderV2(responseData.rowType.Count,
                         responseData.chunks,
@@ -33,6 +33,7 @@ namespace Snowflake.Data.Core
                         responseData.chunkHeaders,
                         cancellationToken,
                         resultSet.sfStatement.SfSession.restRequester);
+
                 default:
                     return new SFBlockingChunkDownloaderV3(responseData.rowType.Count,
                     responseData.chunks,

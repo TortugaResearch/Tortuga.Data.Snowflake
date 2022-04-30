@@ -2,14 +2,12 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-
-namespace Snowflake.Data.Tests
+namespace Tortuga.Data.Snowflake.Tests
 {
-    using Snowflake.Data.Core;
     using NUnit.Framework;
-    using System.Threading;
+    using Tortuga.Data.Snowflake.Core;
     using System.Globalization;
+    using System.Threading;
 
     [TestFixture]
     class SFDataConverterTest
@@ -23,7 +21,7 @@ namespace Snowflake.Data.Tests
 
                 Thread.CurrentThread.CurrentCulture = ci;
 
-                System.Tuple<string, string> t = 
+                System.Tuple<string, string> t =
                     SFDataConverter.csharpTypeValToSfTypeVal(System.Data.DbType.Double, 1.2345);
 
                 Assert.AreEqual("REAL", t.Item1);
@@ -91,12 +89,12 @@ namespace Snowflake.Data.Tests
             TimeSpan expected = TimeSpan.ParseExact(inputTimeStr.Length < 16 ? inputTimeStr : inputTimeStr.Substring(0, 16), "c", CultureInfo.InvariantCulture);
 
             // Generate the value as returned by the DB
-            TimeSpan val= TimeSpan.ParseExact(inputTimeStr.Substring(0, 8), "c", CultureInfo.InvariantCulture);
+            TimeSpan val = TimeSpan.ParseExact(inputTimeStr.Substring(0, 8), "c", CultureInfo.InvariantCulture);
             Console.WriteLine("val " + val.ToString());
             var tickDiff = val.Ticks;
             var inputStringAsItComesBackFromDatabase = (tickDiff / 10000000.0m).ToString(CultureInfo.InvariantCulture);
             inputStringAsItComesBackFromDatabase += inputTimeStr.Substring(8, inputTimeStr.Length - 8);
-    
+
             // Run the conversion
             var result = SFDataConverter.ConvertToCSharpVal(inputStringAsItComesBackFromDatabase, SFDataType.TIME, typeof(TimeSpan));
 
@@ -312,6 +310,5 @@ namespace Snowflake.Data.Tests
         {
             Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(decimal)));
         }
-
     }
 }

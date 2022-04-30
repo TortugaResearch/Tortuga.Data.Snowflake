@@ -2,12 +2,9 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System.IO;
-using Newtonsoft.Json;
-
-namespace Snowflake.Data.Core
+namespace Tortuga.Data.Snowflake.Core
 {
-    using Snowflake.Data.Client;
+    using Tortuga.Data.Snowflake;
     using System.Threading.Tasks;
 
     public class FastStreamWrapper
@@ -112,15 +109,19 @@ namespace Snowflake.Data.Core
                                 case 'n':
                                     c = '\n';
                                     break;
+
                                 case 'r':
                                     c = '\r';
                                     break;
+
                                 case 'b':
                                     c = '\b';
                                     break;
+
                                 case 't':
                                     c = '\t';
                                     break;
+
                                 case -1:
                                     throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected end of stream in escape sequence");
                             }

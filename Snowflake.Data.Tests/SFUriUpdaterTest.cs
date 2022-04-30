@@ -2,11 +2,11 @@
  * Copyright (c) 2019 Snowflake Computing Inc. All rights reserved.
  */
 
-namespace Snowflake.Data.Tests
+namespace Tortuga.Data.Snowflake.Tests
 {
     using NUnit.Framework;
+    using Tortuga.Data.Snowflake.Core;
     using System;
-    using Snowflake.Data.Core;
 
     [TestFixture]
     class SFUriUpdaterTest
@@ -48,7 +48,7 @@ namespace Snowflake.Data.Tests
             // A uri with no request_guid at the begining should not change with the updater.
             Uri newUri = updater.Update();
 
-            Assert.AreEqual(newUri.ToString(),uri.ToString());
+            Assert.AreEqual(newUri.ToString(), uri.ToString());
 
             // A uri with request_guid should update that param
             string initialGuid = Guid.NewGuid().ToString();
@@ -61,7 +61,6 @@ namespace Snowflake.Data.Tests
             Assert.IsTrue(newUri.Query.Contains(RestParams.SF_QUERY_REQUEST_GUID));
             Assert.IsFalse(newUri.Query.Contains(initialGuid));
             Assert.AreEqual(newUri.ToString().Length, uri.ToString().Length);
-            
         }
     }
 }

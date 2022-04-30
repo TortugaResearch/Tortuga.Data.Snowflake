@@ -1,10 +1,8 @@
 ﻿/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
- 
- using System;
 
-namespace Snowflake.Data.Log
+namespace Tortuga.Data.Snowflake.Log
 {
     // Empty implementation of SFLogger
     // Used when SFLoggerFactory.disableLogger() is called.
@@ -61,5 +59,4 @@ namespace Snowflake.Data.Log
             return;
         }
     }
-
 }

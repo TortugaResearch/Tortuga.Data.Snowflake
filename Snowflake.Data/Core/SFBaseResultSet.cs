@@ -2,13 +2,8 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Snowflake.Data.Core
+namespace Tortuga.Data.Snowflake.Core
 {
-
     abstract class SFBaseResultSet
     {
         internal SFStatement sfStatement;
@@ -18,7 +13,7 @@ namespace Snowflake.Data.Core
         internal int columnCount;
 
         internal bool isClosed;
-        
+
         internal string queryId;
 
         internal abstract bool Next();
@@ -53,11 +48,11 @@ namespace Snowflake.Data.Core
                     var val = GetValue(columnIndex);
                     if (val == DBNull.Value)
                         return null;
-                    return SFDataConverter.toDateString((DateTime)val, 
+                    return SFDataConverter.toDateString((DateTime)val,
                         sfResultSetMetaData.dateOutputFormat);
                 //TODO: Implement SqlFormat for timestamp type, aka parsing format specified by user and format the value
                 default:
-                    return getObjectInternal(columnIndex).SafeToString(); 
+                    return getObjectInternal(columnIndex).SafeToString();
             }
         }
 
@@ -77,6 +72,5 @@ namespace Snowflake.Data.Core
         {
             isClosed = true;
         }
-        
     }
 }

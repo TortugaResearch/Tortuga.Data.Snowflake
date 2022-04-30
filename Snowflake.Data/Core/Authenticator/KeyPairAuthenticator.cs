@@ -2,24 +2,19 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Snowflake.Data.Log;
-using System.IdentityModel.Tokens.Jwt;
-using Snowflake.Data.Client;
-using System.Security.Cryptography;
-using System.IO;
-using Org.BouncyCastle.OpenSsl;
-using Org.BouncyCastle.Security;
+using Microsoft.IdentityModel.Tokens;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.OpenSsl;
+using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
+using Tortuga.Data.Snowflake;
+using Tortuga.Data.Snowflake.Log;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Microsoft.IdentityModel.Tokens;
-namespace Snowflake.Data.Core.Authenticator
+using System.Security.Cryptography;
+
+namespace Tortuga.Data.Snowflake.Core.Authenticator
 {
     /// <summary>
     /// KeyPairAuthenticator is used for Key pair based authentication.
@@ -85,9 +80,9 @@ namespace Snowflake.Data.Core.Authenticator
         {
             logger.Info("Key-pair Authentication");
 
-            bool hasPkPath = 
+            bool hasPkPath =
                 session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath);
-            bool hasPkContent = 
+            bool hasPkContent =
                 session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent);
             session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_PWD, out var pkPwd);
 
@@ -96,7 +91,7 @@ namespace Snowflake.Data.Core.Authenticator
             String publicKeyFingerPrint = null;
             AsymmetricCipherKeyPair keypair = null;
             using (TextReader tr =
-                hasPkPath ? (TextReader) new StreamReader(pkPath) : new StringReader(pkContent))
+                hasPkPath ? (TextReader)new StreamReader(pkPath) : new StringReader(pkContent))
             {
                 try
                 {
@@ -151,31 +146,31 @@ namespace Snowflake.Data.Core.Authenticator
                 byte[] sha256Hash = SHA256Encoder.ComputeHash(publicKeyEncoded);
                 publicKeyFingerPrint = "SHA256:" + Convert.ToBase64String(sha256Hash);
             }
-            
-            // Generating the token 
+
+            // Generating the token
             var now = DateTime.UtcNow;
             System.DateTime dtDateTime =
                 new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
             long secondsSinceEpoch = (long)((now - dtDateTime).TotalSeconds);
 
-            /* 
+            /*
              * Payload content
              *      iss : $accountName.$userName.$pulicKeyFingerprint
              *      sub : $accountName.$userName
              *      iat : $now
              *      exp : $now + LIFETIME
-             * 
+             *
              * Note : Lifetime = 120sec for Python impl, 60sec for Jdbc and Odbc
             */
-            String accountUser = 
-                session.properties[SFSessionProperty.ACCOUNT].ToUpper() + 
-                "." + 
+            String accountUser =
+                session.properties[SFSessionProperty.ACCOUNT].ToUpper() +
+                "." +
                 session.properties[SFSessionProperty.USER].ToUpper();
             String issuer = accountUser + "." + publicKeyFingerPrint;
             var claims = new[] {
                         new Claim(
-                            JwtRegisteredClaimNames.Iat, 
-                            secondsSinceEpoch.ToString(), 
+                            JwtRegisteredClaimNames.Iat,
+                            secondsSinceEpoch.ToString(),
                             System.Security.Claims.ClaimValueTypes.Integer64),
                         new Claim(JwtRegisteredClaimNames.Sub, accountUser),
                     };
@@ -242,5 +237,3 @@ namespace Snowflake.Data.Core.Authenticator
         }
     }
 }
-
-

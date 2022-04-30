@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 
-namespace Snowflake.Data.Core
+namespace Tortuga.Data.Snowflake.Core
 {
     public class UTF8Buffer
     {
@@ -36,7 +34,6 @@ namespace Snowflake.Data.Core
             Array.Copy(Buffer, offset, result, 0, length);
             return result;
         }
-
     }
 
     public static class UTF8BufferExtension

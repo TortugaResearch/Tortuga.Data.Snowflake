@@ -2,17 +2,10 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using Newtonsoft.Json;
-using Snowflake.Data.Client;
-using Snowflake.Data.Core;
-using System;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
+using Tortuga.Data.Snowflake.Core;
 
-namespace Snowflake.Data.Tests.Mock
+namespace Tortuga.Data.Snowflake.Tests.Mock
 {
-
     class MockRetryUntilRestTimeoutRestRequester : RestRequester, IMockRestRequester
     {
         public MockRetryUntilRestTimeoutRestRequester() : base(null)
@@ -35,4 +28,3 @@ namespace Snowflake.Data.Tests.Mock
         }
     }
 }
-

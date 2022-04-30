@@ -2,16 +2,15 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
-namespace Snowflake.Data.Tests
+namespace Tortuga.Data.Snowflake.Tests
 {
     using NUnit.Framework;
-    using Snowflake.Data.Client;
-    using System.Data;
-    using Snowflake.Data.Log;
+    using Tortuga.Data.Snowflake;
     using System;
+    using System.Data;
+    using System.Data.Common;
     using System.IO;
     using System.Runtime.InteropServices;
-    using System.Data.Common;
 
     [TestFixture]
     class SFPutGetTest : SFBaseTest

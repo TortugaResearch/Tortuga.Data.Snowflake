@@ -2,20 +2,14 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Tortuga.Data.Snowflake;
+using Tortuga.Data.Snowflake.Core.Authenticator;
+using Tortuga.Data.Snowflake.Log;
 using System.Security;
-using System.Web;
-using Snowflake.Data.Log;
-using Snowflake.Data.Client;
-using Snowflake.Data.Core.Authenticator;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Web;
 
-namespace Snowflake.Data.Core
+namespace Tortuga.Data.Snowflake.Core
 {
     class SFSession
     {
@@ -64,8 +58,8 @@ namespace Snowflake.Data.Core
             else
             {
                 SnowflakeDbException e = new SnowflakeDbException
-                    (SnowflakeDbException.CONNECTION_FAILURE_SSTATE, 
-                    authnResponse.code, 
+                    (SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
+                    authnResponse.code,
                     authnResponse.message,
                     "");
 
@@ -95,7 +89,7 @@ namespace Snowflake.Data.Core
         }
 
         /// <summary>
-        ///     Constructor 
+        ///     Constructor
         /// </summary>
         /// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
         internal SFSession(String connectionString, SecureString password)
@@ -140,19 +134,19 @@ namespace Snowflake.Data.Core
                     if (!String.IsNullOrEmpty(noProxyHosts))
                     {
                         // The list is url-encoded
-                        // Host names are separated with a URL-escaped pipe symbol (%7C). 
+                        // Host names are separated with a URL-escaped pipe symbol (%7C).
                         noProxyHosts = HttpUtility.UrlDecode(noProxyHosts);
                     }
                 }
 
                 // HttpClient config based on the setting in the connection string
-                HttpClientConfig httpClientConfig = 
+                HttpClientConfig httpClientConfig =
                     new HttpClientConfig(
-                        !InsecureMode, 
-                        proxyHost, 
-                        proxyPort, 
-                        proxyUser, 
-                        proxyPwd, 
+                        !InsecureMode,
+                        proxyHost,
+                        proxyPort,
+                        proxyUser,
+                        proxyPwd,
                         noProxyHosts);
 
                 // Get the http client for the config
@@ -178,7 +172,7 @@ namespace Snowflake.Data.Core
                 logger.Warn($"Connection timeout provided is negative. Timeout will be infinite.");
             }
 
-            connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;            
+            connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
         }
 
         internal SFSession(String connectionString, SecureString password, IMockRestRequester restRequester) : this(connectionString, password)
@@ -205,7 +199,7 @@ namespace Snowflake.Data.Core
 
                 uriBuilder.Query = queryString.ToString();
             }
-            
+
             return uriBuilder.Uri;
         }
 
@@ -307,12 +301,12 @@ namespace Snowflake.Data.Core
             var response = restRequester.Post<RenewSessionResponse>(renewSessionRequest);
             if (!response.success)
             {
-                SnowflakeDbException e = new SnowflakeDbException("", 
+                SnowflakeDbException e = new SnowflakeDbException("",
                     response.code, response.message, "");
                 logger.Error("Renew session failed", e);
                 throw e;
-            } 
-            else 
+            }
+            else
             {
                 sessionToken = response.data.sessionToken;
                 masterToken = response.data.masterToken;
@@ -329,7 +323,7 @@ namespace Snowflake.Data.Core
                 RestTimeout = connectionTimeout,
             };
         }
-        
+
         internal void UpdateSessionParameterMap(List<NameValueParameter> parameterList)
         {
             logger.Debug("Update parameter map");
@@ -343,4 +337,3 @@ namespace Snowflake.Data.Core
         }
     }
 }
-

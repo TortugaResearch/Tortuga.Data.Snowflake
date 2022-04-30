@@ -2,24 +2,18 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using System.Threading.Tasks;
-using System.Net.Http;
-using System.Net;
-using System;
-using System.Threading;
-using System.Collections.Generic;
-using Snowflake.Data.Log;
+using Tortuga.Data.Snowflake.Log;
 using System.Collections.Specialized;
-using System.Web;
+using System.Net;
 using System.Security.Authentication;
-using Snowflake.Data.Core;
+using System.Web;
 
-namespace Snowflake.Data.Core
+namespace Tortuga.Data.Snowflake.Core
 {
     public class HttpClientConfig
     {
         public HttpClientConfig(
-            bool crlCheckEnabled, 
+            bool crlCheckEnabled,
             string proxyHost,
             string proxyPort,
             string proxyUser,
@@ -33,7 +27,7 @@ namespace Snowflake.Data.Core
             ProxyPassword = proxyPassword;
             NoProxyList = noProxyList;
 
-            ConfKey = string.Join(";", 
+            ConfKey = string.Join(";",
                 new string[] {
                     crlCheckEnabled.ToString(),
                     proxyHost,
@@ -56,12 +50,13 @@ namespace Snowflake.Data.Core
 
     public sealed class HttpUtil
     {
-
         private static readonly SFLogger logger = SFLoggerFactory.GetLogger<HttpUtil>();
 
         private static readonly HttpUtil instance = new HttpUtil();
 
-        private HttpUtil() { }
+        private HttpUtil()
+        {
+        }
 
         static internal HttpUtil Instance
         {
@@ -81,7 +76,6 @@ namespace Snowflake.Data.Core
             }
         }
 
-
         private HttpClient RegisterNewHttpClientIfNecessary(HttpClientConfig config)
         {
             string name = config.ConfKey;
@@ -91,9 +85,9 @@ namespace Snowflake.Data.Core
 
                 var httpClient = new HttpClient(
                     new RetryHandler(setupCustomHttpHandler(config)))
-                    {
-                        Timeout = Timeout.InfiniteTimeSpan
-                    };
+                {
+                    Timeout = Timeout.InfiniteTimeSpan
+                };
 
                 // Add the new client key to the list
                 _HttpClients.Add(name, httpClient);
@@ -138,14 +132,13 @@ namespace Snowflake.Data.Core
                     {
                         // Get the original entry
                         entry = bypassList[i].Trim();
-                        // . -> [.] because . means any char 
+                        // . -> [.] because . means any char
                         entry = entry.Replace(".", "[.]");
                         // * -> .*  because * is a quantifier and need a char or group to apply to
                         entry = entry.Replace("*", ".*");
 
                         // Replace with the valid entry syntax
                         bypassList[i] = entry;
-
                     }
                     proxy.BypassList = bypassList;
                 }
@@ -206,9 +199,9 @@ namespace Snowflake.Data.Core
                 }
             }
 
-
             UriBuilder uriBuilder;
             List<IRule> rules;
+
             internal UriUpdater(Uri uri)
             {
                 uriBuilder = new UriBuilder(uri);
@@ -245,6 +238,7 @@ namespace Snowflake.Data.Core
                 return uriBuilder.Uri;
             }
         }
+
         private class RetryHandler : DelegatingHandler
         {
             static private SFLogger logger = SFLoggerFactory.GetLogger<RetryHandler>();
@@ -281,7 +275,6 @@ namespace Snowflake.Data.Core
 
                 while (true)
                 {
-
                     try
                     {
                         childCts = null;
@@ -320,7 +313,8 @@ namespace Snowflake.Data.Core
 
                     if (response != null)
                     {
-                        if (response.IsSuccessStatusCode) {
+                        if (response.IsSuccessStatusCode)
+                        {
                             logger.Debug($"Success Response: StatusCode: {(int)response.StatusCode}, ReasonPhrase: '{response.ReasonPhrase}'");
                             return response;
                         }
@@ -378,5 +372,3 @@ namespace Snowflake.Data.Core
         }
     }
 }
-    
-

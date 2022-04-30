@@ -3,9 +3,8 @@
  */
 
 using log4net;
-using System;
 
-namespace Snowflake.Data.Log
+namespace Tortuga.Data.Snowflake.Log
 {
     // Default implementation for SFLogger
 
@@ -61,7 +60,6 @@ namespace Snowflake.Data.Log
             logger.Warn(msg, ex);
         }
 
-
         public void Error(string msg, Exception ex = null)
         {
             msg = SecretDetector.MaskSecrets(msg).maskedText;
@@ -74,5 +72,4 @@ namespace Snowflake.Data.Log
             logger.Fatal(msg, ex);
         }
     }
-
 }

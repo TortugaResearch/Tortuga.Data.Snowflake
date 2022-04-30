@@ -2,9 +2,7 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-
-namespace Snowflake.Data.Core
+namespace Tortuga.Data.Snowflake.Core
 {
     public enum SFError
     {
@@ -16,7 +14,7 @@ namespace Snowflake.Data.Core
 
         [SFErrorAttr(errorCode = 270003)]
         INVALID_DATA_CONVERSION,
-        
+
         [SFErrorAttr(errorCode = 270004)]
         STATEMENT_ALREADY_RUNNING_QUERY,
 
@@ -78,10 +76,9 @@ namespace Snowflake.Data.Core
     {
         public int errorCode { get; set; }
     }
-    
+
     public class SqlState
     {
         public const string WARNING = "01000";
     }
-
 }

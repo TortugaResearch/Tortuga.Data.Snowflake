@@ -2,15 +2,10 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Snowflake.Data.Core
+namespace Tortuga.Data.Snowflake.Core
 {
     class SFReusableChunk : IResultChunk
     {
-       
         public int RowCount { get; set; }
 
         public int ColCount { get; set; }

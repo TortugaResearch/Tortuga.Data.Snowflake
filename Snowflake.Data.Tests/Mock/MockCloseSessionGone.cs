@@ -1,14 +1,13 @@
 ﻿/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
-using System.Collections.Generic;
 
-namespace Snowflake.Data.Tests.Mock
+namespace Tortuga.Data.Snowflake.Tests.Mock
 {
+    using Tortuga.Data.Snowflake.Core;
     using System.Net.Http;
     using System.Threading;
     using System.Threading.Tasks;
-    using Snowflake.Data.Core;
 
     class MockCloseSessionGone : IMockRestRequester
     {

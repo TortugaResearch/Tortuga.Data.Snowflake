@@ -2,17 +2,16 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
 using System.Data;
 
-namespace Snowflake.Data.Tests
+namespace Tortuga.Data.Snowflake.Tests
 {
     using NUnit.Framework;
-    using Snowflake.Data.Client;
-    using Snowflake.Data.Core;
+    using Tortuga.Data.Snowflake;
+    using Tortuga.Data.Snowflake.Core;
     using System.Text;
 
-    [TestFixture]    
+    [TestFixture]
     class SFBindTestIT : SFBaseTest
     {
         [Test]
@@ -79,7 +78,7 @@ namespace Snowflake.Data.Tests
                             "dateTimeWithTimeZone TIMESTAMP_TZ);";
                         command.ExecuteNonQuery();
                     }
-                    
+
                     foreach (DbType type in Enum.GetValues(typeof(DbType)))
                     {
                         bool isTypeSupported = true;
@@ -102,6 +101,7 @@ namespace Snowflake.Data.Tests
                                 case DbType.UInt64:
                                     colName = "intData";
                                     break;
+
                                 case DbType.Decimal:
                                 case DbType.VarNumeric:
                                     colName = "fixedNumericData";
@@ -142,6 +142,7 @@ namespace Snowflake.Data.Tests
                                 case DbType.Binary:
                                     colName = "binaryData";
                                     break;
+
                                 default:
                                     // Not supported
                                     colName = "stringData";
@@ -248,6 +249,7 @@ namespace Snowflake.Data.Tests
                                     colName = "intData";
                                     param.Value = 1;
                                     break;
+
                                 case DbType.Int16:
                                 case DbType.Int32:
                                 case DbType.Int64:
@@ -257,6 +259,7 @@ namespace Snowflake.Data.Tests
                                     colName = "intData";
                                     param.Value = 10;
                                     break;
+
                                 case DbType.Decimal:
                                 case DbType.VarNumeric:
                                     colName = "fixedNumericData";
@@ -306,8 +309,9 @@ namespace Snowflake.Data.Tests
                                     colName = "binaryData";
                                     param.Value = Encoding.UTF8.GetBytes("BinaryData");
                                     break;
+
                                 default:
-                                    // Not supported      
+                                    // Not supported
                                     colName = "stringData";
                                     isTypeSupported = false;
                                     break;
@@ -396,7 +400,6 @@ namespace Snowflake.Data.Tests
                                 command.ExecuteNonQuery();
                             }
 
-
                             using (IDbCommand command = dbConnection.CreateCommand())
                             {
                                 SnowflakeDbParameter param = (SnowflakeDbParameter)command.CreateParameter();
@@ -407,33 +410,43 @@ namespace Snowflake.Data.Tests
                                     case SFDataType.BINARY:
                                         param.Value = Encoding.UTF8.GetBytes("BinaryData");
                                         break;
+
                                     case SFDataType.FIXED:
                                         param.Value = 10;
                                         break;
+
                                     case SFDataType.BOOLEAN:
                                         param.Value = true;
                                         break;
+
                                     case SFDataType.DATE:
                                         param.Value = DateTime.Now;
                                         break;
+
                                     case SFDataType.TEXT:
                                         param.Value = "thisIsAString";
                                         break;
+
                                     case SFDataType.TIMESTAMP_LTZ:
                                         param.Value = DateTimeOffset.Now;
                                         break;
+
                                     case SFDataType.TIMESTAMP_NTZ:
                                         param.Value = DateTime.Now;
                                         break;
+
                                     case SFDataType.TIMESTAMP_TZ:
                                         param.Value = DateTimeOffset.Now;
                                         break;
+
                                     case SFDataType.TIME:
                                         param.Value = DateTime.Now;
                                         break;
+
                                     case SFDataType.REAL:
                                         param.Value = 25.3;
                                         break;
+
                                     default:
                                         isTypeSupported = false;
                                         param.Value = "InvalidSFDataType";
@@ -450,7 +463,7 @@ namespace Snowflake.Data.Tests
                                     Assert.AreEqual(1, rowsInserted);
                                 }
                                 // DB rejects query if param type is VARIANT, OBJECT or ARRAY
-                                else if (!type.Equals(SFDataType.VARIANT) && 
+                                else if (!type.Equals(SFDataType.VARIANT) &&
                                          !type.Equals(SFDataType.OBJECT) &&
                                          !type.Equals(SFDataType.ARRAY))
                                 {
@@ -514,7 +527,6 @@ namespace Snowflake.Data.Tests
                     p2.ParameterName = "2";
                     p1.DbType = DbType.Int16;
                     p2.Value = 2;
-                    
 
                     var p3 = cmd.CreateParameter();
                     p2.ParameterName = "2";
@@ -529,7 +541,7 @@ namespace Snowflake.Data.Tests
                     ((SnowflakeDbParameterCollection)cmd.Parameters).AddRange(parameters);
                     Assert.Throws<NotImplementedException>(
                         () => { cmd.Parameters.CopyTo(parameters, 5); });
-    
+
                     Assert.AreEqual(3, cmd.Parameters.Count);
                     Assert.IsTrue(cmd.Parameters.Contains(p2));
                     Assert.IsTrue(cmd.Parameters.Contains("2"));
@@ -540,7 +552,7 @@ namespace Snowflake.Data.Tests
                     Assert.AreEqual(2, cmd.Parameters.Count);
                     Assert.AreSame(p1, cmd.Parameters[0]);
 
-                    cmd.Parameters.RemoveAt(0); 
+                    cmd.Parameters.RemoveAt(0);
                     Assert.AreSame(p3, cmd.Parameters[0]);
 
                     cmd.Parameters.Clear();

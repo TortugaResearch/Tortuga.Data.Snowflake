@@ -2,13 +2,7 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Snowflake.Data.Core
+namespace Tortuga.Data.Snowflake.Core
 {
     internal static class ResultSetUtil
     {
@@ -32,6 +26,7 @@ namespace Snowflake.Data.Core
                     }
 
                     break;
+
                 case SFStatementType.COPY:
                     var index = resultSet.sfResultSetMetaData.getColumnIndexByName("rows_loaded");
                     if (index >= 0)
@@ -41,6 +36,7 @@ namespace Snowflake.Data.Core
                         resultSet.Rewind();
                     }
                     break;
+
                 case SFStatementType.COPY_UNLOAD:
                     var rowIndex = resultSet.sfResultSetMetaData.getColumnIndexByName("rows_unloaded");
                     if (rowIndex >= 0)
@@ -50,9 +46,11 @@ namespace Snowflake.Data.Core
                         resultSet.Rewind();
                     }
                     break;
+
                 case SFStatementType.SELECT:
                     updateCount = -1;
                     break;
+
                 default:
                     updateCount = 0;
                     break;

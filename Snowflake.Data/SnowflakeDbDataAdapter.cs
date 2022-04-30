@@ -2,12 +2,10 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Data.Common;
-using Snowflake.Data.Core;
 using System.Data;
+using System.Data.Common;
 
-namespace Snowflake.Data.Client
+namespace Tortuga.Data.Snowflake
 {
     public class SnowflakeDbDataAdapter : DbDataAdapter, IDbDataAdapter
     {

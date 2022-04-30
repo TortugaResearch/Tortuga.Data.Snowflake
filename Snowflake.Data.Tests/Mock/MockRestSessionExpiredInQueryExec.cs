@@ -2,14 +2,9 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Net.Http;
-
-namespace Snowflake.Data.Tests.Mock
+namespace Tortuga.Data.Snowflake.Tests.Mock
 {
-    using Snowflake.Data.Core;
+    using Tortuga.Data.Snowflake.Core;
 
     class MockRestSessionExpiredInQueryExec : IMockRestRequester
     {
@@ -19,7 +14,9 @@ namespace Snowflake.Data.Tests.Mock
 
         private int getResultCallCount = 0;
 
-        public MockRestSessionExpiredInQueryExec() { }
+        public MockRestSessionExpiredInQueryExec()
+        {
+        }
 
         public Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
         {
@@ -49,7 +46,6 @@ namespace Snowflake.Data.Tests.Mock
                     code = QUERY_IN_EXEC_CODE
                 };
                 return Task.FromResult<T>((T)(object)queryExecResponse);
-                
             }
             else if (sfRequest.jsonBody is RenewSessionRequest)
             {
@@ -151,4 +147,3 @@ namespace Snowflake.Data.Tests.Mock
         }
     }
 }
-

@@ -6,12 +6,9 @@ using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
-using Snowflake.Data.Log;
-using System;
-using System.IO;
-using System.Runtime.InteropServices;
+using Tortuga.Data.Snowflake.Log;
 
-namespace Snowflake.Data.Core.FileTransfer.StorageClient
+namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient
 {
     /// <summary>
     /// The S3 client used to transfer files to the remote S3 storage.
@@ -28,13 +25,13 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             public string AMZ_IV { get; set; }
             public string AMZ_KEY { get; set; }
             public string AMZ_MATDESC { get; set; }
-
         }
 
         /// <summary>
         /// The metadata header keys.
         /// </summary>
         private const string AMZ_META_PREFIX = "x-amz-meta-";
+
         private const string AMZ_IV = "x-amz-iv";
         private const string AMZ_KEY = "x-amz-key";
         private const string AMZ_MATDESC = "x-amz-matdesc";
@@ -44,6 +41,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// The status of the request.
         /// </summary>
         private const string EXPIRED_TOKEN = "ExpiredToken";
+
         private const string NO_SUCH_KEY = "NoSuchKey";
 
         /// <summary>
@@ -64,8 +62,8 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         /// <summary>
         /// The attribute in the credential map containing the aws token.
         /// </summary>
-        private static readonly string AWS_TOKEN = "AWS_TOKEN";        
-        
+        private static readonly string AWS_TOKEN = "AWS_TOKEN";
+
         /// <summary>
         /// The logger.
         /// </summary>
@@ -97,7 +95,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
                 stageInfo.endPoint,
                 maxRetry,
                 parallel);
-            
+
             // Get the AWS token value and create the S3 client
             if (stageInfo.stageCredentials.TryGetValue(AWS_TOKEN, out string awsSessionToken))
             {
@@ -134,7 +132,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             {
                 bucketName = stageLocation.Substring(0, stageLocation.IndexOf('/'));
 
-                s3path = stageLocation.Substring(stageLocation.IndexOf('/') + 1, 
+                s3path = stageLocation.Substring(stageLocation.IndexOf('/') + 1,
                     stageLocation.Length - stageLocation.IndexOf('/') - 1);
                 if (s3path != null && !s3path.EndsWith("/"))
                 {
@@ -160,7 +158,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
 
             // Get the client
-            SFS3Client SFS3Client = (SFS3Client) fileMetadata.client;
+            SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
             AmazonS3Client client = SFS3Client.S3Client;
 
             // Create the S3 request object
@@ -181,7 +179,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
             catch (Exception ex)
             {
-                AmazonS3Exception err = (AmazonS3Exception) ex.InnerException;
+                AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
                 if (err.ErrorCode == EXPIRED_TOKEN || err.ErrorCode == "400")
                 {
                     fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
@@ -200,12 +198,13 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             // Update the result status of the file metadata
             fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
 
-            SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata{
+            SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata
+            {
                 iv = response.Metadata[AMZ_IV],
                 key = response.Metadata[AMZ_KEY],
                 matDesc = response.Metadata[AMZ_MATDESC]
             };
-            
+
             return new FileHeader
             {
                 digest = response.Metadata[SFC_DIGEST],
@@ -215,7 +214,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
         }
 
         /// <summary>
-        /// Set the client configuration common to both client with and without client-side 
+        /// Set the client configuration common to both client with and without client-side
         /// encryption.
         /// </summary>
         /// <param name="clientConfig">The client config to update.</param>
@@ -243,7 +242,7 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             }
 
             // The region information used to determine the endpoint for the service.
-            // RegionEndpoint and ServiceURL are mutually exclusive properties. 
+            // RegionEndpoint and ServiceURL are mutually exclusive properties.
             // If both stageInfo.endPoint and stageInfo.region have a value, stageInfo.region takes
             // precedence and ServiceUrl will be reset to null.
             if ((null != region) && (0 != region.Length))
@@ -255,7 +254,6 @@ namespace Snowflake.Data.Core.FileTransfer.StorageClient
             // Unavailable for .net framework 4.6
             //clientConfig.MaxConnectionsPerServer = parallel;
             clientConfig.MaxErrorRetry = maxRetry;
-
         }
 
         /// <summary>

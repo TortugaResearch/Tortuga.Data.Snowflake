@@ -2,11 +2,9 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace Snowflake.Data.Log
+namespace Tortuga.Data.Snowflake.Log
 {
     class SecretDetector
     {
@@ -76,7 +74,7 @@ namespace Snowflake.Data.Log
         /*
          * https://docs.microsoft.com/en-us/dotnet/standard/base-types/character-escapes-in-regular-expressions
          * . $ ^ { [ ( | ) * + ? \
-         * The characters are special regular expression language elements. 
+         * The characters are special regular expression language elements.
          * To match them in a regular expression, they must be escaped or included in a positive character group.
          * [ ] \ - ^
          * The characters are special character group element.

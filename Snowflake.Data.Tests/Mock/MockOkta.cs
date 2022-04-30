@@ -2,15 +2,11 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using Snowflake.Data.Core;
-using Snowflake.Data.Core.Authenticator;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
+using Tortuga.Data.Snowflake.Core;
+using Tortuga.Data.Snowflake.Core.Authenticator;
 
-namespace Snowflake.Data.Tests.Mock
+namespace Tortuga.Data.Snowflake.Tests.Mock
 {
-
     class MockOktaRestRequester : IMockRestRequester
     {
         public string TokenUrl { get; set; }
@@ -44,10 +40,10 @@ namespace Snowflake.Data.Tests.Mock
             if (postRequest is SFRestRequest)
             {
                 // authenticator
-                var authnResponse = new AuthenticatorResponse 
+                var authnResponse = new AuthenticatorResponse
                 {
                     success = true,
-                    data = new AuthenticatorResponseData 
+                    data = new AuthenticatorResponseData
                     {
                         tokenUrl = TokenUrl,
                         ssoUrl = SSOUrl,
