@@ -2,9 +2,6 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using Newtonsoft.Json;
-using System.Net.Http.Headers;
-using System.Text;
 using System.Web;
 using Tortuga.Data.Snowflake.Log;
 
@@ -208,54 +205,5 @@ class OktaAuthenticator : BaseAuthenticator, IAuthenticator
 			logger.Error("Authentication failed", e);
 			throw e;
 		}
-	}
-}
-
-internal class IdpTokenRestRequest : BaseRestRequest, IRestRequest
-{
-	private static MediaTypeWithQualityHeaderValue jsonHeader = new MediaTypeWithQualityHeaderValue("application/json");
-
-	internal IdpTokenRequest JsonBody { get; set; }
-
-	HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
-	{
-		HttpRequestMessage message = newMessage(method, Url);
-		message.Headers.Accept.Add(jsonHeader);
-
-		var json = JsonConvert.SerializeObject(JsonBody, JsonUtils.JsonSettings);
-		message.Content = new StringContent(json, Encoding.UTF8, "application/json");
-
-		return message;
-	}
-}
-
-class IdpTokenRequest
-{
-	[JsonProperty(PropertyName = "username")]
-	internal String Username { get; set; }
-
-	[JsonProperty(PropertyName = "password")]
-	internal String Password { get; set; }
-}
-
-class IdpTokenResponse
-{
-	[JsonProperty(PropertyName = "cookieToken")]
-	internal String CookieToken { get; set; }
-}
-
-class SAMLRestRequest : BaseRestRequest, IRestRequest
-{
-	internal string OnetimeToken { set; get; }
-
-	HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
-	{
-		UriBuilder builder = new UriBuilder(Url);
-		builder.Query = "RelayState=%2Fsome%2Fdeep%2Flink&onetimetoken=" + OnetimeToken;
-		HttpRequestMessage message = newMessage(method, builder.Uri);
-
-		message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
-
-		return message;
 	}
 }

@@ -123,3 +123,11 @@ namespace Snowflake.Data.Tests
 	using Snowflake.Data.Client;
 	using Snowflake.Data.Core;
 ```
+
+## Round 3 - Basic File Organization
+
+As per C# conventions, each class, interface, enum, etc. should be in its own file. This reduces the chances of a merge conflict and makes it easier to find specific classes in the solution explorer.
+
+This reorganization operation created approximately 70 new files.
+
+

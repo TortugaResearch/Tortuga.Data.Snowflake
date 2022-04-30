@@ -11,41 +11,6 @@ using Tortuga.Data.Snowflake.Log;
 namespace Tortuga.Data.Snowflake.Core;
 
 /// <summary>
-/// The status of the file to be uploaded/downloaded.
-/// </summary>
-enum ResultStatus
-{
-	ERROR,
-	UPLOADED,
-	DOWNLOADED,
-	COLLISION,
-	SKIPPED,
-	RENEW_TOKEN,
-	RENEW_PRESIGNED_URL,
-	NOT_FOUND_FILE,
-	NEED_RETRY,
-	NEED_RETRY_WITH_LOWER_CONCURRENCY
-}
-
-/// <summary>
-/// The command type of the query.
-/// </summary>
-internal enum CommandTypes
-{
-	UPLOAD,
-	DOWNLOAD
-}
-
-/// <summary>
-/// The type of the storage client.
-/// </summary>
-internal enum StorageClientType
-{
-	LOCAL,
-	REMOTE
-}
-
-/// <summary>
 /// Class responsible for uploading and downloading files to the remote client.
 /// </summary>
 class SFFileTransferAgent

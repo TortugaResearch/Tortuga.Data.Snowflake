@@ -71,13 +71,3 @@ public enum SFError
 	[SFErrorAttr(errorCode = 270055)]
 	INVALID_CONNECTION_PARAMETER_VALUE,
 }
-
-class SFErrorAttr : Attribute
-{
-	public int errorCode { get; set; }
-}
-
-public class SqlState
-{
-	public const string WARNING = "01000";
-}

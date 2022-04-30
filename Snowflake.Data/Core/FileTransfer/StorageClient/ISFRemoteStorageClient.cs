@@ -4,39 +4,6 @@
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer;
 
-internal class WrappedContentInfo
-{
-	public string KeyId;
-	public string EncryptedKey;
-	public string Algorithm;
-}
-
-internal class EncryptionAgentInfo
-{
-	public string Protocol;
-	public string EncryptionAlgorithm;
-}
-
-internal class KeyWrappingMetadataInfo
-{
-	public string EncryptionLibrary;
-}
-
-internal class EncryptionData
-{
-	public string EncryptionMode;
-	public WrappedContentInfo WrappedContentKey;
-	public EncryptionAgentInfo EncryptionAgent;
-	public string ContentEncryptionIV;
-	public KeyWrappingMetadataInfo KeyWrappingMetadata;
-}
-
-internal class RemoteLocation
-{
-	public string bucket { get; set; }
-	public string key { get; set; }
-}
-
 /// <summary>
 /// The interface for the storage clients.
 /// </summary>

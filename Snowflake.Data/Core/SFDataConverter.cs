@@ -8,12 +8,6 @@ using System.Text;
 
 namespace Tortuga.Data.Snowflake.Core;
 
-public enum SFDataType
-{
-	None, FIXED, REAL, TEXT, DATE, VARIANT, TIMESTAMP_LTZ, TIMESTAMP_NTZ,
-	TIMESTAMP_TZ, OBJECT, BINARY, TIME, BOOLEAN, ARRAY
-}
-
 static class SFDataConverter
 {
 	private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);

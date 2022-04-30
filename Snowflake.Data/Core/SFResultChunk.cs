@@ -63,11 +63,3 @@ internal class SFResultChunk : IResultChunk
 		return ChunkIndex;
 	}
 }
-
-public enum DownloadState
-{
-	NOT_STARTED,
-	IN_PROGRESS,
-	SUCCESS,
-	FAILURE
-}

@@ -159,16 +159,3 @@ class SFBlockingChunkDownloader : IChunkDownloader
 		parser.ParseChunk(resultChunk);
 	}
 }
-
-class DownloadContext
-{
-	public SFResultChunk chunk { get; set; }
-
-	public int chunkIndex { get; set; }
-
-	public string qrmk { get; set; }
-
-	public Dictionary<string, string> chunkHeaders { get; set; }
-
-	public CancellationToken cancellationToken { get; set; }
-}

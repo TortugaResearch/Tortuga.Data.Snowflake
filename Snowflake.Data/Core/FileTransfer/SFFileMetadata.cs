@@ -6,18 +6,6 @@ using static Tortuga.Data.Snowflake.Core.FileTransfer.SFFileCompressionTypes;
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer;
 
-public class SFEncryptionMetadata
-{
-	/// Initialization vector
-	public string iv { set; get; }
-
-	/// File key
-	public string key { set; get; }
-
-	/// Encryption material descriptor
-	public string matDesc { set; get; }
-}
-
 /// <summary>
 /// Metadata used by the remote storage client to upload or download a file/stream.
 /// </summary>

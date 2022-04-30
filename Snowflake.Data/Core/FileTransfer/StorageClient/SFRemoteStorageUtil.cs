@@ -7,16 +7,6 @@ using Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 namespace Tortuga.Data.Snowflake.Core.FileTransfer;
 
 /// <summary>
-/// The class containing file header information.
-/// </summary>
-internal class FileHeader
-{
-	public string digest { get; set; }
-	public long contentLength { get; set; }
-	public SFEncryptionMetadata encryptionMetadata { get; set; }
-}
-
-/// <summary>
 /// The interface for the storage clients.
 /// </summary>
 class SFRemoteStorageUtil

@@ -153,14 +153,3 @@ class SFBlockingChunkDownloaderV3 : IChunkDownloader
 		await parser.ParseChunk(resultChunk);
 	}
 }
-
-class DownloadContextV3
-{
-	public SFReusableChunk chunk { get; set; }
-
-	public string qrmk { get; set; }
-
-	public Dictionary<string, string> chunkHeaders { get; set; }
-
-	public CancellationToken cancellationToken { get; set; }
-}

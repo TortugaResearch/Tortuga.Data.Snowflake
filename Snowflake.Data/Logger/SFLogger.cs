@@ -26,8 +26,3 @@ interface SFLogger
 
 	void Fatal(string msg, Exception ex = null);
 }
-
-enum LoggingEvent
-{
-	DEBUG, INFO, WARN, ERROR, FATAL
-}
