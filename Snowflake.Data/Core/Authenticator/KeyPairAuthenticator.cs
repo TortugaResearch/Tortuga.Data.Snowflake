@@ -11,6 +11,8 @@ using Org.BouncyCastle.X509;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using Tortuga.Data.Snowflake.Core.Messages;
+using Tortuga.Data.Snowflake.Core.Sessions;
 
 namespace Tortuga.Data.Snowflake.Core.Authenticator;
 

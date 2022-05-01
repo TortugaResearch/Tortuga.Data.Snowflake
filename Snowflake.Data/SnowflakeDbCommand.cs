@@ -5,6 +5,8 @@
 using System.Data;
 using System.Data.Common;
 using Tortuga.Data.Snowflake.Core;
+using Tortuga.Data.Snowflake.Core.RequestProcessing;
+using Tortuga.Data.Snowflake.Core.ResponseProcessing;
 
 namespace Tortuga.Data.Snowflake;
 

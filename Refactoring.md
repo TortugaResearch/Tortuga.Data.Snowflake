@@ -249,3 +249,49 @@ catch (Exception ex)
 For some strange reason, Log4Net was also the root package of a dependency chain that included System.Web. Once removed, we also lost `HttpUtility`.
 
 This was replaced by `WebUtility` and `QueryHelpers` (from `Microsoft.AspNetCore.WebUtilities`).
+
+## Round 7 - Organizing Core
+
+With roughly 60 classes, the `Core` namespace is rather crowded and it's hard to see what features and subsystems are covered by it. 
+
+Sometimes the best way to organize code is by guessing. 
+
+1. Pick a word. In our first attempt, we'll choose "Chunk".
+2. Move every class that has the word in its name into a new folder.
+3. Right-click on the folder and select "Sync Namespace with Folder Structure". This will cause the code that uses the moved classes to be modified with a new `using` statement. 
+4. Review each modified class to see if it should also be moved into the new folder.
+5. Repeat steps 3 and 4 until no further classes should be moved.
+6. Review the results for overall consistency. Can you describe in plain English what features the folder is responsible for?
+
+Our second word is "Session", which is the `SFSession` class and its dependencies.
+
+Next up is "ResultSet". Upon reviewing this, it seems that "ResultSet" is the core concept and "Chunk" refers to its implementation details. So we'll rename the `Chunks` folder to `ResultSets`.
+
+Then we go through the remaining classes to see if they are only used by classes in a particular folder. That's a hint suggesting they should be moved.
+
+The enum `SFDataType` belongs in the `Client` folder, as that's where the primary publich API for the library lives and it's needed for `SnowflakeDbParameter`.
+
+The file `Snowflake.cs` isn't even a class. It is just assembly-level attributes, so it should be moved to the root and renamed `Assembly.cs`.
+
+After sweeping a few more classes into `ResultSets`, we can start looking at request processing. This namespace will deal with constructing URLs and making outbound requests. Since the naming isn't as consistent as we would need for the previous strategy, we'll instead choose a cornerstone class. Starting with `BaseRestRequest`, we'll iteratively move classes into the new folder based on how they relate to this one.
+
+Since we're calling this folder `RequestProcessing`, it makes sense to rename the `ResultSets` folder to `ResponseProcessing`. Now we have two namespaces with clearly defined roles.
+
+Looking at the usage of `BaseRestRequest`, it is a base class for classes throughout the code. Being a more general-purpose class, we put it back and choose a different cornerstone. The `RestRequester` could be a better candidate. It is only used by `SFSession`, and that's a different concept.
+
+While that seems to fit, `RestRequester` only brings with it the `IRestRequester` interface. So we look for another candidate, `SFRestRequest`. This brings with it `SFStatement`.
+
+After sorting several more classes into the message, request, response, or session folder, we circle back to `BaseRestRequest` and once again move it into `RequestProcessing`. You may find yourself frequently changing your mind when trying to sort out a large namespace. Don't worry about it; it's just part of the process.
+
+In the end we came up with these file counts.
+
+* Core: 19
+* Messages: 28
+* RequestProcessing: 7
+* ResponseProcessing: 12
+* ResponseProcessing/Chunks: 17
+* Sessions: 12
+
+Where did `ResponseProcessing/Chunks` come from? Well at 29 files, `ResponseProcessing` started getting big again. And since all of the chunks code is only referenced by `SFResultSet`, it can be easily pulled into its own subsystem. 
+
+We left the `Messages` large mainly because we rarely look at it. There is no code, only simple DTOs, so charting the interactions between classes isn't as necessary.

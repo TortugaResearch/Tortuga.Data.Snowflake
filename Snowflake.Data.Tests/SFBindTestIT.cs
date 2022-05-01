@@ -5,7 +5,6 @@
 using NUnit.Framework;
 using System.Data;
 using System.Text;
-using Tortuga.Data.Snowflake.Core;
 
 namespace Tortuga.Data.Snowflake.Tests;
 

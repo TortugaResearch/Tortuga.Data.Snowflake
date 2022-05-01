@@ -2,9 +2,10 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 
-namespace Tortuga.Data.Snowflake.Core.FileTransfer;
+using Tortuga.Data.Snowflake.Core.Messages;
+
+namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 
 /// <summary>
 /// The interface for the storage clients.

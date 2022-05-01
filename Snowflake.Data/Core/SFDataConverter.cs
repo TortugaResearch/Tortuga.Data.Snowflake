@@ -5,6 +5,7 @@
 using System.Data;
 using System.Globalization;
 using System.Text;
+using Tortuga.Data.Snowflake.Core.ResponseProcessing;
 
 namespace Tortuga.Data.Snowflake.Core;
 

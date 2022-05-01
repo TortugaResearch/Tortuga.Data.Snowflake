@@ -1,4 +1,7 @@
-﻿namespace Tortuga.Data.Snowflake.Core.Authenticator;
+﻿using Tortuga.Data.Snowflake.Core.Messages;
+using Tortuga.Data.Snowflake.Core.Sessions;
+
+namespace Tortuga.Data.Snowflake.Core.Authenticator;
 
 /// <summary>
 /// OAuthenticator is used when using  an OAuth token for authentication.

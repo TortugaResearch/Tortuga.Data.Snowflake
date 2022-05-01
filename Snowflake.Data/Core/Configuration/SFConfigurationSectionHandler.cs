@@ -5,7 +5,7 @@
 using System.Configuration;
 using System.Xml;
 
-namespace Tortuga.Data.Snowflake.Configuration;
+namespace Tortuga.Data.Snowflake.Core.Configuration;
 
 /// <summary>
 ///     Develop In progress

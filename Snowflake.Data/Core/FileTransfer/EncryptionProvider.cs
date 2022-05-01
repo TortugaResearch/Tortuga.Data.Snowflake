@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography;
+using Tortuga.Data.Snowflake.Core.Messages;
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer;
 

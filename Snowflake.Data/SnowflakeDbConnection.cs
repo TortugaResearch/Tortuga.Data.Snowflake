@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.Common;
 using System.Security;
 using Tortuga.Data.Snowflake.Core;
+using Tortuga.Data.Snowflake.Core.Sessions;
 
 namespace Tortuga.Data.Snowflake;
 

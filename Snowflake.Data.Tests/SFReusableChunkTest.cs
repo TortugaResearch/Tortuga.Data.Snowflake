@@ -5,6 +5,8 @@
 using NUnit.Framework;
 using System.Text;
 using Tortuga.Data.Snowflake.Core;
+using Tortuga.Data.Snowflake.Core.ResponseProcessing;
+using Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
 
 namespace Tortuga.Data.Snowflake.Tests;
 

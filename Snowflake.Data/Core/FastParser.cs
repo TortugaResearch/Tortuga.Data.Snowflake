@@ -1,4 +1,6 @@
-﻿namespace Tortuga.Data.Snowflake.Core;
+﻿using Tortuga.Data.Snowflake.Core.ResponseProcessing;
+
+namespace Tortuga.Data.Snowflake.Core;
 
 public class FastParser
 {

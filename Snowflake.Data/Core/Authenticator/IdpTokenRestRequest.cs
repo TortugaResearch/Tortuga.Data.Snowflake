@@ -5,6 +5,8 @@
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;
+using Tortuga.Data.Snowflake.Core.Messages;
+using Tortuga.Data.Snowflake.Core.RequestProcessing;
 
 namespace Tortuga.Data.Snowflake.Core.Authenticator;
 

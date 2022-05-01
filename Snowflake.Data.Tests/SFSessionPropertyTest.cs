@@ -4,7 +4,7 @@
 
 using NUnit.Framework;
 using System.Security;
-using Tortuga.Data.Snowflake.Core;
+using Tortuga.Data.Snowflake.Core.Sessions;
 
 namespace Tortuga.Data.Snowflake.Tests;
 

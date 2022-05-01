@@ -2,7 +2,7 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
-namespace Tortuga.Data.Snowflake.Core;
+namespace Tortuga.Data.Snowflake.Core.FileTransfer;
 
 /// <summary>
 /// The command type of the query.

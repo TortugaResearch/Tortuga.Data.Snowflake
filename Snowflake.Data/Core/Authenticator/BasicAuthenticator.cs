@@ -2,6 +2,9 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+using Tortuga.Data.Snowflake.Core.Messages;
+using Tortuga.Data.Snowflake.Core.Sessions;
+
 namespace Tortuga.Data.Snowflake.Core.Authenticator;
 
 class BasicAuthenticator : BaseAuthenticator, IAuthenticator

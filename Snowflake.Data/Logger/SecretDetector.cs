@@ -4,7 +4,7 @@
 
 using System.Text.RegularExpressions;
 
-namespace Tortuga.Data.Snowflake.Log;
+namespace Tortuga.Data.Snowflake.Logger;
 
 class SecretDetector
 {

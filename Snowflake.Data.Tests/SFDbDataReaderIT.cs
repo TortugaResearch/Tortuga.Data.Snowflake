@@ -7,7 +7,6 @@ using System.Data;
 using System.Data.Common;
 using System.Globalization;
 using System.Text;
-using Tortuga.Data.Snowflake.Core;
 
 namespace Tortuga.Data.Snowflake.Tests;
 
@@ -511,7 +510,7 @@ class SFDbDataReaderIT : SFBaseTest
 			p1.ParameterName = "1";
 			p1.Value = now;
 			p1.DbType = DbType.DateTimeOffset;
-			p1.SFDataType = Core.SFDataType.TIMESTAMP_LTZ;
+			p1.SFDataType = SFDataType.TIMESTAMP_LTZ;
 			cmd.Parameters.Add(p1);
 
 			count = cmd.ExecuteNonQuery();

@@ -2,7 +2,8 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using Tortuga.Data.Snowflake.Log;
+
+using Tortuga.Data.Snowflake.Logger;
 
 namespace Tortuga.Data.Snowflake.Tests.Mock;
 

@@ -2,6 +2,8 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
+using Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
+using Tortuga.Data.Snowflake.Core.Messages;
 using static Tortuga.Data.Snowflake.Core.FileTransfer.SFFileCompressionTypes;
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer;

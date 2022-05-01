@@ -5,6 +5,9 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using Tortuga.Data.Snowflake.Core.Messages;
+using Tortuga.Data.Snowflake.Core.RequestProcessing;
+using Tortuga.Data.Snowflake.Core.Sessions;
 
 #if !NETFRAMEWORK
 using System.Runtime.InteropServices;

@@ -1,4 +1,6 @@
-﻿namespace Tortuga.Data.Snowflake.Core;
+﻿using Tortuga.Data.Snowflake.Core.Messages;
+
+namespace Tortuga.Data.Snowflake.Core;
 
 internal class SFEnvironment
 {

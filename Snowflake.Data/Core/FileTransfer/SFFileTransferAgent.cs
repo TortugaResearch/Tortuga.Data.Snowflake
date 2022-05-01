@@ -5,9 +5,13 @@
 using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using Tortuga.Data.Snowflake.Core.FileTransfer;
+using Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
+using Tortuga.Data.Snowflake.Core.Messages;
+using Tortuga.Data.Snowflake.Core.RequestProcessing;
+using Tortuga.Data.Snowflake.Core.ResponseProcessing;
+using Tortuga.Data.Snowflake.Core.Sessions;
 
-namespace Tortuga.Data.Snowflake.Core;
+namespace Tortuga.Data.Snowflake.Core.FileTransfer;
 
 /// <summary>
 /// Class responsible for uploading and downloading files to the remote client.

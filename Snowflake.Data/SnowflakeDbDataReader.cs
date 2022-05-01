@@ -5,7 +5,8 @@
 using System.Collections;
 using System.Data;
 using System.Data.Common;
-using Tortuga.Data.Snowflake.Core;
+using Tortuga.Data.Snowflake.Core.Messages;
+using Tortuga.Data.Snowflake.Core.ResponseProcessing;
 
 namespace Tortuga.Data.Snowflake;
 

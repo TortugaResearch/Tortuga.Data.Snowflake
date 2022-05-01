@@ -3,7 +3,9 @@
  */
 
 using NUnit.Framework;
-using Tortuga.Data.Snowflake.Core;
+using Tortuga.Data.Snowflake.Core.RequestProcessing;
+using Tortuga.Data.Snowflake.Core.ResponseProcessing;
+using Tortuga.Data.Snowflake.Core.Sessions;
 
 namespace Tortuga.Data.Snowflake.Tests;
 
