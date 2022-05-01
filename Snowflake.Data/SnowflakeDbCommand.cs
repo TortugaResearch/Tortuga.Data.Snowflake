@@ -218,7 +218,7 @@ public class SnowflakeDbCommand : DbCommand
 		catch (Exception ex)
 		{
 			logger.Error("The command failed to execute.", ex);
-			throw ex;
+			throw;
 		}
 	}
 

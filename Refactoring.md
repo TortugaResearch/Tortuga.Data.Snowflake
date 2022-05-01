@@ -131,3 +131,21 @@ As per C# conventions, each class, interface, enum, etc. should be in its own fi
 This reorganization operation created approximately 70 new files.
 
 
+## Round 4 - Compiler Warnings
+
+There are a handful of compiler warnings to clear. The first is to remove static fields that are never used.
+
+Then remove pointless catch blocks.
+
+```
+catch (Exception ex)
+{
+	throw ex;
+}
+```
+
+`SnowflakeDbException` declares `SqlState `, which shadows a property in the base class for some frameworks.
+
+HttpRequestMessage.Properties is obsolete for some frameworks, so a pair of extension methods with compiler constants are used to resolve the conflict.
+
+

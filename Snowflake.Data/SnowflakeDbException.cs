@@ -22,13 +22,19 @@ public sealed class SnowflakeDbException : DbException
 	static private ResourceManager rm = new ResourceManager("Tortuga.Data.Snowflake.Core.ErrorMessages",
 		typeof(SnowflakeDbException).Assembly);
 
-	public string SqlState { get; private set; }
+	readonly string _sqlState;
 
 	private int VendorCode;
 
 	private string ErrorMessage;
 
 	public string QueryId { get; }
+
+#if NET5_0_OR_GREATER
+	public override string SqlState { get => _sqlState; }
+#else
+        public string SqlState { get => _sqlState; }
+#endif
 
 	public override string Message
 	{
@@ -48,7 +54,7 @@ public sealed class SnowflakeDbException : DbException
 
 	public SnowflakeDbException(string sqlState, int vendorCode, string errorMessage, string queryId)
 	{
-		this.SqlState = sqlState;
+		this._sqlState = sqlState;
 		this.VendorCode = vendorCode;
 		this.ErrorMessage = errorMessage;
 		this.QueryId = queryId;
@@ -64,7 +70,7 @@ public sealed class SnowflakeDbException : DbException
 	{
 		this.ErrorMessage = string.Format(rm.GetString(error.ToString()), args);
 		this.VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
-		this.SqlState = sqlState;
+		this._sqlState = sqlState;
 	}
 
 	public SnowflakeDbException(Exception innerException, SFError error, params object[] args)
@@ -79,7 +85,7 @@ public sealed class SnowflakeDbException : DbException
 	{
 		this.ErrorMessage = string.Format(rm.GetString(error.ToString()), args);
 		this.VendorCode = error.GetAttribute<SFErrorAttr>().errorCode;
-		this.SqlState = sqlState;
+		this._sqlState = sqlState;
 	}
 
 	public override string ToString()

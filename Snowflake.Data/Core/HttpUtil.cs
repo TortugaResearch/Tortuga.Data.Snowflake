@@ -217,13 +217,15 @@ public sealed class HttpUtil
 			int totalRetryTime = 0;
 			int maxDefaultBackoff = 16;
 
+#pragma warning disable SYSLIB0014 // Type or member is obsolete. HttpClient alterntaive is not known.
 			ServicePoint p = ServicePointManager.FindServicePoint(requestMessage.RequestUri);
 			p.Expect100Continue = false; // Saves about 100 ms per request
 			p.UseNagleAlgorithm = false; // Saves about 200 ms per request
 			p.ConnectionLimit = 20;      // Default value is 2, we need more connections for performing multiple parallel queries
+#pragma warning restore SYSLIB0014 // Type or member is obsolete
 
-			TimeSpan httpTimeout = (TimeSpan)requestMessage.Properties[SFRestRequest.HTTP_REQUEST_TIMEOUT_KEY];
-			TimeSpan restTimeout = (TimeSpan)requestMessage.Properties[SFRestRequest.REST_REQUEST_TIMEOUT_KEY];
+			var httpTimeout = requestMessage.GetOptionOrDefault<TimeSpan>(SFRestRequest.HTTP_REQUEST_TIMEOUT_KEY);
+			var restTimeout = requestMessage.GetOptionOrDefault<TimeSpan>(SFRestRequest.REST_REQUEST_TIMEOUT_KEY);
 
 			if (logger.IsDebugEnabled())
 			{

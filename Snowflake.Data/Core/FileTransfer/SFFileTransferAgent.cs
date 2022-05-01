@@ -26,11 +26,6 @@ class SFFileTransferAgent
 	private static readonly string COMPRESSION_AUTO_DETECT = "auto_detect";
 
 	/// <summary>
-	/// none keyword for no source compression.
-	/// </summary>
-	private static readonly string COMPRESSION_NONE = "none";
-
-	/// <summary>
 	/// The Snowflake query
 	/// </summary>
 	private string Query;
@@ -624,7 +619,7 @@ class SFFileTransferAgent
 	/// <param name="fileMetadata">The metadata for the file to get digest.</param>
 	private void getDigestAndSizeForFile(SFFileMetadata fileMetadata)
 	{
-		using (SHA256 SHA256 = SHA256Managed.Create())
+		using (SHA256 SHA256 = SHA256.Create())
 		{
 			using (FileStream fileStream = File.OpenRead(fileMetadata.realSrcFilePath))
 			{
@@ -786,10 +781,6 @@ class SFFileTransferAgent
 				SFLocalStorageUtil.UploadOneFileWithRetry(fileMetadata);
 			}
 		}
-		catch (Exception ex)
-		{
-			throw ex;
-		}
 		finally
 		{
 			Directory.Delete(fileMetadata.tmpDir, true);
@@ -822,10 +813,6 @@ class SFFileTransferAgent
 				// Upload the file using the local client SDK and the file metadata
 				SFLocalStorageUtil.DownloadOneFile(fileMetadata);
 			}
-		}
-		catch (Exception ex)
-		{
-			throw ex;
 		}
 		finally
 		{
