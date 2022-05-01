@@ -11,7 +11,6 @@ using Org.BouncyCastle.X509;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using Tortuga.Data.Snowflake.Log;
 
 namespace Tortuga.Data.Snowflake.Core.Authenticator;
 
@@ -23,10 +22,6 @@ class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
 {
 	// The authenticator setting value to use to authenticate using key pair authentication.
 	public static readonly string AUTH_NAME = "snowflake_jwt";
-
-	// The logger.
-	private static readonly SFLogger logger =
-		SFLoggerFactory.GetLogger<KeyPairAuthenticator>();
 
 	// The RSA provider to use to sign the tokens
 	private RSACryptoServiceProvider rsaProvider;
@@ -50,7 +45,6 @@ class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
 		jwtToken = GenerateJwtToken();
 
 		// Send the http request with the generate token
-		logger.Debug("Send login request");
 		await base.LoginAsync(cancellationToken).ConfigureAwait(false);
 	}
 
@@ -60,7 +54,6 @@ class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
 		jwtToken = GenerateJwtToken();
 
 		// Send the http request with the generate token
-		logger.Debug("Send login request");
 		base.Login();
 	}
 
@@ -77,12 +70,8 @@ class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
 	/// <returns>The generated JWT token.</returns>
 	private string GenerateJwtToken()
 	{
-		logger.Info("Key-pair Authentication");
-
-		bool hasPkPath =
-			session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath);
-		bool hasPkContent =
-			session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent);
+		bool hasPkPath = session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath);
+		bool hasPkContent = session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent);
 		session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_PWD, out var pkPwd);
 
 		// Extract the public key from the private key to generate the fingerprints

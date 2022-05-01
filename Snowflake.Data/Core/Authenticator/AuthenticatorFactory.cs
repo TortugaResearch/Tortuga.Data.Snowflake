@@ -2,8 +2,6 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using Tortuga.Data.Snowflake.Log;
-
 namespace Tortuga.Data.Snowflake.Core.Authenticator;
 
 /// <summary>
@@ -11,8 +9,6 @@ namespace Tortuga.Data.Snowflake.Core.Authenticator;
 /// </summary>
 internal class AuthenticatorFactory
 {
-	private static readonly SFLogger logger = SFLoggerFactory.GetLogger<AuthenticatorFactory>();
-
 	/// <summary>
 	/// Generate the authenticator given the session
 	/// </summary>
@@ -37,13 +33,7 @@ internal class AuthenticatorFactory
 				!session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent))
 			{
 				// There is no PRIVATE_KEY_FILE defined, can't authenticate with key-pair
-				string invalidStringDetail =
-					"Missing required PRIVATE_KEY_FILE or PRIVATE_KEY for key pair authentication";
-				var error = new SnowflakeDbException(
-					SFError.INVALID_CONNECTION_STRING,
-					new object[] { invalidStringDetail });
-				logger.Error(error.Message, error);
-				throw error;
+				throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, "Missing required PRIVATE_KEY_FILE or PRIVATE_KEY for key pair authentication");
 			}
 
 			return new KeyPairAuthenticator(session);
@@ -54,13 +44,7 @@ internal class AuthenticatorFactory
 			if (!session.properties.TryGetValue(SFSessionProperty.TOKEN, out var pkPath))
 			{
 				// There is no TOKEN defined, can't authenticate with oauth
-				string invalidStringDetail =
-					"Missing required TOKEN for Oauth authentication";
-				var error = new SnowflakeDbException(
-					SFError.INVALID_CONNECTION_STRING,
-					new object[] { invalidStringDetail });
-				logger.Error(error.Message, error);
-				throw error;
+				throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, "Missing required TOKEN for Oauth authentication");
 			}
 
 			return new OAuthAuthenticator(session);
@@ -71,10 +55,6 @@ internal class AuthenticatorFactory
 			return new OktaAuthenticator(session, type);
 		}
 
-		var e = new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, type);
-
-		logger.Error("Unknown authenticator", e);
-
-		throw e;
+		throw new SnowflakeDbException(SFError.UNKNOWN_AUTHENTICATOR, type);
 	}
 }

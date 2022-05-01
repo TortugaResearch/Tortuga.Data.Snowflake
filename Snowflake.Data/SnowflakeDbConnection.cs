@@ -6,15 +6,12 @@ using System.Data;
 using System.Data.Common;
 using System.Security;
 using Tortuga.Data.Snowflake.Core;
-using Tortuga.Data.Snowflake.Log;
 
 namespace Tortuga.Data.Snowflake;
 
 [System.ComponentModel.DesignerCategory("Code")]
 public class SnowflakeDbConnection : DbConnection
 {
-	private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbConnection>();
-
 	internal SFSession SfSession { get; set; }
 
 	internal ConnectionState _connectionState;
@@ -74,8 +71,6 @@ public class SnowflakeDbConnection : DbConnection
 
 	public override void ChangeDatabase(string databaseName)
 	{
-		logger.Debug($"ChangeDatabase to:{databaseName}");
-
 		string alterDbCommand = $"use database {databaseName}";
 
 		using (IDbCommand cmd = this.CreateCommand())
@@ -87,8 +82,6 @@ public class SnowflakeDbConnection : DbConnection
 
 	public override void Close()
 	{
-		logger.Debug("Close Connection.");
-
 		if (_connectionState != ConnectionState.Closed && SfSession != null)
 		{
 			SfSession.close();
@@ -99,7 +92,6 @@ public class SnowflakeDbConnection : DbConnection
 
 	public Task CloseAsync(CancellationToken cancellationToken)
 	{
-		logger.Debug("Close Connection.");
 		TaskCompletionSource<object> taskCompletionSource = new TaskCompletionSource<object>();
 
 		if (cancellationToken.IsCancellationRequested)
@@ -116,18 +108,15 @@ public class SnowflakeDbConnection : DbConnection
 						if (previousTask.IsFaulted)
 						{
 							// Exception from SfSession.CloseAsync
-							logger.Error("Error closing the session", previousTask.Exception);
 							taskCompletionSource.SetException(previousTask.Exception.InnerException);
 						}
 						else if (previousTask.IsCanceled)
 						{
 							_connectionState = ConnectionState.Closed;
-							logger.Debug("Session close canceled");
 							taskCompletionSource.SetCanceled();
 						}
 						else
 						{
-							logger.Debug("Session closed successfully");
 							taskCompletionSource.SetResult(null);
 							_connectionState = ConnectionState.Closed;
 						}
@@ -135,7 +124,6 @@ public class SnowflakeDbConnection : DbConnection
 			}
 			else
 			{
-				logger.Debug("Session not opened. Nothing to do.");
 				taskCompletionSource.SetResult(null);
 			}
 		}
@@ -144,7 +132,6 @@ public class SnowflakeDbConnection : DbConnection
 
 	public override void Open()
 	{
-		logger.Debug("Open Connection.");
 		SetSession();
 		try
 		{
@@ -154,7 +141,6 @@ public class SnowflakeDbConnection : DbConnection
 		{
 			// Otherwise when Dispose() is called, the close request would timeout.
 			_connectionState = ConnectionState.Closed;
-			logger.Error("Unable to connect", e);
 			if (!(e.GetType() == typeof(SnowflakeDbException)))
 			{
 				throw
@@ -174,7 +160,6 @@ public class SnowflakeDbConnection : DbConnection
 
 	public override Task OpenAsync(CancellationToken cancellationToken)
 	{
-		logger.Debug("Open Connection.");
 		registerConnectionCancellationCallback(cancellationToken);
 		SetSession();
 
@@ -186,21 +171,14 @@ public class SnowflakeDbConnection : DbConnection
 					// Exception from SfSession.OpenAsync
 					Exception sfSessionEx = previousTask.Exception;
 					_connectionState = ConnectionState.Closed;
-					logger.Error("Unable to connect", sfSessionEx.InnerException);
-					throw new SnowflakeDbException(
-					   sfSessionEx,
-					   SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-					   SFError.INTERNAL_ERROR,
-					   "Unable to connect");
+					throw new SnowflakeDbException(sfSessionEx, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INTERNAL_ERROR, "Unable to connect");
 				}
 				else if (previousTask.IsCanceled)
 				{
 					_connectionState = ConnectionState.Closed;
-					logger.Debug("Connection canceled");
 				}
 				else
 				{
-					logger.Debug("All good");
 					// Only continue if the session was opened successfully
 					OnSessionEstablished();
 				}
@@ -250,10 +228,9 @@ public class SnowflakeDbConnection : DbConnection
 		{
 			this.Close();
 		}
-		catch (Exception ex)
+		catch
 		{
 			// Prevent an exception from being thrown when disposing of this object
-			logger.Error("Unable to close connection", ex);
 		}
 
 		disposed = true;

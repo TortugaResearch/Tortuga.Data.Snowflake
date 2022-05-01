@@ -1,6 +1,19 @@
-# Refactoring Log
+# Refactoring Real Code: Snowflake Connector for .NET
 
-This is the refactoring log for `Tortuga.Data.Snowflake`. It starts with version 2.0.11 of `Snowflake.Data`.
+Normally when people talk about refactoring, they don’t show real code. Instead, you get fake examples, often so contrived that they don’t even resemble real-world code. The reader is left with an idealized vision of what refactoring looks like, where every line of code is under test and every problem neatly fits a pattern from their favorite book.
+
+Well screw that. The real world is messy and it’s about time we acknowledge that. With countless examples of real projects in production use on GitHub, there’s no excuse to invent fake code to demonstrate refactoring.
+
+So that’s what we’re going to do here. In this repository you get to see a real working library be incrementally refactored to improve code quality. A new branch was created for each step along the way so you can see the progression of the code from its original state to something… well not perfect, but better.
+
+Is this the only way to clean up the code? Of course not. So I welcome you to fork this or the original and attempt your own cleanup. 
+
+In fact, this is actually the second attempt to refactor this library. THe first time through was done as a training exercise and exploration to see what was possible. Eventually enough knowledge was gained to fix the broken tests, allowing the majority to be run for the first time. 
+
+In that process, it was discovered that there were places in the code are highly sensitive to the names of enumerations or the order properties appear in the class. As that would be too diffcult to unwind, we instead started over with the intent to make a production-grade refactoring. 
+
+While the work has to be redone, the knowledge wasn't lost. The [original refactoring log](OldRefactoring.md) was kept and we refer to it from time to time to guide this effort.
+
 
 ## Round 0 - Setup and Validation
 
@@ -208,4 +221,31 @@ The field `CONNECTION_FAILURE_SSTATE` should be a constant.
 
 The library as a whole is not internationalized, which is the only reason to add a resource file. Thus we can remove `ErrorMessages.resx`, replacing it with a simple switch block. 
 
+## Round 6 - Remove Logging
 
+A low-level library such as a database driver should not mandate a specific version of a specific logging framework. What if the user of this library prefers something other than Log4Net? Or maybe they are using Log4Net, but an incompatible version of it.
+
+In the first pass of refactoring, we removed Log4Net as the default logger. If someone wants logging, they can implement the ` SFLogger` interface with the logger of their choice.
+
+Then we removed the proprietary `SFLogger` interface entirely. Why ask people to implement it when .NET's offers a generic `ILogger` interface? It would be really surprising to find logging framework that didn’t support `ILogger` directly.
+
+On the third pass of this round, we looked at the actual messages. For the most part they were not useful. With trivial messages such as "All good", they read more like temporary Console output used during development than something that would be useful to developers using the library.
+
+Furthermore, it is quite unusual for a low-level library to have a logger built into it. Logging at this level offers very little information because, being so low-level, there isn't a significant stack trace. 
+
+So in the end we removed the majority of the logging. The one place where it looked valuable was the ` OktaAuthenticator`, which has a six-step login process. For that we wrapped it in try-catch blocks that informed the caller what step failed.
+
+The way that works is fairly simple. A ` lastStep` variable is updated every few lines and used if there is an exception. 
+
+```
+catch (Exception ex)
+{
+    throw new SnowflakeDbException("Okta Authentication in " + lastStep, ex, SFError.INTERNAL_ERROR);
+}
+```
+
+### Replacing HttpUtility
+
+For some strange reason, Log4Net was also the root package of a dependency chain that included System.Web. Once removed, we also lost `HttpUtility`.
+
+This was replaced by `WebUtility` and `QueryHelpers` (from `Microsoft.AspNetCore.WebUtilities`).

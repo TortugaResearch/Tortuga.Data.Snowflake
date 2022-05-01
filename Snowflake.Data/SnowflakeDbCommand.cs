@@ -5,7 +5,6 @@
 using System.Data;
 using System.Data.Common;
 using Tortuga.Data.Snowflake.Core;
-using Tortuga.Data.Snowflake.Log;
 
 namespace Tortuga.Data.Snowflake;
 
@@ -18,11 +17,8 @@ public class SnowflakeDbCommand : DbCommand
 
 	private SnowflakeDbParameterCollection parameterCollection;
 
-	private SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbCommand>();
-
 	public SnowflakeDbCommand()
 	{
-		logger.Debug("Constucting SnowflakeDbCommand class");
 		// by default, no query timeout
 		this.CommandTimeout = 0;
 		parameterCollection = new SnowflakeDbParameterCollection();
@@ -30,7 +26,6 @@ public class SnowflakeDbCommand : DbCommand
 
 	public SnowflakeDbCommand(SnowflakeDbConnection connection)
 	{
-		logger.Debug("Constucting SnowflakeDbCommand class");
 		this.connection = connection;
 		// by default, no query timeout
 		this.CommandTimeout = 0;
@@ -150,14 +145,12 @@ public class SnowflakeDbCommand : DbCommand
 
 	public override int ExecuteNonQuery()
 	{
-		logger.Debug($"ExecuteNonQuery, command: {CommandText}");
 		SFBaseResultSet resultSet = ExecuteInternal();
 		return resultSet.CalculateUpdateCount();
 	}
 
 	public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
 	{
-		logger.Debug($"ExecuteNonQueryAsync, command: {CommandText}");
 		if (cancellationToken.IsCancellationRequested)
 			throw new TaskCanceledException();
 
@@ -167,7 +160,6 @@ public class SnowflakeDbCommand : DbCommand
 
 	public override object ExecuteScalar()
 	{
-		logger.Debug($"ExecuteScalar, command: {CommandText}");
 		SFBaseResultSet resultSet = ExecuteInternal();
 
 		if (resultSet.Next())
@@ -178,7 +170,6 @@ public class SnowflakeDbCommand : DbCommand
 
 	public override async Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
 	{
-		logger.Debug($"ExecuteScalarAsync, command: {CommandText}");
 		if (cancellationToken.IsCancellationRequested)
 			throw new TaskCanceledException();
 
@@ -202,24 +193,14 @@ public class SnowflakeDbCommand : DbCommand
 
 	protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
 	{
-		logger.Debug($"ExecuteDbDataReader, command: {CommandText}");
 		SFBaseResultSet resultSet = ExecuteInternal();
 		return new SnowflakeDbDataReader(this, resultSet);
 	}
 
 	protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
 	{
-		logger.Debug($"ExecuteDbDataReaderAsync, command: {CommandText}");
-		try
-		{
-			var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
-			return new SnowflakeDbDataReader(this, result);
-		}
-		catch (Exception ex)
-		{
-			logger.Error("The command failed to execute.", ex);
-			throw;
-		}
+		var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
+		return new SnowflakeDbDataReader(this, result);
 	}
 
 	private static Dictionary<string, BindingDTO> convertToBindList(List<SnowflakeDbParameter> parameters)

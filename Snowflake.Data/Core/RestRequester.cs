@@ -3,14 +3,11 @@
  */
 
 using Newtonsoft.Json;
-using Tortuga.Data.Snowflake.Log;
 
 namespace Tortuga.Data.Snowflake.Core;
 
 internal class RestRequester : IRestRequester
 {
-	private static SFLogger logger = SFLoggerFactory.GetLogger<RestRequester>();
-
 	protected HttpClient _HttpClient;
 
 	public RestRequester(HttpClient httpClient)
@@ -80,8 +77,6 @@ internal class RestRequester : IRestRequester
 				HttpResponseMessage response = null;
 				try
 				{
-					logger.Debug($"Executing: {message.Method} {message.RequestUri} HTTP/{message.Version}");
-
 					response = await _HttpClient
 						.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
 						.ConfigureAwait(false);

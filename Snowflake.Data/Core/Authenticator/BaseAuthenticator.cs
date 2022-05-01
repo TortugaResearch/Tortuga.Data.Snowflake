@@ -2,8 +2,6 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using Tortuga.Data.Snowflake.Log;
-
 namespace Tortuga.Data.Snowflake.Core.Authenticator;
 
 /// <summary>
@@ -11,10 +9,6 @@ namespace Tortuga.Data.Snowflake.Core.Authenticator;
 /// </summary>
 internal abstract class BaseAuthenticator
 {
-	// The logger.
-	private static readonly SFLogger logger =
-		SFLoggerFactory.GetLogger<BaseAuthenticator>();
-
 	// The name of the authenticator.
 	protected string authName;
 

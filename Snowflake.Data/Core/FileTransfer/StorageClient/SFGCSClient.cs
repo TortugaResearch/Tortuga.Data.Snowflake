@@ -5,7 +5,6 @@
 using Google.Apis.Auth.OAuth2;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
-using Tortuga.Data.Snowflake.Log;
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 
@@ -30,11 +29,6 @@ class SFGCSClient : ISFRemoteStorageClient
 	private static readonly string GCS_ACCESS_TOKEN = "GCS_ACCESS_TOKEN";
 
 	/// <summary>
-	/// The logger.
-	/// </summary>
-	private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFGCSClient>();
-
-	/// <summary>
 	/// The storage client.
 	/// </summary>
 	private Google.Cloud.Storage.V1.StorageClient StorageClient;
@@ -50,18 +44,13 @@ class SFGCSClient : ISFRemoteStorageClient
 	/// <param name="stageInfo">The command stage info.</param>
 	public SFGCSClient(PutGetStageInfo stageInfo)
 	{
-		Logger.Debug("Setting up a new GCS client ");
-
 		if (stageInfo.stageCredentials.TryGetValue(GCS_ACCESS_TOKEN, out string accessToken))
 		{
-			Logger.Debug("Constructing client using access token");
-
 			GoogleCredential creds = GoogleCredential.FromAccessToken(accessToken, null);
 			StorageClient = Google.Cloud.Storage.V1.StorageClient.Create(creds);
 		}
 		else
 		{
-			Logger.Info("No access token received from GS, constructing anonymous client with no encryption support");
 			StorageClient = Google.Cloud.Storage.V1.StorageClient.CreateUnauthenticated();
 		}
 

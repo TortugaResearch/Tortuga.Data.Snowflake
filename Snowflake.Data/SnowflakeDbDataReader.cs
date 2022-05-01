@@ -6,14 +6,11 @@ using System.Collections;
 using System.Data;
 using System.Data.Common;
 using Tortuga.Data.Snowflake.Core;
-using Tortuga.Data.Snowflake.Log;
 
 namespace Tortuga.Data.Snowflake;
 
 public class SnowflakeDbDataReader : DbDataReader
 {
-	static private readonly SFLogger logger = SFLoggerFactory.GetLogger<SnowflakeDbDataReader>();
-
 	private SnowflakeDbCommand dbCommand;
 
 	private SFBaseResultSet resultSet;

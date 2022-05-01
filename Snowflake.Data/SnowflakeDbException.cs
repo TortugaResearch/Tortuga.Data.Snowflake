@@ -44,9 +44,15 @@ public sealed class SnowflakeDbException : DbException
 		_sqlState = sqlState;
 	}
 
-	public SnowflakeDbException(SnowflakeDbException innerException) : base(innerException.Message, innerException)
+	/// <remarks>This is used to re-throw an exception without losing the stack trace when crossing a thread boundary.</remarks>
+	internal SnowflakeDbException(SnowflakeDbException innerException) : this(innerException.Message, innerException, innerException.SFErrorCode)
 	{
-		_errorCode = innerException.SFErrorCode;
+	}
+
+	public SnowflakeDbException(string message, Exception innerException, SFError error)
+		: base(message, innerException)
+	{
+		_errorCode = error;
 	}
 
 	public SnowflakeDbException(Exception innerException, SFError error, params object[] args)
@@ -69,7 +75,7 @@ public sealed class SnowflakeDbException : DbException
 #if NET5_0_OR_GREATER
 	public override string? SqlState { get => _sqlState; }
 #else
-        public string? SqlState { get => _sqlState; }
+	public string? SqlState { get => _sqlState; }
 #endif
 
 	public override string ToString()

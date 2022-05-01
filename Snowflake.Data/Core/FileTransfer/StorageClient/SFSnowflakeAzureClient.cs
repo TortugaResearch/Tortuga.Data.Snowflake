@@ -6,7 +6,6 @@ using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Newtonsoft.Json;
-using Tortuga.Data.Snowflake.Log;
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 
@@ -24,11 +23,6 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 	private static readonly string AZURE_SAS_TOKEN = "AZURE_SAS_TOKEN";
 
 	/// <summary>
-	/// The logger.
-	/// </summary>
-	private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFSnowflakeAzureClient>();
-
-	/// <summary>
 	/// The cloud blob client to use to upload and download data on Azure.
 	/// </summary>
 	private BlobServiceClient blobServiceClient;
@@ -39,8 +33,6 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 	/// <param name="stageInfo">The command stage info.</param>
 	public SFSnowflakeAzureClient(PutGetStageInfo stageInfo)
 	{
-		Logger.Debug("Setting up a new Azure client ");
-
 		// Get the Azure SAS token and create the client
 		if (stageInfo.stageCredentials.TryGetValue(AZURE_SAS_TOKEN, out string sasToken))
 		{

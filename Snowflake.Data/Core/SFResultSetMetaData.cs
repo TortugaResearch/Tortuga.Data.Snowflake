@@ -3,14 +3,11 @@
  */
 
 using System.Data;
-using Tortuga.Data.Snowflake.Log;
 
 namespace Tortuga.Data.Snowflake.Core;
 
 class SFResultSetMetaData
 {
-	static private readonly SFLogger logger = SFLoggerFactory.GetLogger<SFResultSetMetaData>();
-
 	private int columnCount;
 
 	internal readonly string dateOutputFormat;
@@ -95,7 +92,6 @@ class SFResultSetMetaData
 			{
 				if (String.Compare(rowType.name, targetColumnName, false) == 0)
 				{
-					logger.Info($"Found colun name {targetColumnName} under index {indexCounter}");
 					columnNameToIndexCache[targetColumnName] = indexCounter;
 					return indexCounter;
 				}

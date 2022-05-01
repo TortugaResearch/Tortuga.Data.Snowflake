@@ -7,7 +7,6 @@ using System.Data;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Tortuga.Data.Snowflake.Core;
-using Tortuga.Data.Snowflake.Log;
 using Tortuga.Data.Snowflake.Tests.Mock;
 
 namespace Tortuga.Data.Snowflake.Tests;
@@ -15,8 +14,6 @@ namespace Tortuga.Data.Snowflake.Tests;
 [TestFixture]
 class SFConnectionIT : SFBaseTest
 {
-	private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionIT>();
-
 	[Test]
 	public void TestBasicConnection()
 	{
@@ -73,13 +70,11 @@ class SFConnectionIT : SFBaseTest
 				try
 				{
 					conn.Open();
-					logger.Debug("{appName}");
 					Assert.Fail();
 				}
 				catch (SnowflakeDbException e)
 				{
 					// Expected
-					logger.Debug("Failed opening connection ", e);
 					Assert.AreEqual("08006", e.SqlState); // Connection failure
 				}
 
@@ -115,7 +110,6 @@ class SFConnectionIT : SFBaseTest
 			catch (SnowflakeDbException e)
 			{
 				// Expected
-				logger.Debug("Failed opening connection ", e);
 				Assert.AreEqual("08006", e.SqlState); // Connection failure
 			}
 
@@ -573,7 +567,6 @@ class SFConnectionIT : SFBaseTest
 			catch (SnowflakeDbException e)
 			{
 				// Expected
-				logger.Debug("Failed opening connection ", e);
 				Assert.AreEqual(270001, e.ErrorCode); //Internal error
 				Assert.AreEqual("08006", e.SqlState); // Connection failure
 			}
@@ -611,8 +604,6 @@ class SFConnectionIT : SFBaseTest
 [TestFixture]
 class SFConnectionITAsync : SFBaseTestAsync
 {
-	private static SFLogger logger = SFLoggerFactory.GetLogger<SFConnectionITAsync>();
-
 	[Test]
 	public void TestCancelLoginBeforeTimeout()
 	{
@@ -641,7 +632,6 @@ class SFConnectionITAsync : SFBaseTestAsync
 
 			// Cancel the connection because it will never succeed since there is no
 			// connection_timeout defined
-			logger.Debug("connectionCancelToken.Cancel ");
 			connectionCancelToken.Cancel();
 
 			try

@@ -61,15 +61,6 @@ public class SFBaseTestAsync
 	[OneTimeSetUp]
 	public void SFTestSetup()
 	{
-#if NETFRAMEWORK
-		log4net.GlobalContext.Properties["framework"] = "net472";
-		log4net.Config.XmlConfigurator.Configure();
-
-#else
-            log4net.GlobalContext.Properties["framework"] = "netcoreapp2.0";
-            var logRepository = log4net.LogManager.GetRepository(Assembly.GetEntryAssembly());
-            log4net.Config.XmlConfigurator.Configure(logRepository, new FileInfo("App.config"));
-#endif
 		String cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
 		Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
 

@@ -15,7 +15,7 @@ class SFUriUpdaterTest
 	{
 		Uri uri = new Uri("https://ac.snowflakecomputing.com" + RestPath.SF_QUERY_PATH);
 
-		HttpUtil.UriUpdater updater = new HttpUtil.UriUpdater(uri);
+		UriUpdater updater = new UriUpdater(uri);
 
 		for (int retryCount = 1; retryCount < 5; retryCount++)
 		{
@@ -31,7 +31,7 @@ class SFUriUpdaterTest
 	{
 		Uri uri = new Uri("https://ac.snowflakecomputing.com" + RestPath.SF_LOGIN_PATH);
 
-		HttpUtil.UriUpdater updater = new HttpUtil.UriUpdater(uri);
+		UriUpdater updater = new UriUpdater(uri);
 
 		Uri newUri = updater.Update();
 
@@ -42,7 +42,7 @@ class SFUriUpdaterTest
 	public void TestRequestGUIDUpdate()
 	{
 		Uri uri = new Uri("https://ac.snowflakecomputing.com" + RestPath.SF_LOGIN_PATH);
-		HttpUtil.UriUpdater updater = new HttpUtil.UriUpdater(uri);
+		UriUpdater updater = new UriUpdater(uri);
 
 		// A uri with no request_guid at the begining should not change with the updater.
 		Uri newUri = updater.Update();
@@ -54,7 +54,7 @@ class SFUriUpdaterTest
 		uri = new Uri("https://ac.snowflakecomputing.com" + RestPath.SF_LOGIN_PATH
 			+ "?" + RestParams.SF_QUERY_REQUEST_GUID + "=" + initialGuid);
 
-		updater = new HttpUtil.UriUpdater(uri);
+		updater = new UriUpdater(uri);
 		newUri = updater.Update();
 
 		Assert.IsTrue(newUri.Query.Contains(RestParams.SF_QUERY_REQUEST_GUID));

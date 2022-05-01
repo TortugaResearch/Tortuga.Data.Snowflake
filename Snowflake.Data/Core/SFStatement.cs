@@ -3,14 +3,11 @@
  */
 
 using System.Text;
-using Tortuga.Data.Snowflake.Log;
 
 namespace Tortuga.Data.Snowflake.Core;
 
 class SFStatement
 {
-	static private SFLogger logger = SFLoggerFactory.GetLogger<SFStatement>();
-
 	internal SFSession SfSession { get; set; }
 
 	private const string SF_QUERY_CANCEL_PATH = "/queries/v1/abort-request";
@@ -52,7 +49,6 @@ class SFStatement
 		{
 			if (_requestId != null)
 			{
-				logger.Info("Another query is running.");
 				throw new SnowflakeDbException(SFError.STATEMENT_ALREADY_RUNNING_QUERY);
 			}
 
@@ -165,10 +161,9 @@ class SFStatement
 				{
 					Cancel();
 				}
-				catch (Exception ex)
+				catch
 				{
 					// Prevent an unhandled exception from being thrown
-					logger.Error("Unable to cancel query.", ex);
 				}
 			});
 		}
@@ -214,7 +209,6 @@ class SFStatement
 
 				if (SessionExpired(response))
 				{
-					logger.Info("Ping pong request failed with session expired, trying to renew the session.");
 					SfSession.renewSession();
 				}
 				else
@@ -224,11 +218,6 @@ class SFStatement
 			}
 
 			return BuildResultSet(response, cancellationToken);
-		}
-		catch
-		{
-			logger.Error("Query execution failed.");
-			throw;
 		}
 		finally
 		{
@@ -292,7 +281,6 @@ class SFStatement
 
 					if (SessionExpired(response))
 					{
-						logger.Info("Ping pong request failed with session expired, trying to renew the session.");
 						SfSession.renewSession();
 					}
 					else
@@ -302,11 +290,6 @@ class SFStatement
 				}
 				return BuildResultSet(response, CancellationToken.None);
 			}
-		}
-		catch (Exception ex)
-		{
-			logger.Error("Query execution failed.", ex);
-			throw;
 		}
 		finally
 		{
@@ -353,14 +336,6 @@ class SFStatement
 
 		var response = _restRequester.Post<NullDataResponse>(request);
 
-		if (response.success)
-		{
-			logger.Info("Query cancellation succeed");
-		}
-		else
-		{
-			logger.Warn("Query cancellation failed.");
-		}
 		CleanUpCancellationTokenSources();
 	}
 
@@ -412,7 +387,6 @@ class SFStatement
 
 					if (SessionExpired(response))
 					{
-						logger.Info("Ping pong request failed with session expired, trying to renew the session.");
 						SfSession.renewSession();
 					}
 					else
@@ -432,11 +406,6 @@ class SFStatement
 			}
 
 			return response;
-		}
-		catch (Exception ex)
-		{
-			logger.Error("Query execution failed.", ex);
-			throw;
 		}
 		finally
 		{
@@ -491,7 +460,6 @@ class SFStatement
 		while (idx < sqlQueryLen);
 
 		var trimmedQuery = builder.ToString();
-		logger.Debug("Trimmed query : " + trimmedQuery);
 
 		return trimmedQuery;
 	}

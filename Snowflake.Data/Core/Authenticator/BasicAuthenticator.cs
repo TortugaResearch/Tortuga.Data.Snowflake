@@ -2,14 +2,11 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using Tortuga.Data.Snowflake.Log;
-
 namespace Tortuga.Data.Snowflake.Core.Authenticator;
 
 class BasicAuthenticator : BaseAuthenticator, IAuthenticator
 {
 	public static readonly string AUTH_NAME = "snowflake";
-	private static readonly SFLogger logger = SFLoggerFactory.GetLogger<BasicAuthenticator>();
 
 	internal BasicAuthenticator(SFSession session) : base(session, AUTH_NAME)
 	{

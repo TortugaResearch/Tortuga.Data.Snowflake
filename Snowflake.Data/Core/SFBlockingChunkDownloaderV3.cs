@@ -2,14 +2,10 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using Tortuga.Data.Snowflake.Log;
-
 namespace Tortuga.Data.Snowflake.Core;
 
 class SFBlockingChunkDownloaderV3 : IChunkDownloader
 {
-	static private SFLogger logger = SFLoggerFactory.GetLogger<SFBlockingChunkDownloaderV3>();
-
 	private List<SFReusableChunk> chunkDatas = new List<SFReusableChunk>();
 
 	private string qrmk;
@@ -82,7 +78,6 @@ class SFBlockingChunkDownloaderV3 : IChunkDownloader
 
 	public async Task<IResultChunk> GetNextChunkAsync()
 	{
-		logger.Info($"NextChunkToConsume: {nextChunkToConsumeIndex}, NextChunkToDownload: {nextChunkToDownloadIndex}");
 		if (nextChunkToConsumeIndex < chunkInfos.Count)
 		{
 			Task<IResultChunk> chunk = taskQueues[nextChunkToConsumeIndex % prefetchSlot];
@@ -134,7 +129,6 @@ class SFBlockingChunkDownloaderV3 : IChunkDownloader
 		{
 			await ParseStreamIntoChunk(stream, chunk);
 		}
-		logger.Info($"Succeed downloading chunk #{chunk.chunkIndexToDownload}");
 		return chunk;
 	}
 

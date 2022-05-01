@@ -1,6 +1,4 @@
-﻿using Tortuga.Data.Snowflake.Log;
-
-namespace Tortuga.Data.Snowflake.Core.Authenticator;
+﻿namespace Tortuga.Data.Snowflake.Core.Authenticator;
 
 /// <summary>
 /// OAuthenticator is used when using  an OAuth token for authentication.
@@ -10,10 +8,6 @@ class OAuthAuthenticator : BaseAuthenticator, IAuthenticator
 {
 	// The authenticator setting value to use to authenticate using key pair authentication.
 	public static readonly string AUTH_NAME = "oauth";
-
-	// The logger.
-	private static readonly SFLogger logger =
-		SFLoggerFactory.GetLogger<OAuthAuthenticator>();
 
 	/// <summary>
 	/// Constructor for the oauth authenticator.

@@ -5,7 +5,6 @@
 using System.Collections.Concurrent;
 using System.IO.Compression;
 using System.Text;
-using Tortuga.Data.Snowflake.Log;
 
 namespace Tortuga.Data.Snowflake.Core;
 
@@ -14,8 +13,6 @@ namespace Tortuga.Data.Snowflake.Core;
 /// </summary>
 class SFBlockingChunkDownloader : IChunkDownloader
 {
-	static private SFLogger logger = SFLoggerFactory.GetLogger<SFBlockingChunkDownloader>();
-
 	private List<SFResultChunk> chunks;
 
 	private string qrmk;
@@ -53,7 +50,6 @@ class SFBlockingChunkDownloader : IChunkDownloader
 		{
 			this.chunks.Add(new SFResultChunk(chunkInfo.url, chunkInfo.rowCount, colCount, idx++));
 		}
-		logger.Info($"Total chunk number: {chunks.Count}");
 
 		FillDownloads();
 	}
@@ -103,7 +99,6 @@ class SFBlockingChunkDownloader : IChunkDownloader
 
 	private async Task<IResultChunk> DownloadChunkAsync(DownloadContext downloadContext)
 	{
-		logger.Info($"Start donwloading chunk #{downloadContext.chunkIndex}");
 		SFResultChunk chunk = downloadContext.chunk;
 
 		chunk.downloadState = DownloadState.IN_PROGRESS;
@@ -134,7 +129,6 @@ class SFBlockingChunkDownloader : IChunkDownloader
 		ParseStreamIntoChunk(stream, chunk);
 
 		chunk.downloadState = DownloadState.SUCCESS;
-		logger.Info($"Succeed downloading chunk #{downloadContext.chunkIndex}");
 
 		return chunk;
 	}

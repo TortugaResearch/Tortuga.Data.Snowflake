@@ -6,7 +6,6 @@ using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
-using Tortuga.Data.Snowflake.Log;
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 
@@ -65,11 +64,6 @@ class SFS3Client : ISFRemoteStorageClient
 	private static readonly string AWS_TOKEN = "AWS_TOKEN";
 
 	/// <summary>
-	/// The logger.
-	/// </summary>
-	private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFS3Client>();
-
-	/// <summary>
 	/// The underlying S3 client.
 	/// </summary>
 	private AmazonS3Client S3Client;
@@ -83,8 +77,6 @@ class SFS3Client : ISFRemoteStorageClient
 		int maxRetry,
 		int parallel)
 	{
-		Logger.Debug("Setting up a new AWS client ");
-
 		// Get the key id and secret key from the response
 		stageInfo.stageCredentials.TryGetValue(AWS_KEY_ID, out string awsAccessKeyId);
 		stageInfo.stageCredentials.TryGetValue(AWS_SECRET_KEY, out string awsSecretAccessKey);

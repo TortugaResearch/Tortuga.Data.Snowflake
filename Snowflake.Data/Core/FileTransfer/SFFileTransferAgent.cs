@@ -6,7 +6,6 @@ using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Tortuga.Data.Snowflake.Core.FileTransfer;
-using Tortuga.Data.Snowflake.Log;
 
 namespace Tortuga.Data.Snowflake.Core;
 
@@ -15,11 +14,6 @@ namespace Tortuga.Data.Snowflake.Core;
 /// </summary>
 class SFFileTransferAgent
 {
-	/// <summary>
-	/// The logger.
-	/// </summary>
-	private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFFileTransferAgent>();
-
 	/// <summary>
 	/// Auto-detect keyword for source compression type auto detection.
 	/// </summary>
@@ -224,19 +218,15 @@ class SFFileTransferAgent
 		//For each file, using the remote client
 		if (0 < LargeFilesMetas.Count)
 		{
-			Logger.Debug("Start uploading large files");
 			foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
 			{
 				UploadFilesInSequential(fileMetadata);
 			}
-			Logger.Debug("End uploading large files");
 		}
 
 		if (0 < SmallFilesMetas.Count)
 		{
-			Logger.Debug("Start uploading small files");
 			UploadFilesInParallel(SmallFilesMetas, TransferMetadata.parallel);
-			Logger.Debug("End uploading small files");
 		}
 	}
 
@@ -250,18 +240,14 @@ class SFFileTransferAgent
 		//For each file, using the remote client
 		if (0 < LargeFilesMetas.Count)
 		{
-			Logger.Debug("Start uploading large files");
 			foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
 			{
 				DownloadFilesInSequential(fileMetadata);
 			}
-			Logger.Debug("End uploading large files");
 		}
 		if (0 < SmallFilesMetas.Count)
 		{
-			Logger.Debug("Start uploading small files");
 			DownloadFilesInParallel(SmallFilesMetas, TransferMetadata.parallel);
-			Logger.Debug("End uploading small files");
 		}
 	}
 
@@ -355,7 +341,6 @@ class SFFileTransferAgent
 					// Auto-detect source compression type
 					// Will return NONE if no matching type is found
 					compressionType = SFFileCompressionTypes.GuessCompressionType(file);
-					Logger.Debug($"File compression detected as {compressionType.Name} for: {file}");
 				}
 				else
 				{
@@ -570,15 +555,6 @@ class SFFileTransferAgent
 			}
 		}
 
-		if (Logger.IsDebugEnabled())
-		{
-			Logger.Debug("Expand " + location + " into : \n");
-			foreach (string filepath in filePaths)
-			{
-				Logger.Debug("\t" + filepath + "\n");
-			}
-		}
-
 		return filePaths;
 	}
 
@@ -606,7 +582,6 @@ class SFFileTransferAgent
 					}
 				}
 
-				Logger.Debug($"Compressed {fileToCompress.Name} to {fileMetadata.realSrcFilePath}");
 				FileInfo destInfo = new FileInfo(fileMetadata.realSrcFilePath);
 				fileMetadata.destFileSize = destInfo.Length;
 			}

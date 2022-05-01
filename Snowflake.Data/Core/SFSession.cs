@@ -2,18 +2,16 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
+using Microsoft.AspNetCore.WebUtilities;
+using System.Net;
 using System.Security;
 using System.Text.RegularExpressions;
-using System.Web;
 using Tortuga.Data.Snowflake.Core.Authenticator;
-using Tortuga.Data.Snowflake.Log;
 
 namespace Tortuga.Data.Snowflake.Core;
 
 class SFSession
 {
-	private static readonly SFLogger logger = SFLoggerFactory.GetLogger<SFSession>();
-
 	private static readonly Regex APPLICATION_REGEX = new Regex(@"^[A-Za-z]([A-Za-z0-9.\-_]){1,50}$");
 
 	private const string SF_AUTHORIZATION_BASIC = "Basic";
@@ -56,14 +54,7 @@ class SFSession
 		}
 		else
 		{
-			SnowflakeDbException e = new SnowflakeDbException
-				(SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-				authnResponse.code,
-				authnResponse.message,
-				"");
-
-			logger.Error("Authentication failed", e);
-			throw e;
+			throw new SnowflakeDbException(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, authnResponse.code, authnResponse.message, "");
 		}
 	}
 
@@ -134,7 +125,7 @@ class SFSession
 				{
 					// The list is url-encoded
 					// Host names are separated with a URL-escaped pipe symbol (%7C).
-					noProxyHosts = HttpUtility.UrlDecode(noProxyHosts);
+					noProxyHosts = WebUtility.UrlDecode(noProxyHosts);
 				}
 			}
 
@@ -154,21 +145,10 @@ class SFSession
 		}
 		catch (Exception e)
 		{
-			logger.Error("Unable to connect", e);
 			throw new SnowflakeDbException(e.InnerException,
 						SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
 						SFError.INVALID_CONNECTION_STRING,
 						"Unable to connect");
-		}
-
-		if (timeoutInSec < recommendedMinTimeoutSec)
-		{
-			logger.Warn($"Connection timeout provided is less than recommended minimum value of" +
-				$" {recommendedMinTimeoutSec}");
-		}
-		if (timeoutInSec < 0)
-		{
-			logger.Warn($"Connection timeout provided is negative. Timeout will be infinite.");
 		}
 
 		connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
@@ -192,11 +172,18 @@ class SFSession
 
 		if (queryParams != null && queryParams.Any())
 		{
-			var queryString = HttpUtility.ParseQueryString(string.Empty);
+			var queryString = QueryHelpers.ParseQuery(string.Empty);
 			foreach (var kvp in queryParams)
 				queryString[kvp.Key] = kvp.Value;
 
-			uriBuilder.Query = queryString.ToString();
+			//Clear the query and apply the new query parameters
+			uriBuilder.Query = "";
+
+			var uri = uriBuilder.Uri.ToString();
+			foreach (var keyPair in queryParams)
+				uri = QueryHelpers.AddQueryString(uri, keyPair.Key, keyPair.Value);
+
+			uriBuilder = new UriBuilder(uri);
 		}
 
 		return uriBuilder.Uri;
@@ -204,8 +191,6 @@ class SFSession
 
 	internal void Open()
 	{
-		logger.Debug("Open Session");
-
 		if (authenticator == null)
 		{
 			authenticator = AuthenticatorFactory.GetAuthenticator(this);
@@ -216,8 +201,6 @@ class SFSession
 
 	internal async Task OpenAsync(CancellationToken cancellationToken)
 	{
-		logger.Debug("Open Session");
-
 		if (authenticator == null)
 		{
 			authenticator = AuthenticatorFactory.GetAuthenticator(this);
@@ -243,11 +226,7 @@ class SFSession
 			authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)
 		};
 
-		var response = restRequester.Post<CloseResponse>(closeSessionRequest);
-		if (!response.success)
-		{
-			logger.Debug($"Failed to delete session, error ignored. Code: {response.code} Message: {response.message}");
-		}
+		restRequester.Post<CloseResponse>(closeSessionRequest);
 	}
 
 	internal async Task CloseAsync(CancellationToken cancellationToken)
@@ -267,11 +246,7 @@ class SFSession
 			authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)
 		};
 
-		var response = await restRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
-		if (!response.success)
-		{
-			logger.Debug($"Failed to delete session, error ignored. Code: {response.code} Message: {response.message}");
-		}
+		await restRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
 	}
 
 	internal void renewSession()
@@ -296,14 +271,10 @@ class SFSession
 			RestTimeout = Timeout.InfiniteTimeSpan
 		};
 
-		logger.Info("Renew the session.");
 		var response = restRequester.Post<RenewSessionResponse>(renewSessionRequest);
 		if (!response.success)
 		{
-			SnowflakeDbException e = new SnowflakeDbException("",
-				response.code, response.message, "");
-			logger.Error("Renew session failed", e);
-			throw e;
+			throw new SnowflakeDbException("", response.code, response.message, "");
 		}
 		else
 		{
@@ -325,7 +296,6 @@ class SFSession
 
 	internal void UpdateSessionParameterMap(List<NameValueParameter> parameterList)
 	{
-		logger.Debug("Update parameter map");
 		foreach (NameValueParameter parameter in parameterList)
 		{
 			if (Enum.TryParse(parameter.name, out SFSessionParameter parameterName))

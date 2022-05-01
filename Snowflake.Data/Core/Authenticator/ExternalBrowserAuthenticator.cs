@@ -5,7 +5,6 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-using Tortuga.Data.Snowflake.Log;
 
 #if !NETFRAMEWORK
 using System.Runtime.InteropServices;
@@ -19,7 +18,6 @@ namespace Tortuga.Data.Snowflake.Core.Authenticator;
 class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
 {
 	public static readonly string AUTH_NAME = "externalbrowser";
-	private static readonly SFLogger logger = SFLoggerFactory.GetLogger<ExternalBrowserAuthenticator>();
 	private static readonly string TOKEN_REQUEST_PREFIX = "?token=";
 
 	private static readonly byte[] SUCCESS_RESPONSE = System.Text.Encoding.UTF8.GetBytes(
@@ -46,14 +44,11 @@ class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
 	/// <see cref="IAuthenticator"/>
 	async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
 	{
-		logger.Info("External Browser Authentication");
-
 		int localPort = GetRandomUnusedPort();
 		using (var httpListener = GetHttpListener(localPort))
 		{
 			httpListener.Start();
 
-			logger.Debug("Get IdpUrl and ProofKey");
 			var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
 			var authenticatorRestResponse =
 				await session.restRequester.PostAsync<AuthenticatorResponse>(
@@ -65,10 +60,8 @@ class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
 			var idpUrl = authenticatorRestResponse.data.ssoUrl;
 			proofKey = authenticatorRestResponse.data.proofKey;
 
-			logger.Debug("Open browser");
 			StartBrowser(idpUrl);
 
-			logger.Debug("Get the redirect SAML request");
 			var context = await httpListener.GetContextAsync().ConfigureAwait(false);
 			var request = context.Request;
 			samlResponseToken = ValidateAndExtractToken(request);
@@ -83,28 +76,23 @@ class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
 			catch
 			{
 				// Ignore the exception as it does not affect the overall authentication flow
-				logger.Warn("External browser response not sent out");
 			}
 
 			httpListener.Stop();
 		}
 
-		logger.Debug("Send login request");
 		await base.LoginAsync(cancellationToken).ConfigureAwait(false);
 	}
 
 	/// <see cref="IAuthenticator"/>
 	void IAuthenticator.Authenticate()
 	{
-		logger.Info("External Browser Authentication");
-
 		int localPort = GetRandomUnusedPort();
 		using (var httpListener = GetHttpListener(localPort))
 		{
 			httpListener.Prefixes.Add("http://localhost:" + localPort + "/");
 			httpListener.Start();
 
-			logger.Debug("Get IdpUrl and ProofKey");
 			var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
 			var authenticatorRestResponse = session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
 			authenticatorRestResponse.FilterFailedResponse();
@@ -112,10 +100,8 @@ class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
 			var idpUrl = authenticatorRestResponse.data.ssoUrl;
 			proofKey = authenticatorRestResponse.data.proofKey;
 
-			logger.Debug("Open browser");
 			StartBrowser(idpUrl);
 
-			logger.Debug("Get the redirect SAML request");
 			var context = httpListener.GetContext();
 			var request = context.Request;
 			samlResponseToken = ValidateAndExtractToken(request);
@@ -130,13 +116,11 @@ class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
 			catch
 			{
 				// Ignore the exception as it does not affect the overall authentication flow
-				logger.Warn("External browser response not sent out");
 			}
 
 			httpListener.Stop();
 		}
 
-		logger.Debug("Send login request");
 		base.Login();
 	}
 

@@ -5,14 +5,11 @@
 using System.Net;
 using System.Security;
 using Tortuga.Data.Snowflake.Core.Authenticator;
-using Tortuga.Data.Snowflake.Log;
 
 namespace Tortuga.Data.Snowflake.Core;
 
 class SFSessionProperties : Dictionary<SFSessionProperty, string>
 {
-	static private SFLogger logger = SFLoggerFactory.GetLogger<SFSessionProperties>();
-
 	// Connection string properties to obfuscate in the log
 	static private List<SFSessionProperty> secretProps =
 		new List<SFSessionProperty>{
@@ -48,7 +45,6 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 		}
 		catch (InvalidCastException)
 		{
-			logger.Warn("Invalid casting to SFSessionProperties");
 			return false;
 		}
 	}
@@ -60,7 +56,6 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 
 	internal static SFSessionProperties parseConnectionString(string connectionString, SecureString password)
 	{
-		logger.Info("Start parsing connection string.");
 		SFSessionProperties properties = new SFSessionProperties();
 
 		string[] propertyEntry = connectionString.Split(';');
@@ -123,14 +118,8 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 					{
 						// An equal sign was not doubled or something else happened
 						// making the connection invalid
-						string invalidStringDetail =
-							string.Format("Invalid key value pair {0}", keyVal);
-						SnowflakeDbException e =
-							new SnowflakeDbException(
-								SFError.INVALID_CONNECTION_STRING,
-								new object[] { invalidStringDetail });
-						logger.Error("Invalid string.", e);
-						throw e;
+						string invalidStringDetail = string.Format("Invalid key value pair {0}", keyVal);
+						throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, new object[] { invalidStringDetail });
 					}
 				}
 
@@ -139,11 +128,10 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 					SFSessionProperty p = (SFSessionProperty)Enum.Parse(
 						typeof(SFSessionProperty), tokens[0].ToUpper());
 					properties.Add(p, tokens[1]);
-					logger.Info($"Connection property: {p}, value: {(secretProps.Contains(p) ? "XXXXXXXX" : tokens[1])}");
 				}
-				catch (ArgumentException e)
+				catch (ArgumentException)
 				{
-					logger.Warn($"Property {tokens[0]} not found ignored.", e);
+					//Property not found, ignored
 				}
 			}
 		}
@@ -158,10 +146,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 			catch (Exception e)
 			{
 				// The useProxy setting is not a valid boolean value
-				logger.Error("Unable to connect", e);
-				throw new SnowflakeDbException(e,
-							SFError.INVALID_CONNECTION_STRING,
-							e.Message);
+				throw new SnowflakeDbException(e, SFError.INVALID_CONNECTION_STRING, e.Message);
 			}
 		}
 
@@ -194,7 +179,6 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 			// Remove in case it's here but empty
 			properties.Remove(SFSessionProperty.HOST);
 			properties.Add(SFSessionProperty.HOST, hostName);
-			logger.Info($"Compose host name: {hostName}");
 		}
 
 		// Trim the account name to remove the region and cloud platform if any were provided
@@ -213,17 +197,13 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 			if (IsRequired(sessionProperty, properties) &&
 				!properties.ContainsKey(sessionProperty))
 			{
-				SnowflakeDbException e = new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY,
-					sessionProperty);
-				logger.Error("Missing connection property", e);
-				throw e;
+				throw new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, sessionProperty);
 			}
 
 			// add default value to the map
 			string defaultVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultValue;
 			if (defaultVal != null && !properties.ContainsKey(sessionProperty))
 			{
-				logger.Debug($"Sesssion property {sessionProperty} set to default value: {defaultVal}");
 				properties.Add(sessionProperty, defaultVal);
 			}
 		}

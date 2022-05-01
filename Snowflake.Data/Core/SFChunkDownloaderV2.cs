@@ -5,14 +5,11 @@
 using System.Collections.Concurrent;
 using System.IO.Compression;
 using System.Text;
-using Tortuga.Data.Snowflake.Log;
 
 namespace Tortuga.Data.Snowflake.Core;
 
 class SFChunkDownloaderV2 : IChunkDownloader
 {
-	static private SFLogger logger = SFLoggerFactory.GetLogger<SFChunkDownloaderV2>();
-
 	private List<SFResultChunk> chunks;
 
 	private string qrmk;
@@ -42,7 +39,6 @@ class SFChunkDownloaderV2 : IChunkDownloader
 		{
 			this.chunks.Add(new SFResultChunk(chunkInfo.url, chunkInfo.rowCount, colCount, idx++));
 		}
-		logger.Info($"Total chunk number: {chunks.Count}");
 
 		FillDownloads();
 	}
@@ -62,7 +58,7 @@ class SFChunkDownloaderV2 : IChunkDownloader
 				}
 			}
 		}
-		catch (Exception)
+		catch
 		{
 			//Don't blow from background threads.
 		}
@@ -108,7 +104,6 @@ class SFChunkDownloaderV2 : IChunkDownloader
 
 	private async Task<IResultChunk> DownloadChunkAsync(DownloadContextV2 downloadContext)
 	{
-		logger.Info($"Start downloading chunk #{downloadContext.chunkIndex + 1}");
 		SFResultChunk chunk = downloadContext.chunk;
 
 		chunk.downloadState = DownloadState.IN_PROGRESS;
@@ -139,7 +134,6 @@ class SFChunkDownloaderV2 : IChunkDownloader
 		}
 
 		chunk.downloadState = DownloadState.SUCCESS;
-		logger.Info($"Succeed downloading chunk #{downloadContext.chunkIndex + 1}");
 
 		return chunk;
 	}

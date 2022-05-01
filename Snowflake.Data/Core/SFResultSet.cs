@@ -2,14 +2,10 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using Tortuga.Data.Snowflake.Log;
-
 namespace Tortuga.Data.Snowflake.Core;
 
 class SFResultSet : SFBaseResultSet
 {
-	private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFResultSet>();
-
 	private int _currentChunkRowIdx;
 
 	private int _currentChunkRowCount;
@@ -92,7 +88,6 @@ class SFResultSet : SFBaseResultSet
 
 	internal void resetChunkInfo(IResultChunk nextChunk)
 	{
-		Logger.Debug($"Recieved chunk #{nextChunk.GetChunkIndex() + 1} of {_totalChunkCount}");
 		if (_currentChunk is SFResultChunk)
 		{
 			((SFResultChunk)_currentChunk).rowSet = null;
@@ -119,7 +114,6 @@ class SFResultSet : SFBaseResultSet
 		{
 			// GetNextChunk could be blocked if download result is not done yet.
 			// So put this piece of code in a seperate task
-			Logger.Info("Get next chunk from chunk downloader");
 			IResultChunk nextChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
 			if (nextChunk != null)
 			{
@@ -150,7 +144,6 @@ class SFResultSet : SFBaseResultSet
 
 		if (_chunkDownloader != null)
 		{
-			Logger.Info("Get next chunk from chunk downloader");
 			IResultChunk nextChunk = Task.Run(async () => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
 			if (nextChunk != null)
 			{

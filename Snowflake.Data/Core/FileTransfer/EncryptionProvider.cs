@@ -1,5 +1,4 @@
 ﻿using System.Security.Cryptography;
-using Tortuga.Data.Snowflake.Log;
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer;
 
@@ -12,11 +11,6 @@ class EncryptionProvider
 	private const int AES_BLOCK_SIZE = 128;
 
 	private const int blockSize = AES_BLOCK_SIZE / 8;  // in bytes
-
-	/// <summary>
-	/// The logger.
-	/// </summary>
-	private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<EncryptionProvider>();
 
 	/// <summary>
 	/// Encrypt data and write to the outStream.
@@ -32,7 +26,6 @@ class EncryptionProvider
 	{
 		byte[] decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
 		int masterKeySize = decodedMasterKey.Length;
-		Logger.Debug($"Master key size : {masterKeySize}");
 
 		// Generate file key
 		byte[] ivData = new byte[blockSize];
