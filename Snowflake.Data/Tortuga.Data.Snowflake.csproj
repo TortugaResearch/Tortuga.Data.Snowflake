@@ -15,6 +15,7 @@
 		<Version>3.0.0</Version>
 		<LangVersion>10.0</LangVersion>
 		<ImplicitUsings>true</ImplicitUsings>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('$(TargetFramework)', '^net\d'))">

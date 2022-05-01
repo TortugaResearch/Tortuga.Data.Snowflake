@@ -4,7 +4,6 @@
 
 using System.Data;
 using System.Data.Common;
-using Tortuga.Data.Snowflake.Core;
 using Tortuga.Data.Snowflake.Log;
 
 namespace Tortuga.Data.Snowflake;

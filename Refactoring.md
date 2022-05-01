@@ -148,4 +148,64 @@ catch (Exception ex)
 
 HttpRequestMessage.Properties is obsolete for some frameworks, so a pair of extension methods with compiler constants are used to resolve the conflict.
 
+## Round 5 - SnowflakeDbException
+
+### ErrorMessage
+
+This field should go away. There's a perfectly suitable field in the base class to handle this.
+
+### vendorCode
+
+It would be nice if we could remove this field, but we can't because no constructor on DBException accepts both an error code and an inner exception. So the work-around stays. Though we will rename the field to `_errorCode` to match the property name.
+
+### SFError
+
+This is a weird one. Instead of just reading the value of the enum directly, it makes an expensive reflection call to get the number from an attribute.
+
+```
+[SFErrorAttr(errorCode = 270001)]
+INTERNAL_ERROR,
+
+_errorCode = error.GetAttribute<SFErrorAttr>().errorCode;
+```
+
+This easy solution to this is:
+
+```
+readonly SFError _error;
+
+_errorCode = error;
+
+
+public override int ErrorCode => (int)_errorCode;
+```
+
+In order for that to work, the `SFError` enum needs to be renumbered.
+
+```
+public enum SFError
+{
+	INTERNAL_ERROR = 270001,
+	COLUMN_INDEX_OUT_OF_BOUND = 270002,
+	INVALID_DATA_CONVERSION = 270003,
+```
+
+And now `SFErrorAttr` can be deleted. 
+
+Then to make the error codes meaningful, we add this property:
+
+```
+public SFError SFErrorCode => _errorCode;
+```
+
+Ideally we would shadow the base class's `ErrorCode` method, but we can't override and shadow a method at the same time.
+
+### Constants
+
+The field `CONNECTION_FAILURE_SSTATE` should be a constant.
+
+### Resources
+
+The library as a whole is not internationalized, which is the only reason to add a resource file. Thus we can remove `ErrorMessages.resx`, replacing it with a simple switch block. 
+
 
