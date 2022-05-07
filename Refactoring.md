@@ -671,3 +671,54 @@ namespace System.Diagnostics.CodeAnalysis
 The fields in this project use a mixture of `camelCase`, `_camelCase`, and `PascalCase`. The normal `camelCase` is not acceptable because it conflicts with parameter names in constructors. And `PascalCase` conflicts with property names when properties need to be manually implemented. That leaves `_camelCase` as the natural choice for this project. And if this was a straight refactoring job, that's what we'd use.
 
 However, the intention is to make this into a maintained **Tortuga Research** project. As such, we're going to go with with the `m_PascalCase` naming convention to be consisent with other **Tortuga Research** projects. 
+
+## Round 10 - SnowflakeDbCommandBuilder
+
+### Readonly Properties
+
+The properties `DbCommandBuilder.QuotePrefix` and `DbCommandBuilder.QuoteSuffix` have setters because some databases support more than one quoting style.
+
+Since that's not the case for Snowflake, the properties should be changed to return a constant and the setter marked as not supported. To make this 100% clear to callers, we can further restrict it by marking it as obsolete. 
+
+```
+[Obsolete($"The property {nameof(QuoteSuffix)} cannot be changed.", true)]
+set => throw new NotSupportedException($"The property {nameof(QuotePrefix)} cannot be changed.");
+```
+
+
+### Numeric Formatting
+
+In a few places, we see lines of code like this:
+
+```
+return string.Format(CultureInfo.InvariantCulture, "{0}", parameterOrdinal);
+```
+
+While it will return the correct value, the `Format` function is slow and shouldn't be used if alternatives such as `ToString` are available.
+
+```
+return parameterOrdinal.ToString(CultureInfo.InvariantCulture);
+```
+
+Here's another example,
+
+```
+return string.Format(CultureInfo.InvariantCulture, "{0}", parameterName);
+```
+
+We can remove the `Format` call by transforming it into this:
+
+```
+return parameterName.ToString(CultureInfo.InvariantCulture);
+```
+
+And according to the documentation, that just returns the original string. Leaving us with:
+
+```
+return parameterName;
+```
+
+### Nullable Reference Types
+
+Enabling nullable reference types in this file is as easy as adding `#nullable enable` and a couple of `?` characters.
+

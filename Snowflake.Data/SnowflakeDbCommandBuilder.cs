@@ -2,14 +2,19 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
 namespace Tortuga.Data.Snowflake;
 
 public class SnowflakeDbCommandBuilder : DbCommandBuilder
 {
+	const string QuoteCharacter = "\"";
+
 	/// <summary>
 	/// Initializes a new instance of the <see cref="SnowflakeDbCommandBuilder"/> class.
 	/// </summary>
@@ -22,11 +27,11 @@ public class SnowflakeDbCommandBuilder : DbCommandBuilder
 	/// Initializes a new instance of the <see cref="SnowflakeDbCommandBuilder"/> class.
 	/// </summary>
 	/// <param name="adapter">The adapter.</param>
-	public SnowflakeDbCommandBuilder(SnowflakeDbDataAdapter adapter)
+	public SnowflakeDbCommandBuilder(SnowflakeDbDataAdapter? adapter)
 	{
 		DataAdapter = adapter;
-		QuotePrefix = "\"";
-		QuoteSuffix = "\"";
+		QuotePrefix = QuoteCharacter;
+		QuoteSuffix = QuoteCharacter;
 	}
 
 	/// <summary>
@@ -38,11 +43,12 @@ public class SnowflakeDbCommandBuilder : DbCommandBuilder
 	///   <PermissionSet>
 	///   <IPermission class="System.Security.Permissions.FileIOPermission, mscorlib, Version=2.0.3600.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" version="1" PathDiscovery="*AllFiles*" />
 	///   </PermissionSet>
+	[AllowNull]
 	public sealed override string QuotePrefix
 	{
-		get => base.QuotePrefix;
-		// TODO: Why should it be possible to remove the QuotePrefix?
-		set => base.QuotePrefix = string.IsNullOrEmpty(value) ? value : "\"";
+		get => QuoteCharacter;
+		[Obsolete($"The property {nameof(QuoteSuffix)} cannot be changed.", true)]
+		set => throw new NotSupportedException($"The property {nameof(QuotePrefix)} cannot be changed.");
 	}
 
 	/// <summary>
@@ -54,11 +60,12 @@ public class SnowflakeDbCommandBuilder : DbCommandBuilder
 	///   <PermissionSet>
 	///   <IPermission class="System.Security.Permissions.FileIOPermission, mscorlib, Version=2.0.3600.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" version="1" PathDiscovery="*AllFiles*" />
 	///   </PermissionSet>
+	[AllowNull]
 	public sealed override string QuoteSuffix
 	{
-		get => base.QuoteSuffix;
-		// TODO: Why should it be possible to remove the QuoteSuffix?
-		set => base.QuoteSuffix = string.IsNullOrEmpty(value) ? value : "\"";
+		get => QuoteCharacter;
+		[Obsolete($"The property {nameof(QuoteSuffix)} cannot be changed.", true)]
+		set => throw new NotSupportedException($"The property {nameof(QuoteSuffix)} cannot be changed.");
 	}
 
 	/// <summary>
@@ -83,7 +90,7 @@ public class SnowflakeDbCommandBuilder : DbCommandBuilder
 	/// </returns>
 	protected override string GetParameterName(int parameterOrdinal)
 	{
-		return string.Format(CultureInfo.InvariantCulture, "{0}", parameterOrdinal);
+		return parameterOrdinal.ToString(CultureInfo.InvariantCulture);
 	}
 
 	/// <summary>
@@ -95,7 +102,7 @@ public class SnowflakeDbCommandBuilder : DbCommandBuilder
 	/// </returns>
 	protected override string GetParameterName(string parameterName)
 	{
-		return string.Format(CultureInfo.InvariantCulture, "{0}", parameterName);
+		return parameterName;
 	}
 
 	/// <summary>
