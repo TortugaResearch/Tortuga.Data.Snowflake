@@ -779,3 +779,78 @@ return parameterName;
 
 Enabling nullable reference types in this file is as easy as adding `#nullable enable` and a couple of `?` characters.
 
+
+## Round 11 - SnowflakeDbConnection
+
+### Nullability Issues
+
+In several places, `taskCompletionSource.SetResult` is called with a `null`. While not really problematic, this causes the null checker to complain. So a statically defined marker object can be passed to it instead.
+
+```
+static object s_markerObject = new();
+
+taskCompletionSource.SetResult(s_markerObject);
+```
+
+The `Database` property is defined by the expression 
+
+```
+_connectionState == ConnectionState.Open ? SfSession?.database : string.Empty;`
+```
+
+This is safe, but the null checker doesn't known that. Thankfully, it can be simplified to just `SfSession?.database ?? ""`.
+
+The `SfSession` property is set by a call to `SetSession`, so again the null checker doesn't understand. Fortunately this only occurs in 2 places, so the `!` modifer can quiet the compiler.
+
+## Finalizer
+
+This class has a finalizer. Which means `GC.SuppressFinalize(this)` must be added to the `Dispose(bool)` method to avoid unnecessarily adding the object to the finalizer queue.
+
+It should be noted that Microsoft no longer recommends implementing finalizers. So we will just eliminate it.
+
+
+### Evaluate single-line, private methods.
+
+Consider this method.
+
+```
+private void OnSessionEstablished()
+{
+	_connectionState = ConnectionState.Open;
+}
+```
+
+Its sole purpose is to set the connection state to `Open`. There's no reason to believe it will grow with time. Nor are there any complex expressions that need to avoid duplicating. So this method can be inlined. 
+
+### Dispose Pattern
+
+Normally calls to `Close` are simply forwarded to `Dispose`. But in the case of `DbConnection`, the script is flipped. The call to `Dispose` is forwarded to `Close`. And even after the object is closed/disposed, it can be reopened. 
+
+In order to properly support this, a change needs to be made.
+
+
+```
+protected override void Dispose(bool disposing)
+{
+	//Remove this check, it prevents a re-opened connection from being disposed.
+	//if (_disposed)
+	//    return;
+
+	try
+	{
+		this.Close();
+	}
+	catch (Exception ex)
+	{
+		// Prevent an exception from being thrown when disposing of this object
+	}
+
+	//we no longer read from this field
+	//_disposed = true;
+
+	//Not needed. ComponentBase.Dispose(bool) does nothing.
+	//base.Dispose(disposing);
+}
+```
+
+The exception being swallowed is a common design pattern for .NET. It is needed for `finally` blocks to work correctly.
