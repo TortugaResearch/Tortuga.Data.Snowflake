@@ -25,8 +25,8 @@ public class SnowflakeDbConnection : DbConnection
 	{
 		_connectionState = ConnectionState.Closed;
 		_connectionTimeout =
-			int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttr>().
-				defaultValue);
+			int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttribute>().
+				DefaultValue);
 	}
 
 	public override string ConnectionString

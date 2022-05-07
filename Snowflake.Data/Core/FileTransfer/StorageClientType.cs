@@ -9,6 +9,6 @@ namespace Tortuga.Data.Snowflake.Core.FileTransfer;
 /// </summary>
 internal enum StorageClientType
 {
-	LOCAL,
-	REMOTE
+	LOCAL = 0,
+	REMOTE = 1
 }

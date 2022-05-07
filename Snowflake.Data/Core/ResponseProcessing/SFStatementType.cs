@@ -4,77 +4,57 @@
 
 namespace Tortuga.Data.Snowflake.Core.ResponseProcessing;
 
-internal enum SFStatementType
+internal enum SFStatementType : long
 {
-	[SFStatementTypeAttr(typeId = 0x0000)]
-	UNKNOWN,
+	UNKNOWN = 0x0000,
 
-	[SFStatementTypeAttr(typeId = 0x1000)]
-	SELECT,
+	SELECT = 0x1000,
 
 	/// <remark>
 	///     Data Manipulation Language
 	/// </remark>
-	[SFStatementTypeAttr(typeId = 0x3000)]
-	DML,
+	DML = 0x3000,
 
-	[SFStatementTypeAttr(typeId = 0x3000 + 0x100)]
-	INSERT,
+	INSERT = 0x3000 + 0x100,
 
-	[SFStatementTypeAttr(typeId = 0x3000 + 0x200)]
-	UPDATE,
+	UPDATE = 0x3000 + 0x200,
 
-	[SFStatementTypeAttr(typeId = 0x3000 + 0x300)]
-	DELETE,
+	DELETE = 0x3000 + 0x300,
 
-	[SFStatementTypeAttr(typeId = 0x3000 + 0x400)]
-	MERGE,
+	MERGE = 0x3000 + 0x400,
 
-	[SFStatementTypeAttr(typeId = 0x3000 + 0x500)]
-	MULTI_INSERT,
+	MULTI_INSERT = 0x3000 + 0x500,
 
-	[SFStatementTypeAttr(typeId = 0x3000 + 0x600)]
-	COPY,
+	COPY = 0x3000 + 0x600,
 
-	[SFStatementTypeAttr(typeId = 0x3000 + 0x700)]
-	COPY_UNLOAD,
+	COPY_UNLOAD = 0x3000 + 0x700,
 
 	/// <remark>
 	///     System Command Language
 	/// </remark>
-	[SFStatementTypeAttr(typeId = 0x4000)]
-	SCL,
+	SCL = 0x4000,
 
-	[SFStatementTypeAttr(typeId = 0x4000 + 0x100)]
-	ALTER_SESSION,
+	ALTER_SESSION = 0x4000 + 0x100,
 
-	[SFStatementTypeAttr(typeId = 0x4000 + 0x300)]
-	USE,
+	USE = 0x4000 + 0x300,
 
-	[SFStatementTypeAttr(typeId = 0x4000 + 0x300 + 0x10)]
-	USE_DATABASE,
+	USE_DATABASE = 0x4000 + 0x300 + 0x10,
 
-	[SFStatementTypeAttr(typeId = 0x4000 + 0x300 + 0x20)]
-	USE_SCHEMA,
+	USE_SCHEMA = 0x4000 + 0x300 + 0x20,
 
-	[SFStatementTypeAttr(typeId = 0x4000 + 0x300 + 0x30)]
-	USE_WAREHOUSE,
+	USE_WAREHOUSE = 0x4000 + 0x300 + 0x30,
 
-	[SFStatementTypeAttr(typeId = 0x4000 + 0x400)]
-	SHOW,
+	SHOW = 0x4000 + 0x400,
 
-	[SFStatementTypeAttr(typeId = 0x4000 + 0x500)]
-	DESCRIBE,
+	DESCRIBE = 0x4000 + 0x500,
 
 	/// <remark>
 	///     Transaction Command Language
 	/// </remark>
-	[SFStatementTypeAttr(typeId = 0x5000)]
-	TCL,
+	TCL = 0x5000,
 
 	/// <remark>
 	///     Data Definition Language
 	/// </remark>
-	[SFStatementTypeAttr(typeId = 0x6000)]
-	DDL,
+	DDL = 0x6000,
 }

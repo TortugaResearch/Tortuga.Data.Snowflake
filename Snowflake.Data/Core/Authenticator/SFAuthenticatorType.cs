@@ -9,6 +9,6 @@ namespace Tortuga.Data.Snowflake.Core.Authenticator;
 /// </summary>
 internal enum SFAuthenticatorType
 {
-	SNOWFLAKE,
-	OKTA,
+	SNOWFLAKE = 0,
+	OKTA = 1,
 }

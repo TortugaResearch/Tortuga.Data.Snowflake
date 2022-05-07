@@ -6,7 +6,6 @@ using NUnit.Framework;
 using System.Data;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Tortuga.Data.Snowflake.Core;
 using Tortuga.Data.Snowflake.Tests.Mock;
 
 namespace Tortuga.Data.Snowflake.Tests;
@@ -219,8 +218,7 @@ class SFConnectionIT : SFBaseTest
 				}
 				catch (AggregateException e)
 				{
-					Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode,
-						((SnowflakeDbException)e.InnerException).ErrorCode);
+					Assert.AreEqual(SFError.REQUEST_TIMEOUT, ((SnowflakeDbException)e.InnerException).SFErrorCode);
 				}
 				stopwatch.Stop();
 
@@ -254,8 +252,7 @@ class SFConnectionIT : SFBaseTest
 			{
 				if (e.InnerException is SnowflakeDbException)
 				{
-					Assert.AreEqual(SFError.REQUEST_TIMEOUT.GetAttribute<SFErrorAttr>().errorCode,
-					((SnowflakeDbException)e.InnerException).ErrorCode);
+					Assert.AreEqual(SFError.REQUEST_TIMEOUT, ((SnowflakeDbException)e.InnerException).SFErrorCode);
 
 					stopwatch.Stop();
 					// Should timeout after the default timeout (120 sec)
@@ -286,8 +283,7 @@ class SFConnectionIT : SFBaseTest
 			}
 			catch (SnowflakeDbException e)
 			{
-				Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
-					e.ErrorCode);
+				Assert.AreEqual(SFError.INTERNAL_ERROR, e.SFErrorCode);
 			}
 
 			Assert.AreEqual(ConnectionState.Closed, conn.State);
@@ -525,7 +521,7 @@ class SFConnectionIT : SFBaseTest
 			}
 			catch (SnowflakeDbException e)
 			{
-				Assert.AreEqual(SFError.UNKNOWN_AUTHENTICATOR.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
+				Assert.AreEqual(SFError.UNKNOWN_AUTHENTICATOR, e.SFErrorCode);
 			}
 		}
 	}
@@ -673,8 +669,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 				}
 				catch (AggregateException e)
 				{
-					Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
-						((SnowflakeDbException)e.InnerException).ErrorCode);
+					Assert.AreEqual(SFError.INTERNAL_ERROR, ((SnowflakeDbException)e.InnerException).SFErrorCode);
 				}
 				stopwatch.Stop();
 
@@ -707,8 +702,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 			}
 			catch (AggregateException e)
 			{
-				Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
-					((SnowflakeDbException)e.InnerException).ErrorCode);
+				Assert.AreEqual(SFError.INTERNAL_ERROR, ((SnowflakeDbException)e.InnerException).SFErrorCode);
 			}
 			stopwatch.Stop();
 
@@ -744,8 +738,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 			}
 			catch (AggregateException e)
 			{
-				Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode,
-					((SnowflakeDbException)e.InnerException).ErrorCode);
+				Assert.AreEqual(SFError.INTERNAL_ERROR, ((SnowflakeDbException)e.InnerException).SFErrorCode);
 			}
 
 			Assert.AreEqual(ConnectionState.Closed, conn.State);

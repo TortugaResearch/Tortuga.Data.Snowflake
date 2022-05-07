@@ -4,9 +4,9 @@
 
 namespace Tortuga.Data.Snowflake.Core.Sessions;
 
-class SFSessionPropertyAttr : Attribute
+[AttributeUsage(AttributeTargets.Field)]
+class SFSessionPropertyAttribute : Attribute
 {
-	public bool required { get; set; }
-
-	public string defaultValue { get; set; }
+	public string DefaultValue { get; init; }
+	public bool Required { get; init; }
 }

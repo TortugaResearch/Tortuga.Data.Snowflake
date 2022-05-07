@@ -295,3 +295,169 @@ In the end we came up with these file counts.
 Where did `ResponseProcessing/Chunks` come from? Well at 29 files, `ResponseProcessing` started getting big again. And since all of the chunks code is only referenced by `SFResultSet`, it can be easily pulled into its own subsystem. 
 
 We left the `Messages` large mainly because we rarely look at it. There is no code, only simple DTOs, so charting the interactions between classes isn't as necessary.
+
+## Round 8 - Enumerations
+
+### SFDataType
+If an eager developer decides to alphabetize this enum, it will change the number assignments. As we don't currently know if they are important, it's best to just lock those into place by explicitly numbering them.
+
+```
+public enum SFDataType
+{
+	None = 0,
+	FIXED = 1,
+	[...]
+```
+
+While this isn't necessary for application code, in a library extra care is needed to avoid breaking changes.
+
+### SFError
+
+This is a weird one. Instead of just reading the value of the enum directly, it makes a reflection call to get the number from an attribute. Not only is this an expensive call, developers may not even realize it is necessary. Most will assume the enum is the actual error code.
+
+```
+[SFErrorAttr(errorCode = 270001)]
+INTERNAL_ERROR,
+
+_errorCode = error.GetAttribute<SFErrorAttr>().errorCode;
+```
+
+This easy solution to this is:
+
+```
+readonly SFError _error;
+
+_errorCode = error;
+
+
+public override int ErrorCode => (int)_errorCode;
+```
+
+In order for that to work, the `SFError` enum needs to be renumbered.
+
+```
+public enum SFError
+{
+	INTERNAL_ERROR = 270001,
+	COLUMN_INDEX_OUT_OF_BOUND = 270002,
+	INVALID_DATA_CONVERSION = 270003,
+```
+
+And now `SFErrorAttr` can be deleted. 
+
+Then to make the error codes meaningful, we add this property:
+
+```
+public SFError SFErrorCode => _errorCode;
+```
+
+Ideally, we would shadow the base class's `ErrorCode` method, but we can't override and shadow a method at the same time.
+
+### SFStatementType
+
+The `SFStatementType` enum is treated the same as `SFError`, except it needs to be a `long`.
+
+### SFSessionProperty
+
+This is another example of using attributes on enums. 
+
+```
+	[SFSessionPropertyAttr(required = true)]
+	PASSWORD,
+
+	[SFSessionPropertyAttr(required = false, defaultValue = "443")]
+	PORT,
+```
+
+At first glance this seems to be a more reasonable use, but when we dig deeper we find a very serious problem.
+
+The code below treats attributes on the `SFSessionProperty` enums as a hidden global variable. If after making a request using a proxy, you then make a request that doesn't use a proxy it will behave incorrectly.
+
+```
+// Based on which proxy settings have been provided, update the required settings list
+if (useProxy)
+{
+    // If useProxy is true, then proxyhost and proxy port are mandatory
+    SFSessionProperty.ProxyHost.GetAttribute<SFSessionPropertyAttribute>().Required = true;
+    SFSessionProperty.ProxyPort.GetAttribute<SFSessionPropertyAttribute>().Required = true;
+
+    // If a username is provided, then a password is required
+    if (properties.ContainsKey(SFSessionProperty.ProxyUser))
+    {
+        SFSessionProperty.ProxyPassword.GetAttribute<SFSessionPropertyAttribute>().Required = true;
+    }
+}
+```
+
+This code will have to be removed and replaced with `CheckSessionProperties(properties, useProxy);`. After which we can correct the mistakes in`SFSessionPropertyAttr`. 
+
+This `SFSessionPropertyAttr` is being used correctly, but there are a couple of minor implementation mistakes. 
+
+```
+class SFSessionPropertyAttr : Attribute
+{
+    public string defaultValue { get; set; }
+    public bool required { get; set; }
+}
+```
+
+Specifically, the mistakes are:
+
+1. The name should have the suffix `Attribute`. The C# compiler looks for this suffix and allows you to omit it when applying an attribute to a construct.
+2. It is missing the `AttributeUsage` attribute. This tells the compiler where an attribute can be used so that it can warn the programmer of mistakes.
+3. The property names are cased incorrectly.
+
+The fixed attribute can be seen below.
+
+```
+[AttributeUsage(AttributeTargets.Field)]
+class SFSessionPropertyAttribute : Attribute
+{
+    public string DefaultValue { get; init; }
+    public bool Required { get; init; }
+}
+```
+
+The usage of the attribute also changes slightly. 
+
+Before:
+
+```
+[SFSessionPropertyAttr(required = false)]
+SCHEMA,
+
+[SFSessionPropertyAttr(required = false, defaultValue = "https")]
+SCHEME,
+
+[SFSessionPropertyAttr(required = true, defaultValue = "")]
+USER,
+```
+
+After
+
+```
+[SFSessionProperty]
+SCHEMA,
+
+[SFSessionProperty(DefaultValue = "https")]
+SCHEME,
+
+[SFSessionProperty(Required = true, DefaultValue = "")]
+USER,
+```
+
+
+#### Legacy Framework Compatibility
+
+To support versions prior to .NET 5, this code is needed. Without it, the `init` keyword doesn't compile.
+
+```
+#if !NET5_0_OR_GREATER
+
+namespace System.Runtime.CompilerServices;
+
+internal static class IsExternalInit { }
+
+#endif
+```
+

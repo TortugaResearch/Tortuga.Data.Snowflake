@@ -4,7 +4,6 @@
 
 using NUnit.Framework;
 using System.Text;
-using Tortuga.Data.Snowflake.Core;
 using Tortuga.Data.Snowflake.Core.ResponseProcessing;
 using Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
 
@@ -180,7 +179,7 @@ class SFReusableChunkTest
 		}
 		catch (SnowflakeDbException e)
 		{
-			Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
+			Assert.AreEqual(SFError.INTERNAL_ERROR, e.SFErrorCode);
 		}
 	}
 
@@ -210,7 +209,7 @@ class SFReusableChunkTest
 		}
 		catch (SnowflakeDbException e)
 		{
-			Assert.AreEqual(SFError.INTERNAL_ERROR.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
+			Assert.AreEqual(SFError.INTERNAL_ERROR, e.SFErrorCode);
 		}
 	}
 

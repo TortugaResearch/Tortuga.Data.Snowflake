@@ -9,6 +9,6 @@ namespace Tortuga.Data.Snowflake.Core.FileTransfer;
 /// </summary>
 internal enum CommandTypes
 {
-	UPLOAD,
-	DOWNLOAD
+	UPLOAD = 0,
+	DOWNLOAD = 1,
 }

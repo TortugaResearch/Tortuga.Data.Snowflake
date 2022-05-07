@@ -199,25 +199,25 @@ class SFResultSetMetaData
 	{
 		foreach (SFStatementType type in Enum.GetValues(typeof(SFStatementType)))
 		{
-			if (id == type.GetAttribute<SFStatementTypeAttr>().typeId)
+			if (id == (long)type)
 			{
 				return type;
 			}
 		}
 
 		// if specific type not found, we will try to find the range
-		if (id >= SFStatementType.SCL.GetAttribute<SFStatementTypeAttr>().typeId &&
-			id < SFStatementType.SCL.GetAttribute<SFStatementTypeAttr>().typeId + 0x1000)
+		if (id >= (long)SFStatementType.SCL &&
+			id < (long)SFStatementType.SCL + 0x1000)
 		{
 			return SFStatementType.SCL;
 		}
-		else if (id >= SFStatementType.TCL.GetAttribute<SFStatementTypeAttr>().typeId &&
-			id < SFStatementType.TCL.GetAttribute<SFStatementTypeAttr>().typeId + 0x1000)
+		else if (id >= (long)SFStatementType.TCL &&
+			id < (long)SFStatementType.TCL + 0x1000)
 		{
 			return SFStatementType.TCL;
 		}
-		else if (id >= SFStatementType.DDL.GetAttribute<SFStatementTypeAttr>().typeId &&
-			id < SFStatementType.DDL.GetAttribute<SFStatementTypeAttr>().typeId + 0x1000)
+		else if (id >= (long)SFStatementType.DDL &&
+			id < (long)SFStatementType.DDL + 0x1000)
 		{
 			return SFStatementType.DDL;
 		}

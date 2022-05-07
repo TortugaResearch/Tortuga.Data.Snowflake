@@ -150,26 +150,12 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 			}
 		}
 
-		// Based on which proxy settings have been provided, update the required settings list
-		if (useProxy)
-		{
-			// If useProxy is true, then proxyhost and proxy port are mandatory
-			SFSessionProperty.PROXYHOST.GetAttribute<SFSessionPropertyAttr>().required = true;
-			SFSessionProperty.PROXYPORT.GetAttribute<SFSessionPropertyAttr>().required = true;
-
-			// If a username is provided, then a password is required
-			if (properties.ContainsKey(SFSessionProperty.PROXYUSER))
-			{
-				SFSessionProperty.PROXYPASSWORD.GetAttribute<SFSessionPropertyAttr>().required = true;
-			}
-		}
-
 		if (password != null)
 		{
 			properties[SFSessionProperty.PASSWORD] = new NetworkCredential(string.Empty, password).Password;
 		}
 
-		checkSessionProperties(properties);
+		CheckSessionProperties(properties, useProxy);
 
 		// compose host value if not specified
 		if (!properties.ContainsKey(SFSessionProperty.HOST) ||
@@ -189,19 +175,34 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 		return properties;
 	}
 
-	private static void checkSessionProperties(SFSessionProperties properties)
+	private static void CheckSessionProperties(SFSessionProperties properties, bool useProxy)
 	{
 		foreach (SFSessionProperty sessionProperty in Enum.GetValues(typeof(SFSessionProperty)))
 		{
+			var isRequired = IsRequired(sessionProperty, properties);
+			if (useProxy)
+			{
+				// If useProxy is true, then proxyhost and proxy port are mandatory
+				if (sessionProperty is (SFSessionProperty.PROXYHOST or SFSessionProperty.PROXYPORT))
+				{
+					isRequired = true;
+				}
+
+				// If a username is provided, then a password is required
+				if (sessionProperty == SFSessionProperty.PROXYPASSWORD && properties.ContainsKey(SFSessionProperty.PROXYUSER))
+				{
+					isRequired = true;
+				}
+			}
+
 			// if required property, check if exists in the dictionary
-			if (IsRequired(sessionProperty, properties) &&
-				!properties.ContainsKey(sessionProperty))
+			if (isRequired && !properties.ContainsKey(sessionProperty))
 			{
 				throw new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, sessionProperty);
 			}
 
 			// add default value to the map
-			string defaultVal = sessionProperty.GetAttribute<SFSessionPropertyAttr>().defaultValue;
+			string defaultVal = sessionProperty.GetAttribute<SFSessionPropertyAttribute>()?.DefaultValue;
 			if (defaultVal != null && !properties.ContainsKey(sessionProperty))
 			{
 				properties.Add(sessionProperty, defaultVal);
@@ -213,30 +214,25 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 	{
 		if (sessionProperty.Equals(SFSessionProperty.PASSWORD))
 		{
-			var authenticatorDefined =
-				properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator);
+			if (!properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
+				return true;
 
-			// External browser, jwt and oauth don't require a password for authenticating
-			return !(authenticatorDefined &&
-					(authenticator.Equals(ExternalBrowserAuthenticator.AUTH_NAME,
-						StringComparison.OrdinalIgnoreCase) ||
-					authenticator.Equals(KeyPairAuthenticator.AUTH_NAME,
-						StringComparison.OrdinalIgnoreCase) ||
-					authenticator.Equals(OAuthAuthenticator.AUTH_NAME,
-					StringComparison.OrdinalIgnoreCase)));
+			// External browser, jwt and OAuth don't require a password for authenticating
+			return !(authenticator.Equals(ExternalBrowserAuthenticator.AUTH_NAME, StringComparison.OrdinalIgnoreCase) ||
+					authenticator.Equals(KeyPairAuthenticator.AUTH_NAME, StringComparison.OrdinalIgnoreCase) ||
+					authenticator.Equals(OAuthAuthenticator.AUTH_NAME, StringComparison.OrdinalIgnoreCase));
 		}
 		else if (sessionProperty.Equals(SFSessionProperty.USER))
 		{
-			var authenticatorDefined =
-			   properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator);
+			if (!properties.TryGetValue(SFSessionProperty.AUTHENTICATOR, out var authenticator))
+				return false;
 
-			// Oauth don't require a username for authenticating
-			return !(authenticatorDefined &&
-				authenticator.Equals(OAuthAuthenticator.AUTH_NAME, StringComparison.OrdinalIgnoreCase));
+			// OAuth don't require a username for authenticating
+			return !authenticator.Equals(OAuthAuthenticator.AUTH_NAME, StringComparison.OrdinalIgnoreCase);
 		}
 		else
 		{
-			return sessionProperty.GetAttribute<SFSessionPropertyAttr>().required;
+			return sessionProperty.GetAttribute<SFSessionPropertyAttribute>()?.Required ?? false;
 		}
 	}
 }

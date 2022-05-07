@@ -1,5 +1,4 @@
 ﻿using NUnit.Framework;
-using Tortuga.Data.Snowflake.Core;
 using Tortuga.Data.Snowflake.Core.Sessions;
 
 namespace Tortuga.Data.Snowflake.Tests;
@@ -26,7 +25,7 @@ class SFOktaTest
 		}
 		catch (SnowflakeDbException e)
 		{
-			Assert.AreEqual(SFError.IDP_SSO_TOKEN_URL_MISMATCH.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
+			Assert.AreEqual(SFError.IDP_SSO_TOKEN_URL_MISMATCH, e.SFErrorCode);
 		}
 	}
 
@@ -47,7 +46,7 @@ class SFOktaTest
 		}
 		catch (SnowflakeDbException e)
 		{
-			Assert.AreEqual(SFError.IDP_SAML_POSTBACK_NOTFOUND.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
+			Assert.AreEqual(SFError.IDP_SAML_POSTBACK_NOTFOUND, e.SFErrorCode);
 		}
 	}
 
@@ -68,7 +67,7 @@ class SFOktaTest
 		}
 		catch (SnowflakeDbException e)
 		{
-			Assert.AreEqual(SFError.IDP_SAML_POSTBACK_INVALID.GetAttribute<SFErrorAttr>().errorCode, e.ErrorCode);
+			Assert.AreEqual(SFError.IDP_SAML_POSTBACK_INVALID, e.SFErrorCode);
 		}
 	}
 }
