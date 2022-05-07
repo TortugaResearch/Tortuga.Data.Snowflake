@@ -2,21 +2,16 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System.Data;
+#nullable enable
+
 using System.Data.Common;
 
 namespace Tortuga.Data.Snowflake;
 
-public class SnowflakeDbDataAdapter : DbDataAdapter, IDbDataAdapter
+public class SnowflakeDbDataAdapter : DbDataAdapter
 {
-	private static readonly object EventRowUpdated = new object();
-	private static readonly object EventRowUpdating = new object();
-
-	private SnowflakeDbCommand _selectCommand;
-
-	public SnowflakeDbDataAdapter() : base()
+	public SnowflakeDbDataAdapter()
 	{
-		GC.SuppressFinalize(this);
 	}
 
 	public SnowflakeDbDataAdapter(SnowflakeDbCommand selectCommand) : this()
@@ -30,38 +25,27 @@ public class SnowflakeDbDataAdapter : DbDataAdapter, IDbDataAdapter
 		SelectCommand.CommandText = selectCommandText;
 	}
 
-	private SnowflakeDbDataAdapter(SnowflakeDbDataAdapter from) : base(from)
+	new public SnowflakeDbCommand? DeleteCommand
 	{
-		GC.SuppressFinalize(this);
+		get { return (SnowflakeDbCommand?)base.DeleteCommand; }
+		set { base.DeleteCommand = value; }
 	}
 
-	IDbCommand IDbDataAdapter.DeleteCommand
+	new public SnowflakeDbCommand? InsertCommand
 	{
-		get;
-		set;
+		get { return (SnowflakeDbCommand?)base.InsertCommand; }
+		set { base.InsertCommand = value; }
 	}
 
-	IDbCommand IDbDataAdapter.InsertCommand
+	new public SnowflakeDbCommand? SelectCommand
 	{
-		get;
-		set;
+		get { return (SnowflakeDbCommand?)base.SelectCommand; }
+		set { base.SelectCommand = value; }
 	}
 
-	new public SnowflakeDbCommand SelectCommand
+	new public SnowflakeDbCommand? UpdateCommand
 	{
-		get { return _selectCommand; }
-		set { _selectCommand = value; }
-	}
-
-	IDbCommand IDbDataAdapter.SelectCommand
-	{
-		get { return _selectCommand; }
-		set { _selectCommand = (SnowflakeDbCommand)value; }
-	}
-
-	IDbCommand IDbDataAdapter.UpdateCommand
-	{
-		get;
-		set;
+		get { return (SnowflakeDbCommand?)base.UpdateCommand; }
+		set { base.UpdateCommand = value; }
 	}
 }

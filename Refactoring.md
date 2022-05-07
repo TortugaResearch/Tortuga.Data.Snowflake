@@ -854,3 +854,35 @@ protected override void Dispose(bool disposing)
 ```
 
 The exception being swallowed is a common design pattern for .NET. It is needed for `finally` blocks to work correctly.
+
+## Round 12 - SnowflakeDbDataAdapter
+
+* Removed unused fields.
+* Removed unused private constructor.
+* Removed unnecessary call to `GC.SuppressFinalize`.
+* Removed the explicit interface implementation.
+* Fixed the strongly typed methods.
+
+On that last point, this code is wrong.
+
+```
+new public SnowflakeDbCommand SelectCommand
+{
+	get { return _selectCommand; }
+	set { _selectCommand = value; }
+}
+```
+
+If the caller uses `DbDataAdapter.SelectCommand` instead of `SnowflakeDbDataAdapter.SelectCommand`, they will get the wrong value.
+
+Instead, the code should have looked like this:
+
+```
+new public SnowflakeDbCommand? SelectCommand
+{
+	get { return (SnowflakeDbCommand?)base.SelectCommand; }
+	set { base.SelectCommand = value; }
+}
+```
+
+Note how it reuses the base class's property for storing the value. This isn't 100% type safe, but it's what we need to do in order to prevent hard to detect bugs.
