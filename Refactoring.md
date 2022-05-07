@@ -672,6 +672,63 @@ The fields in this project use a mixture of `camelCase`, `_camelCase`, and `Pasc
 
 However, the intention is to make this into a maintained **Tortuga Research** project. As such, we're going to go with with the `m_PascalCase` naming convention to be consisent with other **Tortuga Research** projects. 
 
+### Blocking Methods with Obsolete 
+
+Since the `Prepare` method isn't implemented, we can block calls to it at compile time using `Obsolete` and hide it from the IDE using `EditorBrowsable`. And we'll change it to a `NotSupportedException` to make it clear that it isn't a planned feature for the future.
+
+
+```
+[Obsolete($"The method {nameof(Prepare)} is not implemented.", true)]
+[EditorBrowsable(EditorBrowsableState.Never)]
+public override void Prepare() => throw new NotSupportedException();
+```	
+
+### Nullable Reference Types
+
+Enabling Nullable Reference Types reveals a bug in the `SetStatement` method. Specifically, it is missing a null check on the connection parameter.
+
+In some of the methods, you will also see this pattern.
+
+```
+SetStatement();
+return sfStatement.Execute[...]
+```
+
+The null checker doesn't understand this. It can't detect that `SetStatement` ensures `sfStatement` isn't null.
+
+We can, however, change `SetStatement` to return a non-null reference to `sfStatement`. (We would have liked to remove the `sfStatement` entirely, but it's needed for the `Cancel` method.)
+
+Another change we can make is removing the initializer for `sfStatement` in the `DbConnection` property. This isn't needed because it will just be replaced when the command is executed.
+
+
+### Cleaning up the constructors
+
+The `CommandTimeout` is 0, so we don't need to explicitly set it.
+
+The `parameterCollection` field can be initialized in its declaration.
+
+### Blocking unsupported setters
+
+As with the `SnowflakeDbCommandBuilder`, properties whose setters shouldn't be called can be blocked. And since they don't provide useful information, the property will be hidden as well.
+
+```
+[EditorBrowsable(EditorBrowsableState.Never)]
+public override bool DesignTimeVisible
+{
+	get => false;
+
+	[Obsolete($"The {nameof(DesignTimeVisible)} property is not supported.", true)]
+	set => throw new NotSupportedException($"The {nameof(DesignTimeVisible)} property is not supported.");
+}
+```
+
+### Readonly fields
+
+Where possible, fields are marked as `readonly` instead of `private`. 
+
+This doesn't help performance, but it does act as a form of documentation. Developers glancing at the list of fields can quickly spot which ones are mutable.
+However, the intention is to make this into a maintained **Tortuga Research** project. As such, we're going to go with with the `m_PascalCase` naming convention to be consisent with other **Tortuga Research** projects. 
+
 ## Round 10 - SnowflakeDbCommandBuilder
 
 ### Readonly Properties
