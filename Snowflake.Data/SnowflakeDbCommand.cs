@@ -2,8 +2,12 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using Tortuga.Data.Snowflake.Core;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
 using Tortuga.Data.Snowflake.Core.ResponseProcessing;
@@ -13,136 +17,91 @@ namespace Tortuga.Data.Snowflake;
 [System.ComponentModel.DesignerCategory("Code")]
 public class SnowflakeDbCommand : DbCommand
 {
-	private DbConnection connection;
-
-	private SFStatement sfStatement;
-
-	private SnowflakeDbParameterCollection parameterCollection;
+	readonly SnowflakeDbParameterCollection m_ParameterCollection = new();
+	string m_CommandText = "";
+	SnowflakeDbConnection? m_Connection;
+	SFStatement? m_SFStatement;
 
 	public SnowflakeDbCommand()
 	{
-		// by default, no query timeout
-		this.CommandTimeout = 0;
-		parameterCollection = new SnowflakeDbParameterCollection();
 	}
 
 	public SnowflakeDbCommand(SnowflakeDbConnection connection)
 	{
-		this.connection = connection;
-		// by default, no query timeout
-		this.CommandTimeout = 0;
-		parameterCollection = new SnowflakeDbParameterCollection();
+		m_Connection = connection;
 	}
 
+	[AllowNull]
 	public override string CommandText
 	{
-		get; set;
+		get => m_CommandText;
+		set => m_CommandText = value ?? "";
 	}
 
-	public override int CommandTimeout
-	{
-		get; set;
-	}
+	public override int CommandTimeout { get; set; }
 
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public override CommandType CommandType
 	{
-		get
-		{
-			return CommandType.Text;
-		}
+		get => CommandType.Text;
 
-		set
-		{
-			if (value != CommandType.Text)
-			{
-				throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
-			}
-		}
+		[Obsolete($"The {nameof(CommandType)} property is not supported.", true)]
+		set => throw new NotSupportedException($"The {nameof(CommandType)} property is not supported.");
 	}
 
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public override bool DesignTimeVisible
 	{
-		get
-		{
-			return false;
-		}
+		get => false;
 
-		set
-		{
-			if (value)
-			{
-				throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
-			}
-		}
+		[Obsolete($"The {nameof(DesignTimeVisible)} property is not supported.", true)]
+		set => throw new NotSupportedException($"The {nameof(DesignTimeVisible)} property is not supported.");
 	}
 
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public override UpdateRowSource UpdatedRowSource
 	{
 		get => UpdateRowSource.None;
 
-		set
-		{
-			if (value != UpdateRowSource.None)
-			{
-				throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
-			}
-		}
+		[Obsolete($"The {nameof(UpdatedRowSource)} property is not supported.", true)]
+		set => throw new NotSupportedException($"The {nameof(UpdatedRowSource)} property is not supported.");
 	}
 
-	protected override DbConnection DbConnection
+	protected override DbConnection? DbConnection
 	{
-		get => connection;
+		get => m_Connection;
 
 		set
 		{
-			if (value == null)
+			if (m_Connection != null && m_Connection != value)
+				throw new InvalidOperationException("Connection already set.");
+
+			switch (value)
 			{
-				if (connection == null)
-				{
+				case null:
+					if (m_Connection == null)
+						return;
+					else
+						throw new InvalidOperationException("Unsetting the connection not supported.");
+
+				case SnowflakeDbConnection sfc:
+					m_Connection = sfc;
 					return;
-				}
 
-				// Unsetting connection not supported.
-				throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+				default:
+					throw new ArgumentException("Connection must be of type SnowflakeDbConnection.", nameof(DbConnection));
 			}
-
-			if (!(value is SnowflakeDbConnection))
-			{
-				// Must be of type SnowflakeDbConnection.
-				throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
-			}
-
-			var sfc = (SnowflakeDbConnection)value;
-			if (connection != null && connection != sfc)
-			{
-				// Connection already set.
-				throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
-			}
-
-			connection = sfc;
-			sfStatement = new SFStatement(sfc.SfSession);
 		}
 	}
 
-	protected override DbParameterCollection DbParameterCollection
-	{
-		get
-		{
-			return this.parameterCollection;
-		}
-	}
+	protected override DbParameterCollection DbParameterCollection => m_ParameterCollection;
 
-	protected override DbTransaction DbTransaction
-	{
-		get;
-
-		set;
-	}
+	protected override DbTransaction? DbTransaction { get; set; }
 
 	public override void Cancel()
 	{
 		// doesn't throw exception when sfStatement is null
-		sfStatement?.Cancel();
+		m_SFStatement?.Cancel();
 	}
 
 	public override int ExecuteNonQuery()
@@ -170,7 +129,7 @@ public class SnowflakeDbCommand : DbCommand
 			return DBNull.Value;
 	}
 
-	public override async Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
+	public override async Task<object?> ExecuteScalarAsync(CancellationToken cancellationToken)
 	{
 		if (cancellationToken.IsCancellationRequested)
 			throw new TaskCanceledException();
@@ -183,57 +142,57 @@ public class SnowflakeDbCommand : DbCommand
 			return DBNull.Value;
 	}
 
-	public override void Prepare()
-	{
-		throw new NotImplementedException();
-	}
+	[Obsolete($"The method {nameof(Prepare)} is not implemented.", true)]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public override void Prepare() => throw new NotSupportedException();
 
-	protected override DbParameter CreateDbParameter()
-	{
-		return new SnowflakeDbParameter();
-	}
+	protected override DbParameter CreateDbParameter() => new SnowflakeDbParameter();
 
 	protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
 	{
 		SFBaseResultSet resultSet = ExecuteInternal();
-		return new SnowflakeDbDataReader(this, resultSet);
+		return new SnowflakeDbDataReader(resultSet, m_Connection!, behavior);
 	}
 
 	protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
 	{
 		var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
-		return new SnowflakeDbDataReader(this, result);
+		return new SnowflakeDbDataReader(result, m_Connection!, behavior);
 	}
 
-	private static Dictionary<string, BindingDTO> convertToBindList(List<SnowflakeDbParameter> parameters)
+	Dictionary<string, BindingDTO> ConvertToBindList()
 	{
+		var parameters = m_ParameterCollection;
+		var binding = new Dictionary<string, BindingDTO>();
+
 		if (parameters == null || parameters.Count == 0)
 		{
-			return null;
+			return binding;
 		}
 		else
 		{
-			Dictionary<string, BindingDTO> binding = new Dictionary<string, BindingDTO>();
-			foreach (SnowflakeDbParameter parameter in parameters)
+			for (int i = 0; i < parameters.Count; i++)
 			{
+				SnowflakeDbParameter parameter = parameters[i];
 				string bindingType = "";
-				object bindingVal;
+				object? bindingVal;
 
-				if (parameter.Value.GetType().IsArray &&
+				var effectiveValue = parameter.Value ?? DBNull.Value;
+
+				if (effectiveValue.GetType().IsArray &&
 					// byte array and char array will not be treated as array binding
-					parameter.Value.GetType().GetElementType() != typeof(char) &&
-					parameter.Value.GetType().GetElementType() != typeof(byte))
+					effectiveValue is not char[] &&
+					effectiveValue is not byte[])
 				{
-					List<object> vals = new List<object>();
-					foreach (object val in (Array)parameter.Value)
+					List<object?> vals = new List<object?>();
+					foreach (object? val in (Array)effectiveValue)
 					{
 						// if the user is using interface, SFDataType will be None and there will
 						// a conversion from DbType to SFDataType
 						// if the user is using concrete class, they should specify SFDataType.
 						if (parameter.SFDataType == SFDataType.None)
 						{
-							Tuple<string, string> typeAndVal = SFDataConverter
-								.csharpTypeValToSfTypeVal(parameter.DbType, val);
+							var typeAndVal = SFDataConverter.csharpTypeValToSfTypeVal(parameter.DbType, val);
 
 							bindingType = typeAndVal.Item1;
 							vals.Add(typeAndVal.Item2);
@@ -250,8 +209,7 @@ public class SnowflakeDbCommand : DbCommand
 				{
 					if (parameter.SFDataType == SFDataType.None)
 					{
-						Tuple<string, string> typeAndVal = SFDataConverter
-							.csharpTypeValToSfTypeVal(parameter.DbType, parameter.Value);
+						var typeAndVal = SFDataConverter.csharpTypeValToSfTypeVal(parameter.DbType, parameter.Value);
 						bindingType = typeAndVal.Item1;
 						bindingVal = typeAndVal.Item2;
 					}
@@ -262,33 +220,41 @@ public class SnowflakeDbCommand : DbCommand
 					}
 				}
 
-				binding[parameter.ParameterName] = new BindingDTO(bindingType, bindingVal);
+				if (string.IsNullOrEmpty(parameter.ParameterName))
+					throw new InvalidOperationException($"Parameter {i} does not have a ParameterName");
+				binding[parameter.ParameterName!] = new BindingDTO(bindingType, bindingVal);
 			}
 			return binding;
 		}
 	}
 
-	private void SetStatement()
+	SFBaseResultSet ExecuteInternal(bool describeOnly = false)
 	{
-		var session = (connection as SnowflakeDbConnection).SfSession;
+		if (CommandText == null)
+			throw new InvalidOperationException($"{nameof(CommandText)} is null");
+		return SetStatement().Execute(CommandTimeout, CommandText, ConvertToBindList(), describeOnly);
+	}
+
+	Task<SFBaseResultSet> ExecuteInternalAsync(CancellationToken cancellationToken, bool describeOnly = false)
+	{
+		if (CommandText == null)
+			throw new InvalidOperationException($"{nameof(CommandText)} is null");
+		return SetStatement().ExecuteAsync(CommandTimeout, CommandText, ConvertToBindList(), describeOnly, cancellationToken);
+	}
+
+	SFStatement SetStatement()
+	{
+		if (m_Connection == null)
+			throw new InvalidOperationException("Can't execute command before the connection has been set.");
+
+		var session = m_Connection.SfSession;
 
 		// SetStatement is called when executing a command. If SfSession is null
 		// the connection has never been opened. Exception might be a bit vague.
 		if (session == null)
-			throw new Exception("Can't execute command when connection has never been opened");
+			throw new InvalidOperationException("Can't execute command before the connection has been opened.");
 
-		this.sfStatement = new SFStatement(session);
-	}
-
-	private SFBaseResultSet ExecuteInternal(bool describeOnly = false)
-	{
-		SetStatement();
-		return sfStatement.Execute(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly);
-	}
-
-	private Task<SFBaseResultSet> ExecuteInternalAsync(CancellationToken cancellationToken, bool describeOnly = false)
-	{
-		SetStatement();
-		return sfStatement.ExecuteAsync(CommandTimeout, CommandText, convertToBindList(parameterCollection.parameterList), describeOnly, cancellationToken);
+		m_SFStatement = new SFStatement(session); //Needed to support `Cancel`
+		return m_SFStatement;
 	}
 }

@@ -12,7 +12,9 @@ namespace Tortuga.Data.Snowflake;
 
 public class SnowflakeDbDataReader : DbDataReader
 {
-	private SnowflakeDbCommand dbCommand;
+	readonly CommandBehavior _commandBehavior;
+
+	readonly SnowflakeDbConnection _connection;
 
 	private SFBaseResultSet resultSet;
 
@@ -20,12 +22,13 @@ public class SnowflakeDbDataReader : DbDataReader
 
 	private readonly DataTable SchemaTable;
 
-	internal SnowflakeDbDataReader(SnowflakeDbCommand command, SFBaseResultSet resultSet)
+	internal SnowflakeDbDataReader(SFBaseResultSet resultSet, SnowflakeDbConnection connection, CommandBehavior commandBehavior)
 	{
-		this.dbCommand = command;
+		_connection = connection;
+		_commandBehavior = commandBehavior;
 		this.resultSet = resultSet;
-		this.isClosed = false;
-		this.SchemaTable = PopulateSchemaTable(resultSet);
+		isClosed = false;
+		SchemaTable = PopulateSchemaTable(resultSet);
 		RecordsAffected = resultSet.CalculateUpdateCount();
 	}
 
@@ -283,6 +286,8 @@ public class SnowflakeDbDataReader : DbDataReader
 		base.Close();
 		resultSet.close();
 		isClosed = true;
+		if (_commandBehavior.HasFlag(CommandBehavior.CloseConnection))
+			_connection.Close();
 	}
 
 	//

@@ -166,4 +166,10 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
 			return (SnowflakeDbParameter)parameter;
 		}
 	}
+
+	public new SnowflakeDbParameter this[int index]
+	{
+		get => parameterList[index];
+		set => parameterList[index] = value;
+	}
 }

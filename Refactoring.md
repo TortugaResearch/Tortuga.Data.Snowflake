@@ -461,3 +461,213 @@ internal static class IsExternalInit { }
 #endif
 ```
 
+## Round 9  - SnowflakeDbCommand
+
+### Field Types
+
+For some reason the type of the `connection` field is `DbConnection` instead of `SnowflakeDbConnection`. Which in turn opens the door for unsafe casts such as:
+
+```
+var session = (connection as SnowflakeDbConnection).SfSession;
+```
+
+### Fixing the error messages
+
+What do all of these error conditions have in common?
+
+```
+// Unsetting connection not supported.
+throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+
+// Must be of type SnowflakeDbConnection.
+throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+
+// Connection already set.
+throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+```
+
+They all return exactly the same error message. The actual error desciption is only available as a comment. We can fix that, and at the same time put in more appropriate exception types.
+
+```
+throw new InvalidOperationException("Unsetting the connection not supported.");
+
+throw new ArgumentException("Connection must be of type SnowflakeDbConnection.", nameof(DbConnection));
+
+throw new InvalidOperationException("Connection already set.");
+```
+
+### Pattern Matching to clarify intent
+
+Error messages aside, this series of `if` statements can be hard to follow.
+
+```
+set
+{
+	if (value == null)
+	{
+		if (connection == null)
+		{
+			return;
+		}
+
+		// Unsetting connection not supported.
+		throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+	}
+
+	if (!(value is SnowflakeDbConnection))
+	{
+		// Must be of type SnowflakeDbConnection.
+		throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+	}
+
+	var sfc = (SnowflakeDbConnection)value;
+	if (connection != null && connection != sfc)
+	{
+		// Connection already set.
+		throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
+	}
+
+	connection = sfc;
+	sfStatement = new SFStatement(sfc.SfSession);
+}
+```
+
+The first change is to move the guard statement up top. If the connection is already set, there is no reason to go through the rest of the branches.
+
+The we can switch on the `value`. Now it's easy to see the three possible values by glancing at the `case` labels.
+
+
+```
+set
+{
+	if (connection != null && connection != value)
+		throw new InvalidOperationException("Connection already set.");
+
+	switch (value)
+	{
+		case null:
+			if (connection == null)
+				return;
+			else
+				throw new InvalidOperationException("Unsetting the connection not supported.");
+
+		case SnowflakeDbConnection sfc:
+			connection = sfc;
+			sfStatement = new SFStatement(sfc.SfSession);
+			return;
+
+		default:
+			throw new ArgumentException("Connection must be of type SnowflakeDbConnection.", nameof(DbConnection));
+	}
+}
+```
+
+### Lost Stack Traces
+
+A common beginner mistake is to discard the stack trace of an exception.
+
+```
+catch (Exception ex)
+{
+	logger.Error("The command failed to execute.", ex);
+	throw ex;
+}
+```
+
+This can be fixed by using `throw;` instead of `throw ex;`.
+
+### Static methods
+
+The static method `convertToBindList` is only called in two places. In both cases, it's only argument is a field in the same class. Which means that it can be converted into a instance method that reads the field directly.
+
+### Collection return types
+
+Instead of returning a null, the method `convertToBindList` could return an empty dictionary. At the cost of a small allocation, we can eliminate the need for null checks down the line.
+
+Speaking of which, **nullable reference types** are not enabled in this library. That will have to be addressed.
+
+### Exception Types
+ 
+The type of exception being thrown is important to caller. It gives them hints about what went wrong so they know where to start their research. Some exceptions such as `InvalidOperationException` say "you can't do that now" while `NotSupportedException` says "you can never do that".
+
+```
+throw new Exception("Can't execute command when connection has never been opened");
+```
+
+This error message has the word "when" in it, suggesting that it should be a `InvalidOperationException`. 
+
+For more information on this concept, see [Designing with Exceptions in .NET
+SEP](https://www.infoq.com/articles/Exceptions-API-Design/).
+
+### ExecuteDbDataReader(CommandBehavior behavior)
+
+This method and its async version are ignoring then `CommandBehavior` parameter. Fixing this will require a change to `SnowflakeDbDataReader` as well.
+
+### AllowNull and Properties
+
+This is the code from `DBConnection`, as reported by Visual Studio.
+
+```
+        public abstract string ConnectionString
+        {
+            get;
+            [param: AllowNull]
+            set;
+        }
+```
+
+For our first attempt, we just copy it into `SnowflakeDbConnection`.
+
+```
+public override string ConnectionString { get; [param: AllowNull] set; }
+```
+
+But that gives this compiler error.
+
+```
+Error	CS8765	Nullability of type of parameter 'value' doesn't match overridden member (possibly because of nullability attributes).
+```
+
+What it really wants is this. 
+
+```
+[AllowNull]
+public override string ConnectionString { get; set; }
+```
+
+But now we have a non-nullable property that can store and return a null. To fix that issue, we need to normalize incoming nulls to empty strings.
+
+```
+string _connectionString = "";
+
+[AllowNull]
+public override string ConnectionString { 
+    get => _connectionString; 
+    set => _connectionString = value ?? ""; 
+}
+```
+
+### Legacy Support
+
+Since the AllowNull attribute doesn’t exist in older frameworks, we need to add it to the project with a conditional compiler flag.
+
+```
+#if !NETCOREAPP3_1_OR_GREATER
+namespace System.Diagnostics.CodeAnalysis
+{
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter, Inherited = false)]
+    sealed class AllowNullAttribute : Attribute
+    {
+        public AllowNullAttribute()
+        {
+        }
+    }
+}
+#endif
+``` 
+
+### Naming Conventions
+
+The fields in this project use a mixture of `camelCase`, `_camelCase`, and `PascalCase`. The normal `camelCase` is not acceptable because it conflicts with parameter names in constructors. And `PascalCase` conflicts with property names when properties need to be manually implemented. That leaves `_camelCase` as the natural choice for this project. And if this was a straight refactoring job, that's what we'd use.
+
+However, the intention is to make this into a maintained **Tortuga Research** project. As such, we're going to go with with the `m_PascalCase` naming convention to be consisent with other **Tortuga Research** projects. 
