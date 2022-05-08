@@ -435,8 +435,8 @@ The exception being swallowed is a common design pattern for .NET. It is needed 
 
 ## Round 9 - SnowflakeDbDataReader
 
-# Removed unused fields.
-# Removed unused constructor parameters.
+* Removed unused fields.
+* Removed unused constructor parameters.
 
 ### Implement GetEnumerator
 

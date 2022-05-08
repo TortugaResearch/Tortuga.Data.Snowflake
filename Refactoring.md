@@ -886,3 +886,100 @@ new public SnowflakeDbCommand? SelectCommand
 ```
 
 Note how it reuses the base class's property for storing the value. This isn't 100% type safe, but it's what we need to do in order to prevent hard to detect bugs.
+
+## Round 13 - SnowflakeDbDataReader
+
+As per modern conventions, we're going to use expression bodies for simple methods and properties. If the expression has something interesting that the developer needs to be aware of, we'll leave it as the older block style. For example, in `GetByte` we want to call out that all but the first element in the byte array is being discarded. So, we leave that on its own line.
+
+```
+public override byte GetByte(int ordinal)
+{
+	var bytes = m_ResultSet.GetValue<byte[]>(ordinal);
+	return bytes[0];
+}
+```
+
+We are also using `var` where possible to reduce unnecessary boilerplate. This will also make refactoring easier, as types won't need to be changed in multiple places.
+
+### Implement GetEnumerator
+
+The basic pattern for implementing `GetEnumerator` for a `DBDataReader` is this: 
+
+```
+
+public override IEnumerator GetEnumerator()
+{
+	return new Enumerator(this);
+}
+
+class Enumerator : IEnumerator
+{
+	SnowflakeDbDataReader _parent;
+	public Enumerator(SnowflakeDbDataReader parent)
+	{
+		_parent = parent;
+	}
+
+	object IEnumerator.Current => _parent;
+
+	bool IEnumerator.MoveNext()
+	{
+		return _parent.Read();
+	}
+
+	void IEnumerator.Reset()
+	{
+		throw new NotSupportedException();
+	}
+}
+```
+
+With `yield return`, we can simplify it to:
+
+```
+public override IEnumerator GetEnumerator()
+{
+	while (Read())
+	{
+		yield return this;
+	}
+}
+```
+
+### CommandBehavior.CloseConnection
+
+When this flag is set, closing the `DbDataReader` must result in the associated connection being closed.
+
+### Use nameof
+
+This is a minor change, but it is less error prone to use `nameof(dataOffset)` instead of `"dataOffset"`.
+
+### Hide NextResult
+
+This method always returns false, so we'll mark it as `EditorBrowsableState.Never`. But since calling it won't throw an exception, we don't need to take the extra step of marking it obsolete.
+
+### ArgumentOutOfRangeException
+
+These are modified to return the invalid value as part of the exception.
+
+```
+throw new ArgumentOutOfRangeException(nameof(dataOffset), "Non negative number is required.");
+
+throw new ArgumentOutOfRangeException(nameof(dataOffset), dataOffset, "Non negative number is required.");
+```
+
+### Constructor Parameter Checking
+
+In theory the parameters for the `SnowflakeDbDataReader` will never be null. In practice mistakes happen, so null checks are added as a precaution.
+
+```
+internal SnowflakeDbDataReader(SFBaseResultSet resultSet, SnowflakeDbConnection connection, CommandBehavior commandBehavior)
+{
+	m_ResultSet = resultSet ?? throw new ArgumentNullException(nameof(resultSet), $"{nameof(resultSet)} is null."); ;
+	m_Connection = connection ?? throw new ArgumentNullException(nameof(connection), $"{nameof(connection)} is null.");
+	m_CommandBehavior = commandBehavior;
+	m_SchemaTable = PopulateSchemaTable(resultSet);
+	RecordsAffected = resultSet.CalculateUpdateCount();
+}
+```
+

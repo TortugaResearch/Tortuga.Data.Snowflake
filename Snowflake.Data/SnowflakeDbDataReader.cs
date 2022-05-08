@@ -2,96 +2,183 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 using System.Collections;
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
-using Tortuga.Data.Snowflake.Core.Messages;
+using System.Data.SqlTypes;
 using Tortuga.Data.Snowflake.Core.ResponseProcessing;
 
 namespace Tortuga.Data.Snowflake;
 
 public class SnowflakeDbDataReader : DbDataReader
 {
-	readonly CommandBehavior _commandBehavior;
-
-	readonly SnowflakeDbConnection _connection;
-
-	private SFBaseResultSet resultSet;
-
-	private bool isClosed;
-
-	private readonly DataTable SchemaTable;
+	readonly CommandBehavior m_CommandBehavior;
+	readonly SnowflakeDbConnection m_Connection;
+	readonly DataTable m_SchemaTable;
+	bool m_IsClosed;
+	SFBaseResultSet m_ResultSet;
 
 	internal SnowflakeDbDataReader(SFBaseResultSet resultSet, SnowflakeDbConnection connection, CommandBehavior commandBehavior)
 	{
-		_connection = connection;
-		_commandBehavior = commandBehavior;
-		this.resultSet = resultSet;
-		isClosed = false;
-		SchemaTable = PopulateSchemaTable(resultSet);
+		m_ResultSet = resultSet ?? throw new ArgumentNullException(nameof(resultSet), $"{nameof(resultSet)} is null."); ;
+		m_Connection = connection ?? throw new ArgumentNullException(nameof(connection), $"{nameof(connection)} is null.");
+		m_CommandBehavior = commandBehavior;
+		m_SchemaTable = PopulateSchemaTable(resultSet);
 		RecordsAffected = resultSet.CalculateUpdateCount();
 	}
 
-	public override object this[string name]
-	{
-		get
-		{
-			return resultSet.GetValue(GetOrdinal(name));
-		}
-	}
+	public override int Depth => 0;
 
-	public override object this[int ordinal]
-	{
-		get
-		{
-			return resultSet.GetValue(ordinal);
-		}
-	}
-
-	public override int Depth
-	{
-		get
-		{
-			return 0;
-		}
-	}
-
-	public override int FieldCount
-	{
-		get
-		{
-			return resultSet.columnCount;
-		}
-	}
+	public override int FieldCount => m_ResultSet.columnCount;
 
 	public override bool HasRows
 	{
-		get
-		{
-			// return true for now since every query returned from server
-			// will have at least one row
-			return true;
-		}
+		// return true for now since every query returned from server
+		// will have at least one row
+		get => true;
 	}
 
-	public override bool IsClosed
-	{
-		get
-		{
-			return this.isClosed;
-		}
-	}
+	public override bool IsClosed => m_IsClosed;
 
 	public override int RecordsAffected { get; }
 
-	public override DataTable GetSchemaTable()
+	public override object this[string name] => m_ResultSet.GetValue(GetOrdinal(name));
+
+	public override object this[int ordinal] => m_ResultSet.GetValue(ordinal);
+
+	public override void Close()
 	{
-		return this.SchemaTable;
+		base.Close();
+		m_ResultSet.close();
+		m_IsClosed = true;
+		if (m_CommandBehavior.HasFlag(CommandBehavior.CloseConnection))
+			m_Connection.Close();
 	}
 
-	public string GetQueryId()
+	public override bool GetBoolean(int ordinal) => m_ResultSet.GetValue<bool>(ordinal);
+
+	public override byte GetByte(int ordinal)
 	{
-		return resultSet.queryId;
+		var bytes = m_ResultSet.GetValue<byte[]>(ordinal);
+		return bytes[0];
+	}
+
+	public override long GetBytes(int ordinal, long dataOffset, byte[]? buffer, int bufferOffset, int length)
+	{
+		return ReadSubset(ordinal, dataOffset, buffer, bufferOffset, length);
+	}
+
+	public override char GetChar(int ordinal)
+	{
+		var val = m_ResultSet.GetString(ordinal);
+		return val?[0] ?? (char)0;
+	}
+
+	public override long GetChars(int ordinal, long dataOffset, char[]? buffer, int bufferOffset, int length)
+	{
+		return ReadSubset(ordinal, dataOffset, buffer, bufferOffset, length);
+	}
+
+	public override string GetDataTypeName(int ordinal)
+	{
+		if (m_ResultSet.sfResultSetMetaData == null)
+			throw new InvalidOperationException($"{nameof(m_ResultSet.sfResultSetMetaData)} is null.");
+
+		return m_ResultSet.sfResultSetMetaData.getColumnTypeByIndex(ordinal).ToString();
+	}
+
+	public override DateTime GetDateTime(int ordinal) => m_ResultSet.GetValue<DateTime>(ordinal);
+
+	public override decimal GetDecimal(int ordinal) => m_ResultSet.GetValue<decimal>(ordinal);
+
+	public override double GetDouble(int ordinal) => m_ResultSet.GetValue<double>(ordinal);
+
+	public override IEnumerator GetEnumerator()
+	{
+		while (Read())
+		{
+			yield return this;
+		}
+	}
+
+	public override Type GetFieldType(int ordinal)
+	{
+		if (m_ResultSet.sfResultSetMetaData == null)
+			throw new InvalidOperationException($"{nameof(m_ResultSet.sfResultSetMetaData)} is null.");
+
+		return m_ResultSet.sfResultSetMetaData.getCSharpTypeByIndex(ordinal);
+	}
+
+	public override float GetFloat(int ordinal) => m_ResultSet.GetValue<float>(ordinal);
+
+	public override Guid GetGuid(int ordinal) => m_ResultSet.GetValue<Guid>(ordinal);
+
+	public override short GetInt16(int ordinal) => m_ResultSet.GetValue<short>(ordinal);
+
+	public override int GetInt32(int ordinal) => m_ResultSet.GetValue<int>(ordinal);
+
+	public override long GetInt64(int ordinal) => m_ResultSet.GetValue<long>(ordinal);
+
+	public override string GetName(int ordinal)
+	{
+		if (m_ResultSet.sfResultSetMetaData == null)
+			throw new InvalidOperationException($"{nameof(m_ResultSet.sfResultSetMetaData)} is null.");
+		return m_ResultSet.sfResultSetMetaData.getColumnNameByIndex(ordinal);
+	}
+
+	public override int GetOrdinal(string name)
+	{
+		if (m_ResultSet.sfResultSetMetaData == null)
+			throw new InvalidOperationException($"{nameof(m_ResultSet.sfResultSetMetaData)} is null.");
+		return m_ResultSet.sfResultSetMetaData.getColumnIndexByName(name);
+	}
+
+	public string? GetQueryId() => m_ResultSet.queryId;
+
+	public override DataTable GetSchemaTable() => m_SchemaTable;
+
+	public override string GetString(int ordinal) => m_ResultSet.GetString(ordinal) ?? throw new SqlNullValueException();
+
+	/// <summary>
+	/// Retrieves the value of the specified column as a TimeSpan object.
+	/// </summary>
+	/// <param name="ordinal">The zero-based column ordinal.</param>
+	/// <returns>The value of the specified column as a TimeSpan.</returns>
+	/// <exception cref="InvalidCastException">The specified cast is not valid.</exception>
+	/// <remarks>
+	/// Call IsDBNull to check for null values before calling this method, because TimeSpan
+	/// objects are not nullable.
+	/// </remarks>
+	public TimeSpan GetTimeSpan(int ordinal) => m_ResultSet.GetValue<TimeSpan>(ordinal);
+
+	public override object GetValue(int ordinal) => m_ResultSet.GetValue(ordinal);
+
+	public override int GetValues(object[] values)
+	{
+		var count = Math.Min(FieldCount, values.Length);
+		for (var i = 0; i < count; i++)
+		{
+			values[i] = GetValue(i);
+		}
+		return count;
+	}
+
+	public override bool IsDBNull(int ordinal) => m_ResultSet.IsDBNull(ordinal);
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public override bool NextResult() => false;
+
+	public override bool Read() => m_ResultSet.Next();
+
+	public override async Task<bool> ReadAsync(CancellationToken cancellationToken)
+	{
+		if (cancellationToken.IsCancellationRequested)
+			throw new TaskCanceledException();
+
+		return await m_ResultSet.NextAsync().ConfigureAwait(false);
 	}
 
 	private DataTable PopulateSchemaTable(SFBaseResultSet resultSet)
@@ -107,9 +194,12 @@ public class SnowflakeDbDataReader : DbDataReader
 		table.Columns.Add(SchemaTableColumn.AllowDBNull, typeof(bool));
 		table.Columns.Add(SchemaTableColumn.ProviderType, typeof(SFDataType));
 
-		int columnOrdinal = 0;
-		SFResultSetMetaData sfResultSetMetaData = resultSet.sfResultSetMetaData;
-		foreach (ExecResponseRowType rowType in sfResultSetMetaData.rowTypes)
+		if (resultSet.sfResultSetMetaData == null)
+			throw new ArgumentException($"{nameof(resultSet.sfResultSetMetaData)} is null.", nameof(resultSet));
+
+		var columnOrdinal = 0;
+		var sfResultSetMetaData = resultSet.sfResultSetMetaData;
+		foreach (var rowType in sfResultSetMetaData.rowTypes)
 		{
 			var row = table.NewRow();
 
@@ -120,7 +210,7 @@ public class SnowflakeDbDataReader : DbDataReader
 			row[SchemaTableColumn.NumericScale] = (int)rowType.scale;
 			row[SchemaTableColumn.AllowDBNull] = rowType.nullable;
 
-			Tuple<SFDataType, Type> types = sfResultSetMetaData.GetTypesByIndex(columnOrdinal);
+			var types = sfResultSetMetaData.GetTypesByIndex(columnOrdinal);
 			row[SchemaTableColumn.ProviderType] = types.Item1;
 			row[SchemaTableColumn.DataType] = types.Item2;
 
@@ -129,165 +219,6 @@ public class SnowflakeDbDataReader : DbDataReader
 		}
 
 		return table;
-	}
-
-	public override bool GetBoolean(int ordinal)
-	{
-		return resultSet.GetValue<bool>(ordinal);
-	}
-
-	public override byte GetByte(int ordinal)
-	{
-		byte[] bytes = resultSet.GetValue<byte[]>(ordinal);
-		return bytes[0];
-	}
-
-	public override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
-	{
-		return readSubset<byte>(ordinal, dataOffset, buffer, bufferOffset, length);
-	}
-
-	public override char GetChar(int ordinal)
-	{
-		string val = resultSet.GetString(ordinal);
-		return val[0];
-	}
-
-	public override long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length)
-	{
-		return readSubset<char>(ordinal, dataOffset, buffer, bufferOffset, length);
-	}
-
-	public override string GetDataTypeName(int ordinal)
-	{
-		return resultSet.sfResultSetMetaData.getColumnTypeByIndex(ordinal).ToString();
-	}
-
-	public override DateTime GetDateTime(int ordinal)
-	{
-		return resultSet.GetValue<DateTime>(ordinal);
-	}
-
-	/// <summary>
-	/// Retrieves the value of the specified column as a TimeSpan object.
-	/// </summary>
-	/// <param name="ordinal">The zero-based column ordinal.</param>
-	/// <returns>The value of the specified column as a TimeSpan.</returns>
-	/// <exception cref="InvalidCastException">The specified cast is not valid.</exception>
-	/// <remarks>
-	/// Call IsDBNull to check for null values before calling this method, because TimeSpan
-	/// objects are not nullable.
-	/// </remarks>
-	public TimeSpan GetTimeSpan(int ordinal)
-	{
-		return resultSet.GetValue<TimeSpan>(ordinal);
-	}
-
-	public override decimal GetDecimal(int ordinal)
-	{
-		return resultSet.GetValue<decimal>(ordinal);
-	}
-
-	public override double GetDouble(int ordinal)
-	{
-		return resultSet.GetValue<double>(ordinal);
-	}
-
-	public override IEnumerator GetEnumerator()
-	{
-		throw new NotImplementedException();
-	}
-
-	public override Type GetFieldType(int ordinal)
-	{
-		return resultSet.sfResultSetMetaData.getCSharpTypeByIndex(ordinal);
-	}
-
-	public override float GetFloat(int ordinal)
-	{
-		return resultSet.GetValue<float>(ordinal);
-	}
-
-	public override Guid GetGuid(int ordinal)
-	{
-		return resultSet.GetValue<Guid>(ordinal);
-	}
-
-	public override short GetInt16(int ordinal)
-	{
-		return resultSet.GetValue<short>(ordinal);
-	}
-
-	public override int GetInt32(int ordinal)
-	{
-		return resultSet.GetValue<int>(ordinal);
-	}
-
-	public override long GetInt64(int ordinal)
-	{
-		return resultSet.GetValue<long>(ordinal);
-	}
-
-	public override string GetName(int ordinal)
-	{
-		return resultSet.sfResultSetMetaData.getColumnNameByIndex(ordinal);
-	}
-
-	public override int GetOrdinal(string name)
-	{
-		return resultSet.sfResultSetMetaData.getColumnIndexByName(name);
-	}
-
-	public override string GetString(int ordinal)
-	{
-		return resultSet.GetString(ordinal);
-	}
-
-	public override object GetValue(int ordinal)
-	{
-		return resultSet.GetValue(ordinal);
-	}
-
-	public override int GetValues(object[] values)
-	{
-		int count = Math.Min(FieldCount, values.Length);
-		for (int i = 0; i < count; i++)
-		{
-			values[i] = GetValue(i);
-		}
-		return count;
-	}
-
-	public override bool IsDBNull(int ordinal)
-	{
-		return resultSet.IsDBNull(ordinal);
-	}
-
-	public override bool NextResult()
-	{
-		return false;
-	}
-
-	public override bool Read()
-	{
-		return resultSet.Next();
-	}
-
-	public override async Task<bool> ReadAsync(CancellationToken cancellationToken)
-	{
-		if (cancellationToken.IsCancellationRequested)
-			throw new TaskCanceledException();
-
-		return await resultSet.NextAsync();
-	}
-
-	public override void Close()
-	{
-		base.Close();
-		resultSet.close();
-		isClosed = true;
-		if (_commandBehavior.HasFlag(CommandBehavior.CloseConnection))
-			_connection.Close();
 	}
 
 	//
@@ -313,25 +244,19 @@ public class SnowflakeDbDataReader : DbDataReader
 	//
 	// Returns:
 	//     The actual number of elements read.
-	private long readSubset<T>(int ordinal, long dataOffset, T[] buffer, int bufferOffset, int length)
+	long ReadSubset<T>(int ordinal, long dataOffset, T[]? buffer, int bufferOffset, int length)
 	{
 		if (dataOffset < 0)
-		{
-			throw new ArgumentOutOfRangeException("dataOffset", "Non negative number is required.");
-		}
+			throw new ArgumentOutOfRangeException(nameof(dataOffset), dataOffset, "Non negative number is required.");
 
 		if (bufferOffset < 0)
-		{
-			throw new ArgumentOutOfRangeException("bufferOffset", "Non negative number is required.");
-		}
+			throw new ArgumentOutOfRangeException(nameof(bufferOffset), bufferOffset, "Non negative number is required.");
 
-		if ((null != buffer) && (bufferOffset > buffer.Length))
-		{
-			throw new System.ArgumentException("Destination buffer is not long enough. " +
-				"Check the buffer offset, length, and the buffer's lower bounds.", "buffer");
-		}
+		if ((buffer != null) && (bufferOffset > buffer.Length))
+			throw new ArgumentException("Destination buffer is not long enough. " +
+				"Check the buffer offset, length, and the buffer's lower bounds.", nameof(buffer));
 
-		T[] data = resultSet.GetValue<T[]>(ordinal);
+		var data = m_ResultSet.GetValue<T[]>(ordinal);
 
 		// https://docs.microsoft.com/en-us/dotnet/api/system.data.idatarecord.getbytes?view=net-5.0#remarks
 		// If you pass a buffer that is null, GetBytes returns the length of the row in bytes.
@@ -344,15 +269,15 @@ public class SnowflakeDbDataReader : DbDataReader
 
 		if (dataOffset > data.Length)
 		{
-			throw new System.ArgumentException("Source data is not long enough. " +
-				"Check the data offset, length, and the data's lower bounds.", "dataOffset");
+			throw new ArgumentException("Source data is not long enough. " +
+				"Check the data offset, length, and the data's lower bounds.", nameof(dataOffset));
 		}
 		else
 		{
 			// How much data is available after the offset
-			long dataLength = data.Length - dataOffset;
+			var dataLength = data.Length - dataOffset;
 			// How much data to read
-			long elementsRead = Math.Min(length, dataLength);
+			var elementsRead = Math.Min(length, dataLength);
 			Array.Copy(data, dataOffset, buffer, bufferOffset, elementsRead);
 
 			return elementsRead;

@@ -173,8 +173,8 @@ public class SnowflakeDbCommand : DbCommand
 		{
 			for (int i = 0; i < parameters.Count; i++)
 			{
-				SnowflakeDbParameter parameter = parameters[i];
-				string bindingType = "";
+				var parameter = parameters[i];
+				var bindingType = "";
 				object? bindingVal;
 
 				var effectiveValue = parameter.Value ?? DBNull.Value;
@@ -184,7 +184,7 @@ public class SnowflakeDbCommand : DbCommand
 					effectiveValue is not char[] &&
 					effectiveValue is not byte[])
 				{
-					List<object?> vals = new List<object?>();
+					var vals = new List<object?>();
 					foreach (object? val in (Array)effectiveValue)
 					{
 						// if the user is using interface, SFDataType will be None and there will

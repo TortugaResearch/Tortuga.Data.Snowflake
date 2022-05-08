@@ -62,7 +62,7 @@ public class SnowflakeDbConnection : DbConnection
 	{
 		string alterDbCommand = $"use database {databaseName}";
 
-		using (IDbCommand cmd = this.CreateCommand())
+		using (var cmd = CreateCommand())
 		{
 			cmd.CommandText = alterDbCommand;
 			cmd.ExecuteNonQuery();
@@ -73,7 +73,7 @@ public class SnowflakeDbConnection : DbConnection
 	{
 		string alterDbCommand = $"use database {databaseName}";
 
-		using (var cmd = this.CreateCommand())
+		using (var cmd = CreateCommand())
 		{
 			cmd.CommandText = alterDbCommand;
 			await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
@@ -90,7 +90,7 @@ public class SnowflakeDbConnection : DbConnection
 
 	public Task CloseAsync(CancellationToken cancellationToken)
 	{
-		TaskCompletionSource<object> taskCompletionSource = new TaskCompletionSource<object>();
+		var taskCompletionSource = new TaskCompletionSource<object>();
 
 		if (cancellationToken.IsCancellationRequested)
 		{
@@ -160,7 +160,7 @@ public class SnowflakeDbConnection : DbConnection
 				if (previousTask.IsFaulted)
 				{
 					// Exception from SfSession.OpenAsync
-					Exception sfSessionEx = previousTask.Exception!;
+					var sfSessionEx = previousTask.Exception!;
 					m_ConnectionState = ConnectionState.Closed;
 					throw new SnowflakeDbException(sfSessionEx, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INTERNAL_ERROR, "Unable to connect");
 				}
