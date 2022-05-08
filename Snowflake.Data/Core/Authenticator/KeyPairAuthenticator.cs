@@ -13,6 +13,8 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.Sessions;
+using static Tortuga.Data.Snowflake.Core.Sessions.SFSessionProperty;
+using static Tortuga.Data.Snowflake.SFError;
 
 namespace Tortuga.Data.Snowflake.Core.Authenticator;
 
@@ -39,6 +41,13 @@ class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
 	{
 		this.session = session;
 		this.rsaProvider = new RSACryptoServiceProvider();
+
+		// Get private key path or private key from connection settings
+		if (!session.properties.ContainsKey(PRIVATE_KEY_FILE) && !session.properties.ContainsKey(PRIVATE_KEY))
+		{
+			// There is no PRIVATE_KEY_FILE defined, can't authenticate with key-pair
+			throw new SnowflakeDbException(INVALID_CONNECTION_STRING, "Missing required PRIVATE_KEY_FILE or PRIVATE_KEY for key pair authentication");
+		}
 	}
 
 	/// <see cref="IAuthenticator.AuthenticateAsync"/>

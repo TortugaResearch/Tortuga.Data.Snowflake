@@ -1185,3 +1185,110 @@ This should throw an `ArgumentOutOfRangeException` in the constructor.
 Just like in `SnowflakeDbConnection`, this should swallow exceptions.
 
 
+
+## Round 17 - AuthenticatorFactory
+
+The code in this class is surprisingly hard to read. There's not much going on, but the lines are so long that the important parts get lost in the noise. Fortunately, there are a few tricks to deal with that.
+
+```
+if (!session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath) &&
+	!session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent))
+```
+
+### Local variables
+
+
+Since `session.properties` is used a lot, we can capture it in a local variable.
+
+```
+var properties = session.properties;
+
+[...]
+
+if (!properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath) &&
+	!properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent))
+```
+
+### Static Usings
+
+
+Next, we introduce a `static using` declaration so we don't need to repeat the enum name.
+
+```
+using static Snowflake.Data.Core.SFSessionProperty;
+
+[...]
+
+if (!properties.TryGetValue(PRIVATE_KEY_FILE, out var pkPath) &&
+	!properties.TryGetValue(PRIVATE_KEY, out var pkContent))
+```
+
+### Discards
+
+The output parameters of the `TryGet` methods aren't being used, so we can use discards.
+
+```
+if (!properties.TryGetValue(PRIVATE_KEY_FILE, out _) &&
+	!properties.TryGetValue(PRIVATE_KEY, out _))
+```
+
+### Correct Methods
+
+Though in this case, if we really don't need the value then we can choose a different method. 
+
+```
+if (!properties.ContainsKey(PRIVATE_KEY_FILE) &&
+	!properties.ContainsKey(PRIVATE_KEY))
+```
+
+### Array type inference
+
+Here is another trick to remove boiler plate.
+
+```
+throw new SnowflakeDbException(
+	SFError.INVALID_CONNECTION_STRING,
+	new object[] { invalidStringDetail });
+```
+
+The type `object` is not necessary, as the compiler can infer if from the context.
+
+```
+throw new SnowflakeDbException(
+	SFError.INVALID_CONNECTION_STRING,
+	new[] { invalidStringDetail });
+```
+
+Technically it's inferring a `string[]` array, because that's the type of object being put inside it. But arrays are 'covariant', which means you can give a `string[]` array to a function that expects an `object[]` array.
+
+### Params
+
+A strange thing about this call is that we didn't need to create the array at all. The parameter is marked with `params`, which means the compiler will create the array for us.
+
+```
+throw new SnowflakeDbException(
+	SFError.INVALID_CONNECTION_STRING,
+	invalidStringDetail);
+```
+
+### File Scoped Namespaces
+
+Part of the readability issue is that the statements were so long that they needed to be broken over multiple lines. 
+
+By using `namespace Snowflake.Data.Core.Authenticator;` instead of,
+
+```
+namespace Snowflake.Data.Core.Authenticator;
+{
+```
+
+we remove a level of indentation. Four spaces don’t sound like much, but it can be enough to get everything onto one line. Especially when combined with other techniques shown above.
+
+
+### Validation
+
+Validation for each authenticator is performed in the `AuthenticationFactory` rather than the authenticators themselves. 
+
+This is a problem because if those authenticators are created via any other means, the validation won't be performed.
+
+It can be fixed by moving the validation into the constructor of each authenticator class.

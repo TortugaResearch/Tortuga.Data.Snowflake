@@ -1,5 +1,7 @@
 ﻿using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.Sessions;
+using static Tortuga.Data.Snowflake.Core.Sessions.SFSessionProperty;
+using static Tortuga.Data.Snowflake.SFError;
 
 namespace Tortuga.Data.Snowflake.Core.Authenticator;
 
@@ -19,6 +21,13 @@ class OAuthAuthenticator : BaseAuthenticator, IAuthenticator
 	internal OAuthAuthenticator(SFSession session) : base(session, AUTH_NAME)
 	{
 		this.session = session;
+
+		// Get private key path or private key from connection settings
+		if (!session.properties.ContainsKey(TOKEN))
+		{
+			// There is no TOKEN defined, can't authenticate with oauth
+			throw new SnowflakeDbException(INVALID_CONNECTION_STRING, "Missing required TOKEN for Oauth authentication");
+		}
 	}
 
 	/// <see cref="IAuthenticator.Authenticate"/>
