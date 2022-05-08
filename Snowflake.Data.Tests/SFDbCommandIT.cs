@@ -151,9 +151,8 @@ class SFDbCommandIT : SFBaseTest
 				cmd.CommandType = CommandType.StoredProcedure;
 				Assert.Fail();
 			}
-			catch (SnowflakeDbException e)
+			catch (NotSupportedException)
 			{
-				Assert.AreEqual(270009, e.ErrorCode);
 			}
 
 			Assert.AreEqual(UpdateRowSource.None, cmd.UpdatedRowSource);
@@ -162,9 +161,8 @@ class SFDbCommandIT : SFBaseTest
 				cmd.UpdatedRowSource = UpdateRowSource.FirstReturnedRecord;
 				Assert.Fail();
 			}
-			catch (SnowflakeDbException e)
+			catch (NotSupportedException)
 			{
-				Assert.AreEqual(270009, e.ErrorCode);
 			}
 
 			Assert.AreSame(conn, cmd.Connection);
@@ -173,9 +171,8 @@ class SFDbCommandIT : SFBaseTest
 				cmd.Connection = null;
 				Assert.Fail();
 			}
-			catch (SnowflakeDbException e)
+			catch (InvalidOperationException)
 			{
-				Assert.AreEqual(270009, e.ErrorCode);
 			}
 
 			Assert.IsFalse(((SnowflakeDbCommand)cmd).DesignTimeVisible);
@@ -184,9 +181,8 @@ class SFDbCommandIT : SFBaseTest
 				((SnowflakeDbCommand)cmd).DesignTimeVisible = true;
 				Assert.Fail();
 			}
-			catch (SnowflakeDbException e)
+			catch (NotSupportedException)
 			{
-				Assert.AreEqual(270009, e.ErrorCode);
 			}
 
 			object val = cmd.ExecuteScalar();
