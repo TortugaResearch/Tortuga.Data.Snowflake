@@ -983,3 +983,18 @@ internal SnowflakeDbDataReader(SFBaseResultSet resultSet, SnowflakeDbConnection 
 }
 ```
 
+## Round 14 – SnowflakeDbParameter
+
+### Remove Unnecessary Initializers
+
+Remove the assignments for `SFDataType` and `OriginType` in the default constructor as they will be automatically initialized to that value.
+
+### Fix parameter names in constructors
+
+By convention, parameters are in `camelCase`.
+
+Again, we'll mark the overridden property as obsolete. 
+
+### Nullability
+
+Enabling null checking on this class catches potential null reference exceptions in `SnowflakeDbCommand`.
