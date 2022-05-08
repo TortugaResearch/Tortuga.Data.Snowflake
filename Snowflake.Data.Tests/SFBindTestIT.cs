@@ -530,14 +530,20 @@ class SFBindTestIT : SFBaseTest
 				p1.DbType = DbType.Int16;
 				p2.Value = 2;
 
-				Array parameters = Array.CreateInstance(typeof(IDbDataParameter), 3);
+				var parameters = new IDbDataParameter[3];
 				parameters.SetValue(p1, 0);
 				parameters.SetValue(p2, 1);
 				parameters.SetValue(p3, 2);
 
 				((SnowflakeDbParameterCollection)cmd.Parameters).AddRange(parameters);
-				Assert.Throws<NotImplementedException>(
-					() => { cmd.Parameters.CopyTo(parameters, 5); });
+
+				var target = new IDataParameter[15];
+
+				cmd.Parameters.CopyTo(target, 5);
+
+				var badTarget = new int[15];
+				Assert.Throws<InvalidCastException>(
+					() => { cmd.Parameters.CopyTo(badTarget, 5); });
 
 				Assert.AreEqual(3, cmd.Parameters.Count);
 				Assert.IsTrue(cmd.Parameters.Contains(p2));

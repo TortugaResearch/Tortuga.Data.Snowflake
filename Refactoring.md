@@ -998,3 +998,174 @@ Again, we'll mark the overridden property as obsolete.
 ### Nullability
 
 Enabling null checking on this class catches potential null reference exceptions in `SnowflakeDbCommand`.
+
+## Round 15 - SnowflakeDbParameterCollection
+
+This is an old collection design from a time when .NET didn't have generics. So a lot of runtime casts are needed.
+
+### SyncRoot
+
+This should be a read-only object field. 
+
+It should have never existed in the first place. But it does, so it should be honored.
+
+### Add
+
+The `tryCastThrow` method isn't needed. The built-in type check when casting is sufficient.
+
+A type-safe version of `Add` should be created.
+
+### AddRange
+
+This code:
+
+```
+public override void AddRange(Array values)
+{
+	IEnumerator e = values.GetEnumerator();
+	while (e.MoveNext())
+	{
+		parameterList.Add(tryCastThrow(e.Current));
+	}
+}
+```
+
+Can be converted into a normal for-each loop:
+
+```
+public override void AddRange(Array values)
+{
+	foreach(SnowflakeDbParameter value in values)
+		_parameterList.Add(value);
+}
+``` 
+
+### CopyTo 
+
+The base case is easy to implement with a simple cast.
+
+```
+public override void CopyTo(Array array, int index)
+{
+	_parameterList.CopyTo((SnowflakeDbParameter[])array, index);
+}
+```
+
+For the full version, a bit more is needed.
+
+```
+public override void CopyTo(Array array, int index)
+{
+	if (array is SnowflakeDbParameter[] sTypedArray)
+		m_ParameterList.CopyTo(sTypedArray, index);
+	else if (array is DbParameter[] dTypedArray)
+		for (var i = 0; i < m_ParameterList.Count; i++)
+			dTypedArray[i + index] = m_ParameterList[i];
+	else if (array is IDataParameter[] iTypedArray)
+		for (var i = 0; i < m_ParameterList.Count; i++)
+			iTypedArray[i + index] = m_ParameterList[i];
+	else if (array is IDbDataParameter[] idTypedArray)
+		for (var i = 0; i < m_ParameterList.Count; i++)
+			idTypedArray[i + index] = m_ParameterList[i];
+}
+```
+
+Arguably we didn't need to take it quite this far, but it will make it easier on the caller. 
+
+Though now we run into a code duplication issue. To resolve it, we can leverage array covariance and cast the target collection to `object[]`.
+
+```
+public override void CopyTo(Array array, int index)
+{
+	switch (array)
+	{
+		case SnowflakeDbParameter[] sTypedArray:
+			m_ParameterList.CopyTo(sTypedArray, index);
+			break;
+
+		case DbParameter[]:
+		case IDbDataParameter[]:
+		case IDataParameter[]:
+			var untypedArray = (object[])array;
+			for (var i = 0; i < m_ParameterList.Count; i++)
+				untypedArray[i + index] = m_ParameterList[i];
+			break;
+
+		default: throw new InvalidCastException($"{nameof(array)} is not a supported array type.");
+	}
+}
+```
+
+But what if there is another valid array type that we're not aware of? We can just try it and allow the runtime to throw the InvalidCastException.
+
+```
+public override void CopyTo(Array array, int index)
+{
+	if (array is SnowflakeDbParameter[] sTypedArray)
+		m_ParameterList.CopyTo(sTypedArray, index);
+	else
+	{
+		var untypedArray = (object[])array;
+		for (var i = 0; i < m_ParameterList.Count; i++)
+			untypedArray[i + index] = m_ParameterList[i];
+	}
+}
+```
+
+At this point, we have to ask why have the special case at all?
+
+```
+public override void CopyTo(Array array, int index)
+{
+	var untypedArray = (object[])array;
+	for (var i = 0; i < m_ParameterList.Count; i++)
+		untypedArray[i + index] = m_ParameterList[i];
+}
+```
+
+
+### IndexOf
+
+This function:
+
+```
+public override int IndexOf(string parameterName)
+{
+	int index = 0;
+	foreach (SnowflakeDbParameter parameter in _parameterList)
+	{
+		if (String.Compare(parameterName, parameter.ParameterName) == 0)
+		{
+			return index;
+		}
+		index++;
+	}
+	return -1;
+}
+```
+
+should be just a normal for loop.
+
+```
+public override int IndexOf(string parameterName)
+{
+	for (int i = 0; i < _parameterList.Count; i++)
+		if (_parameterList[i].ParameterName == parameterName)
+			return i;
+	return -1;
+}
+```
+
+### Fields should be private
+
+There is no need to mark `_parameterList` internal. Anything that reads it can read the class itself.
+
+For `for` loops, this property is needed.
+
+```
+public new SnowflakeDbParameter this[int index]
+{
+	get => _parameterList[index];
+	set => _parameterList[index] = value;
+}
+```
