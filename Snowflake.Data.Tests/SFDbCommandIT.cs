@@ -366,9 +366,8 @@ public void TestUseV2ChunkDownloader()
 				conn.BeginTransaction(IsolationLevel.ReadUncommitted);
 				Assert.Fail();
 			}
-			catch (SnowflakeDbException e)
+			catch (ArgumentOutOfRangeException)
 			{
-				Assert.AreEqual(270009, e.ErrorCode);
 			}
 
 			IDbTransaction tran = conn.BeginTransaction(IsolationLevel.ReadCommitted);

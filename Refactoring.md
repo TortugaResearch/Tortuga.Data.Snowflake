@@ -1169,3 +1169,19 @@ public new SnowflakeDbParameter this[int index]
 	set => _parameterList[index] = value;
 }
 ```
+
+## Round 16 - SnowflakeDbTransaction
+
+### Finalizer
+
+Again, finalizers are no longer recommended. 
+
+### Isolation Level
+
+This should throw an `ArgumentOutOfRangeException` in the constructor.
+
+### Dispose
+
+Just like in `SnowflakeDbConnection`, this should swallow exceptions.
+
+

@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 using System.Data;
 using System.Data.Common;
 
@@ -9,48 +11,32 @@ namespace Tortuga.Data.Snowflake;
 
 public class SnowflakeDbTransaction : DbTransaction
 {
-	private IsolationLevel isolationLevel;
-
-	private SnowflakeDbConnection connection;
-
-	private bool disposed = false;
+	readonly SnowflakeDbConnection m_Connection;
+	bool m_Disposed;
+	readonly IsolationLevel m_IsolationLevel;
 
 	public SnowflakeDbTransaction(IsolationLevel isolationLevel, SnowflakeDbConnection connection)
 	{
 		if (isolationLevel != IsolationLevel.ReadCommitted)
-		{
-			throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
-		}
+			throw new ArgumentOutOfRangeException(nameof(isolationLevel), isolationLevel, "Only IsolationLevel.ReadCommitted is supported.");
 
-		this.isolationLevel = isolationLevel;
-		this.connection = connection;
+		m_IsolationLevel = isolationLevel;
+		m_Connection = connection;
 
-		using (IDbCommand command = connection.CreateCommand())
+		using (var command = connection.CreateCommand())
 		{
 			command.CommandText = "BEGIN";
 			command.ExecuteNonQuery();
 		}
 	}
 
-	public override IsolationLevel IsolationLevel
-	{
-		get
-		{
-			return isolationLevel;
-		}
-	}
+	public override IsolationLevel IsolationLevel => m_IsolationLevel;
 
-	protected override DbConnection DbConnection
-	{
-		get
-		{
-			return connection;
-		}
-	}
+	protected override DbConnection DbConnection => m_Connection;
 
 	public override void Commit()
 	{
-		using (IDbCommand command = connection.CreateCommand())
+		using (var command = m_Connection.CreateCommand())
 		{
 			command.CommandText = "COMMIT";
 			command.ExecuteNonQuery();
@@ -59,7 +45,7 @@ public class SnowflakeDbTransaction : DbTransaction
 
 	public override void Rollback()
 	{
-		using (IDbCommand command = connection.CreateCommand())
+		using (var command = m_Connection.CreateCommand())
 		{
 			command.CommandText = "ROLLBACK";
 			command.ExecuteNonQuery();
@@ -68,22 +54,21 @@ public class SnowflakeDbTransaction : DbTransaction
 
 	protected override void Dispose(bool disposing)
 	{
-		if (disposed)
+		if (m_Disposed)
 			return;
 
 		// Rollback the uncommitted transaction when the connection is open
-		if (connection != null && connection.IsOpen())
+		if (m_Connection != null && m_Connection.IsOpen())
 		{
 			// When there is no uncommitted transaction, Snowflake would just ignore the rollback request;
-			this.Rollback();
+			try
+			{
+				Rollback();
+			}
+			catch { } ///Don't allow exceptions to escape the Dispose method.
 		}
-		disposed = true;
+		m_Disposed = true;
 
 		base.Dispose(disposing);
-	}
-
-	~SnowflakeDbTransaction()
-	{
-		Dispose(false);
 	}
 }
