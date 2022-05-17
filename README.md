@@ -28,8 +28,8 @@ Steps
 
 1. Check out the source code from GitHub:
 ```{r, engine='bash', code_block_name}
-git clone git@github.com:snowflakedb/snowflake-connector-net snowflake-connector-net
-```
+ git clone git@github.com:snowflakedb/snowflake-connector-net snowflake-connector-net
+````
 
 2. Pull down the dependency:
 ```{r, engine='bash', code_block_name}
@@ -60,7 +60,7 @@ Testing the Connector
 =====================
 
 Before running tests, create a parameters.json file under Snowflake.Data.Tests\ directory. In this file, specify username, password and account info that tests will run against. Here is a sample parameters.json file
-```
+````json
 {
   "testconnection": {
     "SNOWFLAKE_TEST_USER": "snowman",
@@ -73,7 +73,7 @@ Before running tests, create a parameters.json file under Snowflake.Data.Tests\ 
     "SNOWFLAKE_TEST_HOST": "testaccount.snowflakecomputing.com"
   }
 }
-```
+````
 
 Command Prompt
 --------------
@@ -141,7 +141,7 @@ The following table lists all valid connection properties:
 
 The following example demonstrates how to open a connection to Snowflake. This example uses a password for authentication.
 
-```cs
+````csharp
 using (IDbConnection conn = new SnowflakeDbConnection())
 {
     conn.ConnectionString = "account=testaccount;user=testuser;password=XXXXX;db=testdb;schema=testschema";
@@ -150,7 +150,7 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     
     conn.Close();
 }
-```
+````
 
 If you are using a different method for authentication, see the examples below:
 
@@ -161,7 +161,7 @@ If you are using a different method for authentication, see the examples below:
 
   * Specify the file containing an unencrypted private key:
 
-    ```cs
+    ````csharp
     using (IDbConnection conn = new SnowflakeDbConnection())
     {
         conn.ConnectionString = "account=testaccount;authenticator=snowflake_jwt;user=testuser;private_key_file={pathToThePrivateKeyFile};db=testdb;schema=testschema";
@@ -170,7 +170,7 @@ If you are using a different method for authentication, see the examples below:
     
         conn.Close();
     }
-    ```
+    ````
 
     where:
 
@@ -178,7 +178,7 @@ If you are using a different method for authentication, see the examples below:
 
   * Specify the file containing an encrypted private key:
 
-    ```cs
+    ````csharp
     using (IDbConnection conn = new SnowflakeDbConnection())
     {
         conn.ConnectionString = "account=testaccount;authenticator=snowflake_jwt;user=testuser;private_key_file={pathToThePrivateKeyFile};private_key_pwd={passwordForDecryptingThePrivateKey};db=testdb;schema=testschema";
@@ -187,7 +187,7 @@ If you are using a different method for authentication, see the examples below:
     
         conn.Close();
     }
-    ```
+    ````
 
     where:
 
@@ -196,7 +196,7 @@ If you are using a different method for authentication, see the examples below:
 
   * Specify an unencrypted private key (read from a file):
 
-    ```cs
+    ````csharp
     using (IDbConnection conn = new SnowflakeDbConnection())
     {
         string privateKeyContent = File.ReadAllText({pathToThePrivateKeyFile}).Replace("=", "==");
@@ -207,7 +207,7 @@ If you are using a different method for authentication, see the examples below:
     
         conn.Close();
     }
-    ```
+    ````
 
     where:
 
@@ -218,7 +218,7 @@ If you are using a different method for authentication, see the examples below:
   After setting up [OAuth](https://docs.snowflake.com/en/user-guide/oauth.html), set `AUTHENTICATOR=oauth` and `TOKEN` to the
   OAuth token in the connection string.
 
-  ```cs
+  ````csharp
   using (IDbConnection conn = new SnowflakeDbConnection())
   {
       conn.ConnectionString = "account=testaccount;user=testuser;authenticator=oauth;token={oauthTokenValue};db=testdb;schema=testschema";
@@ -227,7 +227,7 @@ If you are using a different method for authentication, see the examples below:
     
       conn.Close();
   }
-  ```
+  ````
 
   where:
 
@@ -237,7 +237,7 @@ If you are using a different method for authentication, see the examples below:
 
   In the connection string, set `AUTHENTICATOR=externalbrowser`, and set `USER` to the login name for your IdP.
 
-  ```cs
+  ````csharp
   using (IDbConnection conn = new SnowflakeDbConnection())
   {
       conn.ConnectionString = "account=testaccount;authenticator=externalbrowser;user={login_name_for_IdP};db=testdb;schema=testschema";
@@ -246,7 +246,7 @@ If you are using a different method for authentication, see the examples below:
 
       conn.Close();
   }
-  ```
+  ````
 
   where:
 
@@ -259,7 +259,7 @@ If you are using a different method for authentication, see the examples below:
   [URL of the endpoint for your Okta account](https://docs.snowflake.com/en/user-guide/admin-security-fed-auth-use.html#label-native-sso-okta),
   and set `USER` to the login name for your IdP.
 
-  ```cs
+````csharp
   using (IDbConnection conn = new SnowflakeDbConnection())
   {
       conn.ConnectionString = "account=testaccount;authenticator={okta_url_endpoint};user={login_name_for_IdP};db=testdb;schema=testschema";
@@ -268,7 +268,7 @@ If you are using a different method for authentication, see the examples below:
 
       conn.Close();
   }
-  ```
+  ````
 
   where:
 
@@ -279,7 +279,7 @@ In v2.0.4 and later releases, you can configure the driver to connect through a 
 driver to connect through the proxy server `myproxyserver` on port `8888`. The driver authenticates to the proxy server as the
 user `test` with the password `test`:
 
-```cs
+````csharp
 using (IDbConnection conn = new SnowflakeDbConnection())
 {
     conn.ConnectionString = "account=testaccount;user=testuser;password=XXXXX;db=testdb;schema=testschema;useProxy=true;proxyHost=myproxyserver;proxyPort=8888;proxyUser=test;proxyPassword=test";
@@ -288,7 +288,7 @@ using (IDbConnection conn = new SnowflakeDbConnection())
     
     conn.Close();
 }
-```
+````
 
 Mapping .NET and Snowflake Data Types
 -------------------------------------
@@ -310,7 +310,7 @@ The .NET driver supports the following mappings from .NET to Snowflake data type
 Run a Query and Read Data
 -------------------------
 
-```cs
+````csharp
 using (IDbConnection conn = new SnowflakeDbConnection())
 {
     conn.ConnectionString = connectionString;
@@ -327,7 +327,7 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 
     conn.Close();
 }
-```
+````
 
 Note that for a `TIME` column, the reader returns a `System.DateTime` value. If you need a `System.TimeSpan` column, call the
 `getTimeSpan` method in `SnowflakeDbDataReader`. This method was introduced in the v2.0.4 release.
@@ -348,7 +348,7 @@ is INTEGER, then you can bind C# data types Int32 or Int16.
 
 This example inserts 3 rows into a table with one column.
 
-```cs
+````csharp
 using (IDbConnection conn = new SnowflakeDbConnection())
 {
     conn.ConnectionString = connectionString;
@@ -389,7 +389,7 @@ using (IDbConnection conn = new SnowflakeDbConnection())
 
     conn.Close();
 }
-```
+````
 
 Close the Connection
 --------------------
@@ -414,7 +414,7 @@ The Snowflake Connector for .NET uses [log4net](http://logging.apache.org/log4ne
 
 Here is a sample app.config file that uses [log4net](http://logging.apache.org/log4net/)
 
-```xml
+````xml
   <configSections>
     <section name="log4net" type="log4net.Config.Log4NetConfigurationSectionHandler, log4net"/>
   </configSections>
@@ -438,7 +438,7 @@ Here is a sample app.config file that uses [log4net](http://logging.apache.org/l
       <appender-ref ref="MyRollingFileAppender" />
     </root>
   </log4net>
-```
+````
 
 Notice
 ----------------
