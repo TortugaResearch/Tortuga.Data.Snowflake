@@ -2,8 +2,6 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-
-using Tortuga.Data.Snowflake.Core.Configuration;
 using Tortuga.Data.Snowflake.Core.Messages;
 
 namespace Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
@@ -14,8 +12,8 @@ class ChunkDownloaderFactory
 												 SFBaseResultSet resultSet,
 												 CancellationToken cancellationToken)
 	{
-		int ChunkDownloaderVersion = SFConfiguration.Instance().ChunkDownloaderVersion;
-		if (SFConfiguration.Instance().UseV2ChunkDownloader)
+		int ChunkDownloaderVersion = resultSet.Configuration.ChunkDownloaderVersion;
+		if (resultSet.Configuration.UseV2ChunkDownloader)
 			ChunkDownloaderVersion = 2;
 
 		switch (ChunkDownloaderVersion)
@@ -34,7 +32,7 @@ class ChunkDownloaderFactory
 					responseData.qrmk,
 					responseData.chunkHeaders,
 					cancellationToken,
-					resultSet.sfStatement.SfSession.restRequester);
+					resultSet.sfStatement.SfSession.restRequester, resultSet.Configuration);
 
 			default:
 				return new SFBlockingChunkDownloaderV3(responseData.rowType.Count,

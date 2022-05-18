@@ -30,8 +30,9 @@ abstract class SFBaseResultSet
 	/// <returns>True if it works, false otherwise.</returns>
 	internal abstract bool Rewind();
 
-	protected SFBaseResultSet()
+	protected SFBaseResultSet(SnowflakeDbConfiguration configuration)
 	{
+		Configuration = configuration;
 	}
 
 	internal T GetValue<T>(int columnIndex)
@@ -74,4 +75,6 @@ abstract class SFBaseResultSet
 	{
 		isClosed = true;
 	}
+
+	internal SnowflakeDbConfiguration Configuration { get; }
 }
