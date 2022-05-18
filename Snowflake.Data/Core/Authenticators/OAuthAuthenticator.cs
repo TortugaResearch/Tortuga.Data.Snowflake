@@ -3,13 +3,13 @@ using Tortuga.Data.Snowflake.Core.Sessions;
 using static Tortuga.Data.Snowflake.Core.Sessions.SFSessionProperty;
 using static Tortuga.Data.Snowflake.SFError;
 
-namespace Tortuga.Data.Snowflake.Core.Authenticator;
+namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
 /// <summary>
 /// OAuthenticator is used when using  an OAuth token for authentication.
 /// See <see cref="https://docs.snowflake.com/en/user-guide/oauth.html"/> for more information.
 /// </summary>
-class OAuthAuthenticator : BaseAuthenticator
+class OAuthAuthenticator : Authenticator
 {
 	// The authenticator setting value to use to authenticate using key pair authentication.
 	public const string AUTH_NAME = "oauth";

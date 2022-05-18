@@ -4,7 +4,7 @@
 
 using System.Net;
 using System.Security;
-using Tortuga.Data.Snowflake.Core.Authenticator;
+using Tortuga.Data.Snowflake.Core.Authenticators;
 
 namespace Tortuga.Data.Snowflake.Core.Sessions;
 

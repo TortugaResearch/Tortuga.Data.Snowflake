@@ -15,12 +15,12 @@ using Tortuga.Data.Snowflake.Core.Sessions;
 using System.Runtime.InteropServices;
 #endif
 
-namespace Tortuga.Data.Snowflake.Core.Authenticator;
+namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
 /// <summary>
 /// ExternalBrowserAuthenticator would start a new browser to perform authentication
 /// </summary>
-class ExternalBrowserAuthenticator : BaseAuthenticator
+class ExternalBrowserAuthenticator : Authenticator
 {
 	public const string AUTH_NAME = "externalbrowser";
 	const string TokenRequestPrefix = "?token=";

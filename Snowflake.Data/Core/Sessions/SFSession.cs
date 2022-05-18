@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using System.Net;
 using System.Security;
 using System.Text.RegularExpressions;
-using Tortuga.Data.Snowflake.Core.Authenticator;
+using Tortuga.Data.Snowflake.Core.Authenticators;
 using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
 
@@ -26,7 +26,7 @@ class SFSession
 
 	internal IRestRequester restRequester { get; private set; }
 
-	private IAuthenticator authenticator;
+	private Authenticator authenticator;
 
 	internal SFSessionProperties properties;
 

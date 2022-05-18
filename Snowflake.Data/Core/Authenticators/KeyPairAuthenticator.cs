@@ -18,13 +18,13 @@ using Tortuga.Data.Snowflake.Core.Sessions;
 using static Tortuga.Data.Snowflake.Core.Sessions.SFSessionProperty;
 using static Tortuga.Data.Snowflake.SFError;
 
-namespace Tortuga.Data.Snowflake.Core.Authenticator;
+namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
 /// <summary>
 /// KeyPairAuthenticator is used for Key pair based authentication.
 /// See <see cref="https://docs.snowflake.com/en/user-guide/key-pair-auth.html"/> for more information.
 /// </summary>
-class KeyPairAuthenticator : BaseAuthenticator
+class KeyPairAuthenticator : Authenticator
 {
 	// The authenticator setting value to use to authenticate using key pair authentication.
 	public const string AUTH_NAME = "snowflake_jwt";

@@ -8,7 +8,7 @@ using Tortuga.Data.Snowflake.Core.Sessions;
 using static System.StringComparison;
 using static Tortuga.Data.Snowflake.SFError;
 
-namespace Tortuga.Data.Snowflake.Core.Authenticator;
+namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
 /// <summary>
 /// Authenticator Factory to build authenticators
@@ -21,7 +21,7 @@ internal class AuthenticatorFactory
 	/// <param name="session">session that requires the authentication</param>
 	/// <returns>authenticator</returns>
 	/// <exception cref="SnowflakeDbException">when authenticator is unknown</exception>
-	internal static IAuthenticator GetAuthenticator(SFSession session)
+	internal static Authenticator GetAuthenticator(SFSession session)
 	{
 		var type = session.properties[SFSessionProperty.AUTHENTICATOR];
 

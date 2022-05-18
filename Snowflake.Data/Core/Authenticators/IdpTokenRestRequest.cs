@@ -8,7 +8,7 @@ using System.Text;
 using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
 
-namespace Tortuga.Data.Snowflake.Core.Authenticator;
+namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
 internal class IdpTokenRestRequest : BaseRestRequest, IRestRequest
 {

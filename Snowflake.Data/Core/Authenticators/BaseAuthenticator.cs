@@ -8,12 +8,12 @@ using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
 using Tortuga.Data.Snowflake.Core.Sessions;
 
-namespace Tortuga.Data.Snowflake.Core.Authenticator;
+namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
 /// <summary>
 /// A base implementation for all authenticators to create and send a login request.
 /// </summary>
-internal abstract class BaseAuthenticator : IAuthenticator
+internal abstract class Authenticator
 {
 	// The client environment properties
 	readonly LoginRequestClientEnv m_ClientEnv = SFEnvironment.ClientEnv;
@@ -22,7 +22,7 @@ internal abstract class BaseAuthenticator : IAuthenticator
 	/// The abstract base for all authenticators.
 	/// </summary>
 	/// <param name="session">The session which created the authenticator.</param>
-	public BaseAuthenticator(SFSession session)
+	public Authenticator(SFSession session)
 	{
 		Session = session;
 

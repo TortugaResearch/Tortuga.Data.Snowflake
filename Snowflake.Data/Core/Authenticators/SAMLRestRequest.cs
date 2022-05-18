@@ -6,7 +6,7 @@ using System.Net.Http.Headers;
 using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
 
-namespace Tortuga.Data.Snowflake.Core.Authenticator;
+namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
 class SAMLRestRequest : BaseRestRequest, IRestRequest
 {

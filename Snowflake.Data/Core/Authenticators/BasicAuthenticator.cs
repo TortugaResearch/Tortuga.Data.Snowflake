@@ -7,9 +7,9 @@
 using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.Sessions;
 
-namespace Tortuga.Data.Snowflake.Core.Authenticator;
+namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
-class BasicAuthenticator : BaseAuthenticator
+class BasicAuthenticator : Authenticator
 {
 	public const string AUTH_NAME = "snowflake";
 

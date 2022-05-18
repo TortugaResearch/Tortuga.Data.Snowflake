@@ -10,12 +10,12 @@ using Tortuga.Data.Snowflake.Core.RequestProcessing;
 using Tortuga.Data.Snowflake.Core.Sessions;
 using Tortuga.HttpClientUtilities;
 
-namespace Tortuga.Data.Snowflake.Core.Authenticator;
+namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
 /// <summary>
 /// OktaAuthenticator would perform serveral steps of authentication with Snowflake and Okta idp
 /// </summary>
-class OktaAuthenticator : BaseAuthenticator
+class OktaAuthenticator : Authenticator
 {
 	readonly string m_AuthName;
 

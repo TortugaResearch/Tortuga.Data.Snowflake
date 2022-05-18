@@ -1349,4 +1349,10 @@ To address this, a set of extension methods were created. For down-level clients
 While not a perfect solution, it will allow the library to slowly eliminate the 'sync over async' situations as `HttpClient` is improved.
 
 
+## Round 19 - IAuthenticator and BaseAuthenticator
 
+This interface is marked as `internal` and thus can't be used for mocking. The only thing that implements it is `BaseAuthenticator`. At this point there is no purpose to it and thus it can be deleted.
+
+To match .NET naming conventions for base classes, `BaseAuthenticator` simply becomes `Authenticator`. The `Base` prefix is unnecessary.
+
+Another naming convention is that namespaces should be plural. So the `Core.Authenticator` namespace is renamed `Authenticators`. 

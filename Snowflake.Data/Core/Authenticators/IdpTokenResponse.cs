@@ -4,7 +4,7 @@
 
 using Newtonsoft.Json;
 
-namespace Tortuga.Data.Snowflake.Core.Authenticator;
+namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
 class IdpTokenResponse
 {
