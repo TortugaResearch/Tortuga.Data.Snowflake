@@ -198,7 +198,7 @@ class SFSession
 			authenticator = AuthenticatorFactory.GetAuthenticator(this);
 		}
 
-		authenticator.Authenticate();
+		authenticator.Login();
 	}
 
 	internal async Task OpenAsync(CancellationToken cancellationToken)
@@ -208,7 +208,7 @@ class SFSession
 			authenticator = AuthenticatorFactory.GetAuthenticator(this);
 		}
 
-		await authenticator.AuthenticateAsync(cancellationToken).ConfigureAwait(false);
+		await authenticator.LoginAsync(cancellationToken).ConfigureAwait(false);
 	}
 
 	internal void close()

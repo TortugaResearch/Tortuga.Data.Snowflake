@@ -16,11 +16,11 @@ internal interface IAuthenticator
 	/// <param name="cancellationToken"></param>
 	/// <returns></returns>
 	/// <exception cref="SnowflakeDbException"></exception>
-	Task AuthenticateAsync(CancellationToken cancellationToken);
+	Task LoginAsync(CancellationToken cancellationToken);
 
 	/// <summary>
 	/// Process the authentication synchronously
 	/// </summary>
 	/// <exception cref="SnowflakeDbException"></exception>
-	void Authenticate();
+	void Login();
 }

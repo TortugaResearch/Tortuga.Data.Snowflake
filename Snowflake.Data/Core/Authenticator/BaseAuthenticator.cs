@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
 using Tortuga.Data.Snowflake.Core.Sessions;
@@ -11,60 +13,62 @@ namespace Tortuga.Data.Snowflake.Core.Authenticator;
 /// <summary>
 /// A base implementation for all authenticators to create and send a login request.
 /// </summary>
-internal abstract class BaseAuthenticator
+internal abstract class BaseAuthenticator : IAuthenticator
 {
-	// The name of the authenticator.
-	protected string authName;
-
-	// The session which created this authenticator.
-	protected SFSession session;
-
 	// The client environment properties
-	protected LoginRequestClientEnv ClientEnv = SFEnvironment.ClientEnv;
+	readonly LoginRequestClientEnv m_ClientEnv = SFEnvironment.ClientEnv;
 
 	/// <summary>
 	/// The abstract base for all authenticators.
 	/// </summary>
 	/// <param name="session">The session which created the authenticator.</param>
-	public BaseAuthenticator(SFSession session, string authName)
+	public BaseAuthenticator(SFSession session)
 	{
-		this.session = session;
-		this.authName = authName;
+		Session = session;
+
 		// Update the value for insecureMode because it can be different for each session
-		ClientEnv.insecureMode = session.properties[SFSessionProperty.INSECUREMODE];
+		m_ClientEnv.insecureMode = session.properties[SFSessionProperty.INSECUREMODE];
 		if (session.properties.TryGetValue(SFSessionProperty.APPLICATION, out var applicationName))
 		{
 			// If an application name has been specified in the connection setting, use it
 			// Otherwise, it will default to the running process name
-			ClientEnv.application = applicationName;
+			m_ClientEnv.application = applicationName;
 		}
 	}
 
-	//// <see cref="IAuthenticator.AuthenticateAsync"/>
-	protected async Task LoginAsync(CancellationToken cancellationToken)
+	/// <summary>
+	/// The name of the authenticator.
+	/// </summary>
+	protected abstract string AuthName { get; }
+
+	/// <summary>
+	/// The session which created this authenticator.
+	/// </summary>
+	protected SFSession Session { get; }
+
+	public virtual void Login()
 	{
 		var loginRequest = BuildLoginRequest();
 
-		var response = await session.restRequester.PostAsync<LoginResponse>(loginRequest, cancellationToken).ConfigureAwait(false);
+		var response = Session.restRequester.Post<LoginResponse>(loginRequest);
 
-		session.ProcessLoginResponse(response);
+		Session.ProcessLoginResponse(response);
 	}
 
-	/// <see cref="IAuthenticator.Authenticate"/>
-	protected void Login()
+	public virtual async Task LoginAsync(CancellationToken cancellationToken)
 	{
 		var loginRequest = BuildLoginRequest();
 
-		var response = session.restRequester.Post<LoginResponse>(loginRequest);
+		var response = await Session.restRequester.PostAsync<LoginResponse>(loginRequest, cancellationToken).ConfigureAwait(false);
 
-		session.ProcessLoginResponse(response);
+		Session.ProcessLoginResponse(response);
 	}
 
 	/// <summary>
 	/// Specialized authenticator data to add to the login request.
 	/// </summary>
 	/// <param name="data">The login request data to update.</param>
-	protected abstract void SetSpecializedAuthenticatorData(ref LoginRequestData data);
+	protected abstract void SetSpecializedAuthenticatorData(LoginRequestData data);
 
 	/// <summary>
 	/// Builds a simple login request. Each authenticator will fill the Data part with their
@@ -72,24 +76,24 @@ internal abstract class BaseAuthenticator
 	/// ClienAppVersion...).
 	/// </summary>
 	/// <returns>A login request to send to the server.</returns>
-	private SFRestRequest BuildLoginRequest()
+	SFRestRequest BuildLoginRequest()
 	{
 		// build uri
-		var loginUrl = session.BuildLoginUrl();
+		var loginUrl = Session.BuildLoginUrl();
 
 		LoginRequestData data = new LoginRequestData()
 		{
-			loginName = session.properties[SFSessionProperty.USER],
-			accountName = session.properties[SFSessionProperty.ACCOUNT],
+			loginName = Session.properties[SFSessionProperty.USER],
+			accountName = Session.properties[SFSessionProperty.ACCOUNT],
 			clientAppId = SFEnvironment.DriverName,
 			clientAppVersion = SFEnvironment.DriverVersion,
-			clientEnv = ClientEnv,
-			SessionParameters = session.ParameterMap,
-			Authenticator = authName,
+			clientEnv = m_ClientEnv,
+			SessionParameters = Session.ParameterMap,
+			Authenticator = AuthName,
 		};
 
-		SetSpecializedAuthenticatorData(ref data);
+		SetSpecializedAuthenticatorData(data);
 
-		return session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
+		return Session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
 	}
 }

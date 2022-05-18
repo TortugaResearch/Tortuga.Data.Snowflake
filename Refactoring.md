@@ -1292,3 +1292,61 @@ Validation for each authenticator is performed in the `AuthenticationFactory` ra
 This is a problem because if those authenticators are created via any other means, the validation won't be performed.
 
 It can be fixed by moving the validation into the constructor of each authenticator class.
+
+## Round 18 - BaseAuthenticator and its Subclasses
+
+### Protected Fields
+
+In ideomatic .NET code, fields are almost always private. Normally a protected field should be converted into a property with proper access controls.
+
+#### ClientEnv
+
+The `ClientEnv` field is easy. We just need to change it from `protected` to `readonly`.
+
+#### session
+
+The `session` field is slightly trickier. It is set by the base class constructor, and then again in the subclass constructor. Once this redundancy is removed, it can be made `readonly`.
+
+It still needs to be `protected` because at least one subclass reads from it. So we mark it as a readonly property instead.
+
+#### authName
+
+The last field has a few interesting characteristics.
+
+* Its value is determined by a constant in each subclass (except `OktaAuthenticator`).
+* It should never be modified.
+
+This sounds more like an abstract, read-only property than a field.
+
+### ref parameters
+
+The `SetSpecializedAuthenticatorData` method incorrectly marks its parameter as `ref`. If a subclass were to replace the parameter `data` insead of just modifying it, the code would fail.
+
+```
+protected abstract void SetSpecializedAuthenticatorData(ref LoginRequestData data);
+```
+
+Fortunatelly none of the subclasses does this, so the `ref` flag can be removed.
+
+### Constants vs Read-only Fields
+
+In most subclasses, there is a static field named `AUTH_NAME`. This should be a constant.
+
+### IAuthenticator interface
+
+Every subclass of `BaseAuthenticator` implement this interface, so it can be moved into that class. 
+
+Normally the interface methods would be exposed in the base class as `abstract` methods. But the interface methods `Authenticate` and `AuthenticateAsync` always call `Login` and `LoginAsync`.
+
+This means we can combine them. Simply rename `Authenticate` and `AuthenticateAsync` to be `Login` and `LoginAsync`. Then make the real `Login` and `LoginAsync` methods `virtual`. 
+
+### Sync Over Async
+
+There are places where `Task.Run` is used haphazardly to call asynchronous methods from a synchronous context. This is essentially caused by the design of `HttpClient`, which originally didn't have any synchronous methods, and the design of `System.Data`, which originally only had synchronous methods.
+
+To address this, a set of extension methods were created. For down-level clients, these simulate the core synchronous methods from .NET Core 5. Then it stacks on synchronous methods for all of the asynchronous methods that doesn't exist yet.
+
+While not a perfect solution, it will allow the library to slowly eliminate the 'sync over async' situations as `HttpClient` is improved.
+
+
+

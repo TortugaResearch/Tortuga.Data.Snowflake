@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
@@ -18,34 +20,36 @@ namespace Tortuga.Data.Snowflake.Core.Authenticator;
 /// <summary>
 /// ExternalBrowserAuthenticator would start a new browser to perform authentication
 /// </summary>
-class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
+class ExternalBrowserAuthenticator : BaseAuthenticator
 {
-	public static readonly string AUTH_NAME = "externalbrowser";
-	private static readonly string TOKEN_REQUEST_PREFIX = "?token=";
+	public const string AUTH_NAME = "externalbrowser";
+	const string TokenRequestPrefix = "?token=";
 
-	private static readonly byte[] SUCCESS_RESPONSE = System.Text.Encoding.UTF8.GetBytes(
+	static readonly byte[] s_successResponse = System.Text.Encoding.UTF8.GetBytes(
 		"<!DOCTYPE html><html><head><meta charset=\"UTF-8\"/>" +
 		"<title> SAML Response for Snowflake </title></head>" +
 		"<body>Your identity was confirmed and propagated to Snowflake .NET driver. You can close this window now and go back where you started from." +
 		"</body></html>;"
 		);
 
+	protected override string AuthName => AUTH_NAME;
+
 	// The saml token to send in the login request.
-	private string samlResponseToken;
+	string? _samlResponseToken;
 
 	// The proof key to send in the login request.
-	private string proofKey;
+	string? _proofKey;
 
 	/// <summary>
 	/// Constructor of the External authenticator
 	/// </summary>
 	/// <param name="session"></param>
-	internal ExternalBrowserAuthenticator(SFSession session) : base(session, AUTH_NAME)
+	internal ExternalBrowserAuthenticator(SFSession session) : base(session)
 	{
 	}
 
 	/// <see cref="IAuthenticator"/>
-	async Task IAuthenticator.AuthenticateAsync(CancellationToken cancellationToken)
+	async public override Task LoginAsync(CancellationToken cancellationToken)
 	{
 		int localPort = GetRandomUnusedPort();
 		using (var httpListener = GetHttpListener(localPort))
@@ -54,26 +58,26 @@ class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
 
 			var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
 			var authenticatorRestResponse =
-				await session.restRequester.PostAsync<AuthenticatorResponse>(
+				await Session.restRequester.PostAsync<AuthenticatorResponse>(
 					authenticatorRestRequest,
 					cancellationToken
 				).ConfigureAwait(false);
 			authenticatorRestResponse.FilterFailedResponse();
 
 			var idpUrl = authenticatorRestResponse.data.ssoUrl;
-			proofKey = authenticatorRestResponse.data.proofKey;
+			_proofKey = authenticatorRestResponse.data.proofKey;
 
 			StartBrowser(idpUrl);
 
 			var context = await httpListener.GetContextAsync().ConfigureAwait(false);
 			var request = context.Request;
-			samlResponseToken = ValidateAndExtractToken(request);
+			_samlResponseToken = ValidateAndExtractToken(request);
 			HttpListenerResponse response = context.Response;
 			try
 			{
 				using (var output = response.OutputStream)
 				{
-					await output.WriteAsync(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length).ConfigureAwait(false);
+					await output.WriteAsync(s_successResponse, 0, s_successResponse.Length).ConfigureAwait(false);
 				}
 			}
 			catch
@@ -88,7 +92,7 @@ class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
 	}
 
 	/// <see cref="IAuthenticator"/>
-	void IAuthenticator.Authenticate()
+	public override void Login()
 	{
 		int localPort = GetRandomUnusedPort();
 		using (var httpListener = GetHttpListener(localPort))
@@ -97,23 +101,23 @@ class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
 			httpListener.Start();
 
 			var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
-			var authenticatorRestResponse = session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
+			var authenticatorRestResponse = Session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
 			authenticatorRestResponse.FilterFailedResponse();
 
 			var idpUrl = authenticatorRestResponse.data.ssoUrl;
-			proofKey = authenticatorRestResponse.data.proofKey;
+			_proofKey = authenticatorRestResponse.data.proofKey;
 
 			StartBrowser(idpUrl);
 
 			var context = httpListener.GetContext();
 			var request = context.Request;
-			samlResponseToken = ValidateAndExtractToken(request);
+			_samlResponseToken = ValidateAndExtractToken(request);
 			HttpListenerResponse response = context.Response;
 			try
 			{
 				using (var output = response.OutputStream)
 				{
-					output.Write(SUCCESS_RESPONSE, 0, SUCCESS_RESPONSE.Length);
+					output.Write(s_successResponse, 0, s_successResponse.Length);
 				}
 			}
 			catch
@@ -127,7 +131,7 @@ class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
 		base.Login();
 	}
 
-	private static int GetRandomUnusedPort()
+	static int GetRandomUnusedPort()
 	{
 		var listener = new TcpListener(IPAddress.Loopback, 0);
 		listener.Start();
@@ -136,7 +140,7 @@ class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
 		return port;
 	}
 
-	private static HttpListener GetHttpListener(int port)
+	static HttpListener GetHttpListener(int port)
 	{
 		string redirectURI = string.Format("http://{0}:{1}/", IPAddress.Loopback, port);
 		HttpListener listener = new HttpListener();
@@ -144,69 +148,69 @@ class ExternalBrowserAuthenticator : BaseAuthenticator, IAuthenticator
 		return listener;
 	}
 
-	private static void StartBrowser(string url)
+	static void StartBrowser(string url)
 	{
 		// The following code is learnt from https://brockallen.com/2016/09/24/process-start-for-urls-on-net-core/
 #if NETFRAMEWORK
 		// .net standard would pass here
 		Process.Start(url);
 #else
-            // hack because of this: https://github.com/dotnet/corefx/issues/10361
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                url = url.Replace("&", "^&");
-                Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { CreateNoWindow = true });
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                Process.Start("xdg-open", url);
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                Process.Start("open", url);
-            }
-            else
-            {
-                throw new SnowflakeDbException(SFError.UNSUPPORTED_PLATFORM);
-            }
+		// hack because of this: https://github.com/dotnet/corefx/issues/10361
+		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+		{
+			url = url.Replace("&", "^&");
+			Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { CreateNoWindow = true });
+		}
+		else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+		{
+			Process.Start("xdg-open", url);
+		}
+		else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+		{
+			Process.Start("open", url);
+		}
+		else
+		{
+			throw new SnowflakeDbException(SFError.UNSUPPORTED_PLATFORM);
+		}
 #endif
 	}
 
-	private static string ValidateAndExtractToken(HttpListenerRequest request)
+	static string ValidateAndExtractToken(HttpListenerRequest request)
 	{
 		if (request.HttpMethod != "GET")
 		{
 			throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_WRONG_METHOD, request.HttpMethod);
 		}
 
-		if (request.Url.Query == null || !request.Url.Query.StartsWith(TOKEN_REQUEST_PREFIX))
+		if (request.Url?.Query == null || !request.Url.Query.StartsWith(TokenRequestPrefix))
 		{
-			throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_INVALID_PREFIX, request.Url.Query);
+			throw new SnowflakeDbException(SFError.BROWSER_RESPONSE_INVALID_PREFIX, request.Url?.Query);
 		}
 
-		return Uri.UnescapeDataString(request.Url.Query.Substring(TOKEN_REQUEST_PREFIX.Length));
+		return Uri.UnescapeDataString(request.Url.Query.Substring(TokenRequestPrefix.Length));
 	}
 
-	private SFRestRequest BuildAuthenticatorRestRequest(int port)
+	SFRestRequest BuildAuthenticatorRestRequest(int port)
 	{
-		var fedUrl = session.BuildUri(RestPath.SF_AUTHENTICATOR_REQUEST_PATH);
+		var fedUrl = Session.BuildUri(RestPath.SF_AUTHENTICATOR_REQUEST_PATH);
 		var data = new AuthenticatorRequestData()
 		{
-			AccountName = session.properties[SFSessionProperty.ACCOUNT],
+			AccountName = Session.properties[SFSessionProperty.ACCOUNT],
 			Authenticator = AUTH_NAME,
 			BrowserModeRedirectPort = port.ToString(),
 		};
 
-		int connectionTimeoutSec = int.Parse(session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);
+		int connectionTimeoutSec = int.Parse(Session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);
 
-		return session.BuildTimeoutRestRequest(fedUrl, new AuthenticatorRequest() { Data = data });
+		return Session.BuildTimeoutRestRequest(fedUrl, new AuthenticatorRequest() { Data = data });
 	}
 
-	/// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(ref LoginRequestData)"/>
-	protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
+	/// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(LoginRequestData)"/>
+	protected override void SetSpecializedAuthenticatorData(LoginRequestData data)
 	{
 		// Add the token and proof key to the Data
-		data.Token = samlResponseToken;
-		data.ProofKey = proofKey;
+		data.Token = _samlResponseToken;
+		data.ProofKey = _proofKey;
 	}
 }

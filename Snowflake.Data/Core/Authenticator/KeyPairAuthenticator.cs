@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 using Microsoft.IdentityModel.Tokens;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -22,57 +24,58 @@ namespace Tortuga.Data.Snowflake.Core.Authenticator;
 /// KeyPairAuthenticator is used for Key pair based authentication.
 /// See <see cref="https://docs.snowflake.com/en/user-guide/key-pair-auth.html"/> for more information.
 /// </summary>
-class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
+class KeyPairAuthenticator : BaseAuthenticator
 {
 	// The authenticator setting value to use to authenticate using key pair authentication.
-	public static readonly string AUTH_NAME = "snowflake_jwt";
+	public const string AUTH_NAME = "snowflake_jwt";
 
 	// The RSA provider to use to sign the tokens
-	private RSACryptoServiceProvider rsaProvider;
+	readonly RSACryptoServiceProvider m_RsaProvider;
 
 	// The jwt token to send in the login request.
-	private string jwtToken;
+	string? m_JwtToken;
 
 	/// <summary>
 	/// Constructor for the Key-Pair authenticator.
 	/// </summary>
 	/// <param name="session">Session which created this authenticator</param>
-	internal KeyPairAuthenticator(SFSession session) : base(session, AUTH_NAME)
+	internal KeyPairAuthenticator(SFSession session) : base(session)
 	{
-		this.session = session;
-		this.rsaProvider = new RSACryptoServiceProvider();
-
 		// Get private key path or private key from connection settings
 		if (!session.properties.ContainsKey(PRIVATE_KEY_FILE) && !session.properties.ContainsKey(PRIVATE_KEY))
 		{
 			// There is no PRIVATE_KEY_FILE defined, can't authenticate with key-pair
 			throw new SnowflakeDbException(INVALID_CONNECTION_STRING, "Missing required PRIVATE_KEY_FILE or PRIVATE_KEY for key pair authentication");
 		}
+
+		m_RsaProvider = new RSACryptoServiceProvider();
 	}
 
-	/// <see cref="IAuthenticator.AuthenticateAsync"/>
-	async public Task AuthenticateAsync(CancellationToken cancellationToken)
-	{
-		jwtToken = GenerateJwtToken();
+	protected override string AuthName => AUTH_NAME;
 
-		// Send the http request with the generate token
-		await base.LoginAsync(cancellationToken).ConfigureAwait(false);
-	}
-
-	/// <see cref="IAuthenticator.Authenticate"/>
-	public void Authenticate()
+	/// <see cref="IAuthenticator.Login"/>
+	public override void Login()
 	{
-		jwtToken = GenerateJwtToken();
+		m_JwtToken = GenerateJwtToken();
 
 		// Send the http request with the generate token
 		base.Login();
 	}
 
-	/// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(ref LoginRequestData)"/>
-	protected override void SetSpecializedAuthenticatorData(ref LoginRequestData data)
+	/// <see cref="IAuthenticator.LoginAsync"/>
+	async public override Task LoginAsync(CancellationToken cancellationToken)
+	{
+		m_JwtToken = GenerateJwtToken();
+
+		// Send the http request with the generate token
+		await base.LoginAsync(cancellationToken).ConfigureAwait(false);
+	}
+
+	/// <see cref="BaseAuthenticator.SetSpecializedAuthenticatorData(LoginRequestData)"/>
+	protected override void SetSpecializedAuthenticatorData(LoginRequestData data)
 	{
 		// Add the token to the Data attribute
-		data.Token = jwtToken;
+		data.Token = m_JwtToken;
 	}
 
 	/// <summary>
@@ -81,23 +84,25 @@ class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
 	/// <returns>The generated JWT token.</returns>
 	private string GenerateJwtToken()
 	{
-		bool hasPkPath = session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath);
-		bool hasPkContent = session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent);
-		session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_PWD, out var pkPwd);
+		var hasPkPath = Session.properties.TryGetValue(PRIVATE_KEY_FILE, out var pkPath);
+		var hasPkContent = Session.properties.TryGetValue(PRIVATE_KEY, out var pkContent);
+		Session.properties.TryGetValue(PRIVATE_KEY_PWD, out var pkPwd);
+
+		if (!hasPkPath && !hasPkContent)
+			throw new InvalidOperationException($"Either {nameof(PRIVATE_KEY_FILE)} or {nameof(PRIVATE_KEY)} needs to be set in the {nameof(Session.properties)}");
 
 		// Extract the public key from the private key to generate the fingerprints
 		RSAParameters rsaParams;
-		String publicKeyFingerPrint = null;
-		AsymmetricCipherKeyPair keypair = null;
-		using (TextReader tr =
-			hasPkPath ? (TextReader)new StreamReader(pkPath) : new StringReader(pkContent))
+		String? publicKeyFingerPrint = null;
+		AsymmetricCipherKeyPair? keypair = null;
+		using (TextReader tr = hasPkPath ? (TextReader)new StreamReader(pkPath!) : new StringReader(pkContent!))
 		{
 			try
 			{
-				PemReader pr = null;
+				PemReader? pr = null;
 				if (null != pkPwd)
 				{
-					IPasswordFinder ipwdf = new PasswordFinder(pkPwd);
+					var ipwdf = new PasswordFinder(pkPwd);
 					pr = new PemReader(tr, ipwdf);
 				}
 				else
@@ -128,29 +133,23 @@ class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
 			}
 			catch (Exception e)
 			{
-				throw new SnowflakeDbException(
-					SFError.JWT_ERROR_READING_PK,
-					hasPkPath ? pkPath : "with value passed in connection string",
-					e.ToString(),
-					e);
+				throw new SnowflakeDbException(JWT_ERROR_READING_PK, hasPkPath ? pkPath : "with value passed in connection string", e.ToString(), e);
 			}
 		}
 
 		// Generate the public key fingerprint
 		var publicKey = keypair.Public;
-		byte[] publicKeyEncoded =
-			SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(publicKey).GetDerEncoded();
-		using (SHA256 SHA256Encoder = SHA256.Create())
+		var publicKeyEncoded = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(publicKey).GetDerEncoded();
+		using (var SHA256Encoder = SHA256.Create())
 		{
-			byte[] sha256Hash = SHA256Encoder.ComputeHash(publicKeyEncoded);
+			var sha256Hash = SHA256Encoder.ComputeHash(publicKeyEncoded);
 			publicKeyFingerPrint = "SHA256:" + Convert.ToBase64String(sha256Hash);
 		}
 
 		// Generating the token
 		var now = DateTime.UtcNow;
-		System.DateTime dtDateTime =
-			new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
-		long secondsSinceEpoch = (long)((now - dtDateTime).TotalSeconds);
+		var dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+		var secondsSinceEpoch = (long)((now - dtDateTime).TotalSeconds);
 
 		/*
 		 * Payload content
@@ -161,41 +160,28 @@ class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
 		 *
 		 * Note : Lifetime = 120sec for Python impl, 60sec for Jdbc and Odbc
 		*/
-		String accountUser =
-			session.properties[SFSessionProperty.ACCOUNT].ToUpper() +
-			"." +
-			session.properties[SFSessionProperty.USER].ToUpper();
-		String issuer = accountUser + "." + publicKeyFingerPrint;
+		var accountUser = Session.properties[SFSessionProperty.ACCOUNT].ToUpper() + "." + Session.properties[SFSessionProperty.USER].ToUpper();
+		var issuer = accountUser + "." + publicKeyFingerPrint;
 		var claims = new[] {
-						new Claim(
-							JwtRegisteredClaimNames.Iat,
-							secondsSinceEpoch.ToString(),
-							System.Security.Claims.ClaimValueTypes.Integer64),
+						new Claim(JwtRegisteredClaimNames.Iat, secondsSinceEpoch.ToString(), ClaimValueTypes.Integer64),
 						new Claim(JwtRegisteredClaimNames.Sub, accountUser),
 					};
 
-		rsaProvider.ImportParameters(rsaParams);
+		m_RsaProvider.ImportParameters(rsaParams);
 		var token = new JwtSecurityToken(
-			// Issuer
-			issuer,
-			// Audience
-			null,
-			// Subject
-			claims,
-			//NotBefore
-			null,
-			// Expires
-			now.AddSeconds(60),
-			//SigningCredentials
-			new SigningCredentials(
-				new RsaSecurityKey(rsaProvider), SecurityAlgorithms.RsaSha256)
+			issuer: issuer,
+			audience: null,
+			claims: claims,
+			notBefore: null,
+			expires: now.AddSeconds(60),
+			signingCredentials: new SigningCredentials(new RsaSecurityKey(m_RsaProvider), SecurityAlgorithms.RsaSha256)
 		);
 
 		// Serialize the jwt token
 		// Base64URL-encoded parts delimited by period ('.'), with format :
 		//     [header-base64url].[payload-base64url].[signature-base64url]
 		var handler = new JwtSecurityTokenHandler();
-		string jwtToken = handler.WriteToken(token);
+		var jwtToken = handler.WriteToken(token);
 
 		return jwtToken;
 	}
@@ -203,10 +189,10 @@ class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
 	/// <summary>
 	/// Helper class to handle the password for the certificate if there is one.
 	/// </summary>
-	private class PasswordFinder : IPasswordFinder
+	class PasswordFinder : IPasswordFinder
 	{
 		// The password.
-		private string password;
+		string m_Password;
 
 		/// <summary>
 		/// Constructor.
@@ -214,24 +200,19 @@ class KeyPairAuthenticator : BaseAuthenticator, IAuthenticator
 		/// <param name="password">The password.</param>
 		public PasswordFinder(string password)
 		{
-			this.password = password;
+			m_Password = password;
 		}
 
 		/// <summary>
 		/// Returns the password or null if the password is empty or null.
 		/// </summary>
 		/// <returns>The password or null if the password is empty or null.</returns>
-		public char[] GetPassword()
+		public char[]? GetPassword()
 		{
-			if ((null == password) || (0 == password.Length))
-			{
-				// No password.
+			if (string.IsNullOrEmpty(m_Password)) // No password.
 				return null;
-			}
 			else
-			{
-				return password.ToCharArray();
-			}
+				return m_Password.ToCharArray();
 		}
 	}
 }
