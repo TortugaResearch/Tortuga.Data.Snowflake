@@ -21,7 +21,7 @@ class SFResultSet : SFBaseResultSet
 
 	private IResultChunk _currentChunk;
 
-	public SFResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
+	public SFResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base(sfStatement.SfSession.Configuration)
 	{
 		columnCount = responseData.rowType.Count;
 		_currentChunkRowIdx = -1;
@@ -70,7 +70,7 @@ class SFResultSet : SFBaseResultSet
 		}
 	}
 
-	public SFResultSet(PutGetResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base()
+	public SFResultSet(PutGetResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base(sfStatement.SfSession.Configuration)
 	{
 		responseData.rowType = new List<ExecResponseRowType>();
 		initializePutGetRowType(responseData.rowType);

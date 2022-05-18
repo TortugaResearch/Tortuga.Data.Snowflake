@@ -58,6 +58,28 @@ public class SnowflakeDbConnection : DbConnection
 	public override ConnectionState State => m_ConnectionState;
 	internal SFSession? SfSession { get; set; }
 
+	SnowflakeDbConfiguration m_Configuration = SnowflakeDbConfiguration.Default;
+
+	/// <summary>
+	/// Gets or sets the configuration.
+	/// </summary>
+	/// <value>The configuration.</value>
+	/// <remarks>This defaults to SnowflakeDbConfiguration.Default.</remarks>
+	public SnowflakeDbConfiguration Configuration
+	{
+		get => m_Configuration;
+		set
+		{
+			if (m_Configuration == value)
+				return;
+
+			if (State != ConnectionState.Closed)
+				throw new InvalidOperationException("Cannot change configuration while the connection is open.");
+
+			m_Configuration = value;
+		}
+	}
+
 	public override void ChangeDatabase(string databaseName)
 	{
 		string alterDbCommand = $"use database {databaseName}";
@@ -228,7 +250,7 @@ public class SnowflakeDbConnection : DbConnection
 		if (ConnectionString == null)
 			throw new InvalidOperationException($"{nameof(ConnectionString)} is null");
 
-		SfSession = new SFSession(ConnectionString, Password);
+		SfSession = new SFSession(ConnectionString, Password, Configuration);
 		m_ConnectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
 		m_ConnectionState = ConnectionState.Connecting;
 	}

@@ -84,8 +84,9 @@ class SFSession
 	///     Constructor
 	/// </summary>
 	/// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
-	internal SFSession(String connectionString, SecureString password)
+	internal SFSession(String connectionString, SecureString password, SnowflakeDbConfiguration configuration)
 	{
+		Configuration = configuration;
 		properties = SFSessionProperties.parseConnectionString(connectionString, password);
 
 		// If there is an "application" setting, verify that it matches the expect pattern
@@ -156,7 +157,7 @@ class SFSession
 		connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
 	}
 
-	internal SFSession(String connectionString, SecureString password, IMockRestRequester restRequester) : this(connectionString, password)
+	internal SFSession(String connectionString, SecureString password, IMockRestRequester restRequester, SnowflakeDbConfiguration configuration) : this(connectionString, password, configuration)
 	{
 		// Inject the HttpClient to use with the Mock requester
 		restRequester.setHttpClient(_HttpClient);
@@ -306,4 +307,6 @@ class SFSession
 			}
 		}
 	}
+
+	internal SnowflakeDbConfiguration Configuration { get; }
 }

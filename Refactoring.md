@@ -1348,11 +1348,51 @@ To address this, a set of extension methods were created. For down-level clients
 
 While not a perfect solution, it will allow the library to slowly eliminate the 'sync over async' situations as `HttpClient` is improved.
 
-
 ## Round 19 - IAuthenticator and BaseAuthenticator
 
 This interface is marked as `internal` and thus can't be used for mocking. The only thing that implements it is `BaseAuthenticator`. At this point there is no purpose to it and thus it can be deleted.
 
 To match .NET naming conventions for base classes, `BaseAuthenticator` simply becomes `Authenticator`. The `Base` prefix is unnecessary.
 
-Another naming convention is that namespaces should be plural. So the `Core.Authenticator` namespace is renamed `Authenticators`. 
+Another naming convention is that namespaces should be plural. So, the `Core.Authenticator` namespace is renamed `Authenticators`. 
+
+## Round 20 - Configuration
+
+As a public class, `SFConfiguration` is moved out of `Core` and renamed to `SnowflakeDbConfiguration` to be more consistent with other public classes.
+
+Change the public fields into properties.
+
+The static method `Instance` should also be a property. To make it more descriptive, it will also be renamed to `Default`.
+
+### Global Singletons
+
+The `SFConfiguration` class doesn't make sense as a singleton. If we really want only one instance, then we could just replace it with a static class and save some code.
+
+But what if the application needs two instances of the configuration? Perhaps some calls need to use the V2 Json parser and some need the original.
+
+In order to facility this, the following changes will be made.
+
+* The `Instance` property will be renamed to `Default`.
+* The `SnowflakeDbConfiguration` will be made into an immutable record. This is to avoid accidentally changing the default when you think you're changing a copy.
+* The `SnowflakeDbConfiguration.Default` property will add a setter.
+
+This gives you two ways to change the default configuration:
+
+
+```
+//Modify a copy of existing record
+SnowflakeDbConfiguration.Default = SnowflakeDbConfiguration.Default with { ChunkDownloaderVersion = 2 };
+
+//Create a new object
+SnowflakeDbConfiguration.Default = new(useV2JsonParser: true, useV2ChunkDownloader: false, chunkDownloaderVersion: 3)
+
+```
+
+Then to add flexability, the configuration will flow 
+
+* The `SnowflakeDbConnection` object will have a property called `Configuration`. 
+* The configuration will flow through the session and result set to the response processing components.
+
+### SFConfigurationSectionHandler
+
+This isn't used anywhere so it can be deleted.

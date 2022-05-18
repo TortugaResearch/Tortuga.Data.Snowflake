@@ -22,17 +22,18 @@ class SFChunkDownloaderV2 : IChunkDownloader
 	private const int prefetchSlot = 5;
 
 	private readonly IRestRequester _RestRequester;
-
+	readonly SnowflakeDbConfiguration m_Configuration;
 	private Dictionary<string, string> chunkHeaders;
 
 	public SFChunkDownloaderV2(int colCount, List<ExecResponseChunk> chunkInfos, string qrmk,
 		Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken,
-		IRestRequester restRequester)
+		IRestRequester restRequester, SnowflakeDbConfiguration configuration)
 	{
 		this.qrmk = qrmk;
 		this.chunkHeaders = chunkHeaders;
 		this.chunks = new List<SFResultChunk>();
 		_RestRequester = restRequester;
+		this.m_Configuration = configuration;
 		externalCancellationToken = cancellationToken;
 
 		var idx = 0;
@@ -148,14 +149,14 @@ class SFChunkDownloaderV2 : IChunkDownloader
 	/// </summary>
 	/// <param name="content"></param>
 	/// <param name="resultChunk"></param>
-	private static void parseStreamIntoChunk(Stream content, SFResultChunk resultChunk)
+	private void parseStreamIntoChunk(Stream content, SFResultChunk resultChunk)
 	{
 		Stream openBracket = new MemoryStream(Encoding.UTF8.GetBytes("["));
 		Stream closeBracket = new MemoryStream(Encoding.UTF8.GetBytes("]"));
 
 		Stream concatStream = new ConcatenatedStream(new Stream[3] { openBracket, content, closeBracket });
 
-		IChunkParser parser = ChunkParserFactory.GetParser(concatStream);
+		IChunkParser parser = ChunkParserFactory.GetParser(m_Configuration, concatStream);
 		parser.ParseChunk(resultChunk);
 	}
 }
