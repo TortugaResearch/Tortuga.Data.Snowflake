@@ -2,31 +2,35 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 using Newtonsoft.Json;
 
 namespace Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
 
 class ChunkDeserializer : IChunkParser
 {
-	private static JsonSerializer JsonSerializer = new JsonSerializer() { DateParseHandling = DateParseHandling.None };
+	static JsonSerializer JsonSerializer = new() { DateParseHandling = DateParseHandling.None };
 
-	private readonly Stream stream;
+	readonly Stream m_Stream;
 
 	internal ChunkDeserializer(Stream stream)
 	{
-		this.stream = stream;
+		m_Stream = stream;
 	}
 
-	public async Task ParseChunk(IResultChunk chunk)
+	public void ParseChunk(IResultChunk chunk)
 	{
-		await Task.Run(() =>
+		// parse results row by row
+		using (var sr = new StreamReader(m_Stream))
+		using (var jr = new JsonTextReader(sr))
 		{
-			// parse results row by row
-			using (StreamReader sr = new StreamReader(stream))
-			using (JsonTextReader jr = new JsonTextReader(sr))
-			{
-				((SFResultChunk)chunk).rowSet = JsonSerializer.Deserialize<string[,]>(jr);
-			}
-		});
+			((SFResultChunk)chunk).RowSet = JsonSerializer.Deserialize<string[,]>(jr)!;
+		}
+	}
+
+	public async Task ParseChunkAsync(IResultChunk chunk)
+	{
+		await Task.Run(() => ParseChunk(chunk));
 	}
 }

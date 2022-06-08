@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
 using Tortuga.Data.Snowflake.Core.Sessions;
 
@@ -9,69 +11,65 @@ namespace Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
 
 class SFBlockingChunkDownloaderV3 : IChunkDownloader
 {
-	private List<SFReusableChunk> chunkDatas = new List<SFReusableChunk>();
+	readonly List<SFReusableChunk> m_ChunkDatas = new List<SFReusableChunk>();
 
-	private string qrmk;
+	readonly string m_Qrmk;
 
-	private int nextChunkToDownloadIndex;
+	int m_NextChunkToDownloadIndex;
 
-	private int nextChunkToConsumeIndex;
+	int m_NextChunkToConsumeIndex;
 
 	// External cancellation token, used to stop donwload
-	private CancellationToken externalCancellationToken;
+	readonly CancellationToken m_ExternalCancellationToken;
 
-	private readonly int prefetchSlot;
+	readonly int m_PrefetchSlot;
 
-	private readonly IRestRequester _RestRequester;
+	readonly IRestRequester m_RestRequester;
 
-	private Dictionary<string, string> chunkHeaders;
+	readonly Dictionary<string, string> m_ChunkHeaders;
 
-	private readonly SFBaseResultSet ResultSet;
+	readonly SFBaseResultSet m_ResultSet;
 
-	private readonly List<ExecResponseChunk> chunkInfos;
+	readonly List<ExecResponseChunk> m_ChunkInfos;
 
-	private readonly List<Task<IResultChunk>> taskQueues;
+	readonly List<Task<IResultChunk>> m_TaskQueues;
 
-	public SFBlockingChunkDownloaderV3(int colCount,
-		List<ExecResponseChunk> chunkInfos, string qrmk,
-		Dictionary<string, string> chunkHeaders,
-		CancellationToken cancellationToken,
-		SFBaseResultSet ResultSet)
+	public SFBlockingChunkDownloaderV3(int colCount, List<ExecResponseChunk> chunkInfos, string qrmk, Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken, SFBaseResultSet ResultSet)
 	{
-		this.qrmk = qrmk;
-		this.chunkHeaders = chunkHeaders;
-		this.nextChunkToDownloadIndex = 0;
-		this.ResultSet = ResultSet;
-		this._RestRequester = ResultSet.sfStatement.SfSession.restRequester;
-		this.prefetchSlot = Math.Min(chunkInfos.Count, GetPrefetchThreads(ResultSet));
-		this.chunkInfos = chunkInfos;
-		this.nextChunkToConsumeIndex = 0;
-		this.taskQueues = new List<Task<IResultChunk>>();
-		externalCancellationToken = cancellationToken;
+		m_Qrmk = qrmk;
+		m_ChunkHeaders = chunkHeaders;
+		m_NextChunkToDownloadIndex = 0;
+		m_ResultSet = ResultSet;
+		m_RestRequester = ResultSet.sfStatement.SfSession.restRequester;
+		m_PrefetchSlot = Math.Min(chunkInfos.Count, GetPrefetchThreads(ResultSet));
+		m_ChunkInfos = chunkInfos;
+		m_NextChunkToConsumeIndex = 0;
+		m_TaskQueues = new List<Task<IResultChunk>>();
+		m_ExternalCancellationToken = cancellationToken;
 
-		for (int i = 0; i < prefetchSlot; i++)
+		for (int i = 0; i < m_PrefetchSlot; i++)
 		{
 			SFReusableChunk reusableChunk = new SFReusableChunk(colCount);
-			reusableChunk.Reset(chunkInfos[nextChunkToDownloadIndex], nextChunkToDownloadIndex);
-			chunkDatas.Add(reusableChunk);
+			reusableChunk.Reset(chunkInfos[m_NextChunkToDownloadIndex], m_NextChunkToDownloadIndex);
+			m_ChunkDatas.Add(reusableChunk);
 
-			taskQueues.Add(DownloadChunkAsync(new DownloadContextV3()
+			m_TaskQueues.Add(DownloadChunkAsync(new DownloadContextV3()
 			{
 				chunk = reusableChunk,
-				qrmk = this.qrmk,
-				chunkHeaders = this.chunkHeaders,
-				cancellationToken = this.externalCancellationToken
+				qrmk = m_Qrmk,
+				chunkHeaders = m_ChunkHeaders,
+				cancellationToken = m_ExternalCancellationToken
 			}));
 
-			nextChunkToDownloadIndex++;
+			m_NextChunkToDownloadIndex++;
 		}
 	}
 
-	private int GetPrefetchThreads(SFBaseResultSet resultSet)
+	int GetPrefetchThreads(SFBaseResultSet resultSet)
 	{
-		Dictionary<SFSessionParameter, object> sessionParameters = resultSet.sfStatement.SfSession.ParameterMap;
-		String val = (String)sessionParameters[SFSessionParameter.CLIENT_PREFETCH_THREADS];
-		return Int32.Parse(val);
+		var sessionParameters = resultSet.sfStatement.SfSession.ParameterMap;
+		var val = (string)sessionParameters[SFSessionParameter.CLIENT_PREFETCH_THREADS];
+		return int.Parse(val);
 	}
 
 	/*public Task<IResultChunk> GetNextChunkAsync()
@@ -79,58 +77,57 @@ class SFBlockingChunkDownloaderV3 : IChunkDownloader
 		return _downloadTasks.IsCompleted ? Task.FromResult<SFResultChunk>(null) : _downloadTasks.Take();
 	}*/
 
-	public async Task<IResultChunk> GetNextChunkAsync()
+	public async Task<IResultChunk?> GetNextChunkAsync()
 	{
-		if (nextChunkToConsumeIndex < chunkInfos.Count)
+		if (m_NextChunkToConsumeIndex < m_ChunkInfos.Count)
 		{
-			Task<IResultChunk> chunk = taskQueues[nextChunkToConsumeIndex % prefetchSlot];
+			Task<IResultChunk> chunk = m_TaskQueues[m_NextChunkToConsumeIndex % m_PrefetchSlot];
 
-			if (nextChunkToDownloadIndex < chunkInfos.Count && nextChunkToConsumeIndex > 0)
+			if (m_NextChunkToDownloadIndex < m_ChunkInfos.Count && m_NextChunkToConsumeIndex > 0)
 			{
-				SFReusableChunk reusableChunk = chunkDatas[nextChunkToDownloadIndex % prefetchSlot];
-				reusableChunk.Reset(chunkInfos[nextChunkToDownloadIndex], nextChunkToDownloadIndex);
+				SFReusableChunk reusableChunk = m_ChunkDatas[m_NextChunkToDownloadIndex % m_PrefetchSlot];
+				reusableChunk.Reset(m_ChunkInfos[m_NextChunkToDownloadIndex], m_NextChunkToDownloadIndex);
 
-				taskQueues[nextChunkToDownloadIndex % prefetchSlot] = DownloadChunkAsync(new DownloadContextV3()
+				m_TaskQueues[m_NextChunkToDownloadIndex % m_PrefetchSlot] = DownloadChunkAsync(new DownloadContextV3()
 				{
 					chunk = reusableChunk,
-					qrmk = this.qrmk,
-					chunkHeaders = this.chunkHeaders,
-					cancellationToken = externalCancellationToken
+					qrmk = this.m_Qrmk,
+					chunkHeaders = this.m_ChunkHeaders,
+					cancellationToken = m_ExternalCancellationToken
 				});
-				nextChunkToDownloadIndex++;
+				m_NextChunkToDownloadIndex++;
 			}
 
-			nextChunkToConsumeIndex++;
+			m_NextChunkToConsumeIndex++;
 			return await chunk;
 		}
 		else
 		{
-			return await Task.FromResult<IResultChunk>(null);
+			return await Task.FromResult<IResultChunk?>(null);
 		}
 	}
 
-	private async Task<IResultChunk> DownloadChunkAsync(DownloadContextV3 downloadContext)
+	async Task<IResultChunk> DownloadChunkAsync(DownloadContextV3 downloadContext)
 	{
-		//logger.Info($"Start donwloading chunk #{downloadContext.chunkIndex}");
-		SFReusableChunk chunk = downloadContext.chunk;
+		if (downloadContext.chunk == null)
+			throw new ArgumentException("downloadContext.chunk is null", nameof(downloadContext));
 
-		S3DownloadRequest downloadRequest =
-			new S3DownloadRequest()
-			{
-				Url = new UriBuilder(chunk.Url).Uri,
-				qrmk = downloadContext.qrmk,
-				// s3 download request timeout to one hour
-				RestTimeout = TimeSpan.FromHours(1),
-				HttpTimeout = Timeout.InfiniteTimeSpan, // Disable timeout for each request
-				chunkHeaders = downloadContext.chunkHeaders
-			};
+		var chunk = downloadContext.chunk;
 
-		using (var httpResponse = await _RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken)
-					   .ConfigureAwait(continueOnCapturedContext: false))
-		using (Stream stream = await httpResponse.Content.ReadAsStreamAsync()
-			.ConfigureAwait(continueOnCapturedContext: false))
+		var downloadRequest = new S3DownloadRequest()
 		{
-			await ParseStreamIntoChunk(stream, chunk);
+			Url = new UriBuilder(chunk.Url!).Uri,
+			qrmk = downloadContext.qrmk,
+			// s3 download request timeout to one hour
+			RestTimeout = TimeSpan.FromHours(1),
+			HttpTimeout = Timeout.InfiniteTimeSpan, // Disable timeout for each request
+			chunkHeaders = downloadContext.chunkHeaders
+		};
+
+		using (var httpResponse = await m_RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false))
+		using (var stream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false))
+		{
+			await ParseStreamIntoChunk(stream, chunk).ConfigureAwait(false);
 		}
 		return chunk;
 	}
@@ -144,9 +141,8 @@ class SFBlockingChunkDownloaderV3 : IChunkDownloader
 	/// </summary>
 	/// <param name="content"></param>
 	/// <param name="resultChunk"></param>
-	private async Task ParseStreamIntoChunk(Stream content, IResultChunk resultChunk)
+	async Task ParseStreamIntoChunk(Stream content, IResultChunk resultChunk)
 	{
-		IChunkParser parser = new ReusableChunkParser(content);
-		await parser.ParseChunk(resultChunk);
+		await new ReusableChunkParser(content).ParseChunkAsync(resultChunk).ConfigureAwait(false);
 	}
 }

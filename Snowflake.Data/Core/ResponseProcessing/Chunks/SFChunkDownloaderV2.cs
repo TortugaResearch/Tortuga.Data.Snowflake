@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 using System.Collections.Concurrent;
 using System.IO.Compression;
 using System.Text;
@@ -11,53 +13,47 @@ namespace Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
 
 class SFChunkDownloaderV2 : IChunkDownloader
 {
-	private List<SFResultChunk> chunks;
+	readonly List<SFResultChunk> m_Chunks;
 
-	private string qrmk;
+	readonly string m_Qrmk;
 
 	// External cancellation token, used to stop donwload
-	private CancellationToken externalCancellationToken;
+	readonly CancellationToken m_ExternalCancellationToken;
 
 	//TODO: parameterize prefetch slot
-	private const int prefetchSlot = 5;
+	const int prefetchSlot = 5;
 
-	private readonly IRestRequester _RestRequester;
+	readonly IRestRequester m_RestRequester;
 	readonly SnowflakeDbConfiguration m_Configuration;
-	private Dictionary<string, string> chunkHeaders;
+	readonly Dictionary<string, string> m_ChunkHeaders;
 
-	public SFChunkDownloaderV2(int colCount, List<ExecResponseChunk> chunkInfos, string qrmk,
-		Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken,
-		IRestRequester restRequester, SnowflakeDbConfiguration configuration)
+	public SFChunkDownloaderV2(int colCount, List<ExecResponseChunk> chunkInfos, string qrmk, Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken, IRestRequester restRequester, SnowflakeDbConfiguration configuration)
 	{
-		this.qrmk = qrmk;
-		this.chunkHeaders = chunkHeaders;
-		this.chunks = new List<SFResultChunk>();
-		_RestRequester = restRequester;
-		this.m_Configuration = configuration;
-		externalCancellationToken = cancellationToken;
+		m_Qrmk = qrmk;
+		m_ChunkHeaders = chunkHeaders;
+		m_Chunks = new List<SFResultChunk>();
+		m_RestRequester = restRequester;
+		m_Configuration = configuration;
+		m_ExternalCancellationToken = cancellationToken;
 
 		var idx = 0;
 		foreach (ExecResponseChunk chunkInfo in chunkInfos)
-		{
-			this.chunks.Add(new SFResultChunk(chunkInfo.url, chunkInfo.rowCount, colCount, idx++));
-		}
+			m_Chunks.Add(new SFResultChunk(chunkInfo.url!, chunkInfo.rowCount, colCount, idx++));
 
 		FillDownloads();
 	}
 
-	private BlockingCollection<Lazy<Task<IResultChunk>>> _downloadTasks;
-	private ConcurrentQueue<Lazy<Task<IResultChunk>>> _downloadQueue;
+	BlockingCollection<Lazy<Task<IResultChunk>>>? m_DownloadTasks;
+	ConcurrentQueue<Lazy<Task<IResultChunk>>>? m_DownloadQueue;
 
-	private void RunDownloads()
+	void RunDownloads()
 	{
 		try
 		{
-			while (_downloadQueue.TryDequeue(out var task) && !externalCancellationToken.IsCancellationRequested)
+			while (m_DownloadQueue!.TryDequeue(out var task) && !m_ExternalCancellationToken.IsCancellationRequested)
 			{
 				if (!task.IsValueCreated)
-				{
-					task.Value.Wait(externalCancellationToken);
-				}
+					task.Value.Wait(m_ExternalCancellationToken);
 			}
 		}
 		catch
@@ -66,53 +62,55 @@ class SFChunkDownloaderV2 : IChunkDownloader
 		}
 	}
 
-	private void FillDownloads()
+	void FillDownloads()
 	{
-		_downloadTasks = new BlockingCollection<Lazy<Task<IResultChunk>>>();
+		m_DownloadTasks = new BlockingCollection<Lazy<Task<IResultChunk>>>();
 
-		foreach (var c in chunks)
+		foreach (var c in m_Chunks)
 		{
 			var t = new Lazy<Task<IResultChunk>>(() => DownloadChunkAsync(new DownloadContextV2()
 			{
 				chunk = c,
 				chunkIndex = c.ChunkIndex,
-				qrmk = this.qrmk,
-				chunkHeaders = this.chunkHeaders,
-				cancellationToken = this.externalCancellationToken,
+				qrmk = m_Qrmk,
+				chunkHeaders = m_ChunkHeaders,
+				cancellationToken = m_ExternalCancellationToken,
 			}));
 
-			_downloadTasks.Add(t);
+			m_DownloadTasks.Add(t);
 		}
 
-		_downloadTasks.CompleteAdding();
+		m_DownloadTasks.CompleteAdding();
 
-		_downloadQueue = new ConcurrentQueue<Lazy<Task<IResultChunk>>>(_downloadTasks);
+		m_DownloadQueue = new ConcurrentQueue<Lazy<Task<IResultChunk>>>(m_DownloadTasks);
 
-		for (var i = 0; i < prefetchSlot && i < chunks.Count; i++)
+		for (var i = 0; i < prefetchSlot && i < m_Chunks.Count; i++)
 			Task.Run(new Action(RunDownloads));
 	}
 
-	public Task<IResultChunk> GetNextChunkAsync()
+	public Task<IResultChunk?> GetNextChunkAsync()
 	{
-		if (_downloadTasks.IsAddingCompleted)
-		{
-			return Task.FromResult<IResultChunk>(null);
-		}
+		if (m_DownloadTasks == null)
+			throw new InvalidOperationException("m_DownloadTasks is null");
+
+		if (m_DownloadTasks.IsAddingCompleted)
+			return Task.FromResult<IResultChunk?>(null);
 		else
-		{
-			return _downloadTasks.Take().Value;
-		}
+			return (Task<IResultChunk?>)(object)m_DownloadTasks.Take().Value;
 	}
 
-	private async Task<IResultChunk> DownloadChunkAsync(DownloadContextV2 downloadContext)
+	async Task<IResultChunk> DownloadChunkAsync(DownloadContextV2 downloadContext)
 	{
-		SFResultChunk chunk = downloadContext.chunk;
+		if (downloadContext.chunk == null)
+			throw new ArgumentException("downloadContext.chunk is null", nameof(downloadContext));
 
-		chunk.downloadState = DownloadState.IN_PROGRESS;
+		var chunk = downloadContext.chunk;
 
-		S3DownloadRequest downloadRequest = new S3DownloadRequest()
+		chunk.DownloadState = DownloadState.IN_PROGRESS;
+
+		var downloadRequest = new S3DownloadRequest()
 		{
-			Url = new UriBuilder(chunk.url).Uri,
+			Url = new UriBuilder(chunk.Url!).Uri,
 			qrmk = downloadContext.qrmk,
 			// s3 download request timeout to one hour
 			RestTimeout = TimeSpan.FromHours(1),
@@ -120,8 +118,8 @@ class SFChunkDownloaderV2 : IChunkDownloader
 			chunkHeaders = downloadContext.chunkHeaders
 		};
 
-		Stream stream = null;
-		using (var httpResponse = await _RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false))
+		Stream stream;
+		using (var httpResponse = await m_RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false))
 		using (stream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false))
 		{
 			if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out var encoding))
@@ -135,7 +133,7 @@ class SFChunkDownloaderV2 : IChunkDownloader
 			parseStreamIntoChunk(stream, chunk);
 		}
 
-		chunk.downloadState = DownloadState.SUCCESS;
+		chunk.DownloadState = DownloadState.SUCCESS;
 
 		return chunk;
 	}
@@ -149,14 +147,14 @@ class SFChunkDownloaderV2 : IChunkDownloader
 	/// </summary>
 	/// <param name="content"></param>
 	/// <param name="resultChunk"></param>
-	private void parseStreamIntoChunk(Stream content, SFResultChunk resultChunk)
+	void parseStreamIntoChunk(Stream content, SFResultChunk resultChunk)
 	{
-		Stream openBracket = new MemoryStream(Encoding.UTF8.GetBytes("["));
-		Stream closeBracket = new MemoryStream(Encoding.UTF8.GetBytes("]"));
+		var openBracket = new MemoryStream(Encoding.UTF8.GetBytes("["));
+		var closeBracket = new MemoryStream(Encoding.UTF8.GetBytes("]"));
 
-		Stream concatStream = new ConcatenatedStream(new Stream[3] { openBracket, content, closeBracket });
+		var concatStream = new ConcatenatedStream(new Stream[3] { openBracket, content, closeBracket });
 
-		IChunkParser parser = ChunkParserFactory.GetParser(m_Configuration, concatStream);
+		var parser = ChunkParserFactory.GetParser(m_Configuration, concatStream);
 		parser.ParseChunk(resultChunk);
 	}
 }

@@ -1452,3 +1452,18 @@ Methods in `SFRemoteStorageUtil` destroys the stack trace when there is an error
 * Fix missing stack traces in `RestRequester`
 * Changed the proxy test to accept a connection timeout as a valid result.
 * Updated other tests to not expect an aggregate exception
+
+## Round 26 - Core.ResponseProcessing.Chunks
+
+* Add `#nullable enable` to each file in the namespace. Update properties where appropriate.
+* Change `ParseChunk` to `ParseChunkAsync`. Add a real sync version named `ParseChunk`.
+* Change callers of `ParseChunkAsync` to use `ParseChunk` when appropriate.
+* Use `var` where appropriate
+* Assume any null checks on messages that don't currently exist aren't needed. (Long term, appropriate null checks should be added.)
+* Lined up parameters in method signatures and calls
+* Mark classes static when they only contain static methods.
+* Removed unnecessary Task.Run in `SFBlockingChunkDownloader.DownloadChunkAsync`
+* Mark fields as readonly where possible
+* Add missing `.ConfigureAwait(false)`
+* Fix casing on public properties in `SFResultChunk`
+

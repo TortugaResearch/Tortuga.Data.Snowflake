@@ -30,7 +30,7 @@ class SFReusableChunkTest
 		SFReusableChunk chunk = new SFReusableChunk(3);
 		chunk.Reset(chunkInfo, 0);
 
-		await parser.ParseChunk(chunk);
+		await parser.ParseChunkAsync(chunk);
 
 		Assert.AreEqual("1", chunk.ExtractCell(0, 0).SafeToString());
 		Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
@@ -58,7 +58,7 @@ class SFReusableChunkTest
 		SFReusableChunk chunk = new SFReusableChunk(3);
 		chunk.Reset(chunkInfo, 0);
 
-		await parser.ParseChunk(chunk);
+		await parser.ParseChunkAsync(chunk);
 
 		Assert.AreEqual(null, chunk.ExtractCell(0, 0).SafeToString());
 		Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
@@ -86,7 +86,7 @@ class SFReusableChunkTest
 		SFReusableChunk chunk = new SFReusableChunk(3);
 		chunk.Reset(chunkInfo, 0);
 
-		await parser.ParseChunk(chunk);
+		await parser.ParseChunkAsync(chunk);
 
 		Assert.AreEqual(null, chunk.ExtractCell(0, 0).SafeToString());
 		Assert.AreEqual("2019-08-21T11:58:00", chunk.ExtractCell(0, 1).SafeToString());
@@ -114,7 +114,7 @@ class SFReusableChunkTest
 		SFReusableChunk chunk = new SFReusableChunk(3);
 		chunk.Reset(chunkInfo, 0);
 
-		await parser.ParseChunk(chunk);
+		await parser.ParseChunkAsync(chunk);
 
 		Assert.AreEqual("\\åäö\nÅÄÖ\r", chunk.ExtractCell(0, 0).SafeToString());
 		Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
@@ -143,7 +143,7 @@ class SFReusableChunkTest
 		SFReusableChunk chunk = new SFReusableChunk(3);
 		chunk.Reset(chunkInfo, 0);
 
-		await parser.ParseChunk(chunk);
+		await parser.ParseChunkAsync(chunk);
 
 		Assert.AreEqual("åäö\nÅÄÖ\r", chunk.ExtractCell(0, 0).SafeToString());
 		Assert.AreEqual("1.234", chunk.ExtractCell(0, 1).SafeToString());
@@ -174,7 +174,7 @@ class SFReusableChunkTest
 
 		try
 		{
-			await parser.ParseChunk(chunk);
+			await parser.ParseChunkAsync(chunk);
 			Assert.Fail();
 		}
 		catch (SnowflakeDbException e)
@@ -204,7 +204,7 @@ class SFReusableChunkTest
 
 		try
 		{
-			await parser.ParseChunk(chunk);
+			await parser.ParseChunkAsync(chunk);
 			Assert.Fail();
 		}
 		catch (SnowflakeDbException e)
@@ -232,7 +232,7 @@ class SFReusableChunkTest
 		SFReusableChunk chunk = new SFReusableChunk(1);
 		chunk.Reset(chunkInfo, 0);
 
-		await parser.ParseChunk(chunk);
+		await parser.ParseChunkAsync(chunk);
 		string val = chunk.ExtractCell(0, 0).SafeToString();
 		Assert.AreEqual("abc\t", chunk.ExtractCell(0, 0).SafeToString());
 	}

@@ -95,7 +95,7 @@ class SFResultSet : SFBaseResultSet
 	{
 		if (_currentChunk is SFResultChunk)
 		{
-			((SFResultChunk)_currentChunk).rowSet = null;
+			((SFResultChunk)_currentChunk).RowSet = null;
 		}
 		_currentChunk = nextChunk;
 		_currentChunkRowIdx = 0;
@@ -119,7 +119,7 @@ class SFResultSet : SFBaseResultSet
 		{
 			// GetNextChunk could be blocked if download result is not done yet.
 			// So put this piece of code in a seperate task
-			IResultChunk nextChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
+			var nextChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
 			if (nextChunk != null)
 			{
 				resetChunkInfo(nextChunk);
@@ -149,7 +149,7 @@ class SFResultSet : SFBaseResultSet
 
 		if (_chunkDownloader != null)
 		{
-			IResultChunk nextChunk = Task.Run(async () => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
+			var nextChunk = Task.Run(async () => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
 			if (nextChunk != null)
 			{
 				resetChunkInfo(nextChunk);

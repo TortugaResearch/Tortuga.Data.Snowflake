@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 namespace Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
 
 interface IChunkParser
@@ -10,5 +12,11 @@ interface IChunkParser
 	///     Parse source data stream, result will be store into SFResultChunk.rowset
 	/// </summary>
 	/// <param name="chunk"></param>
-	Task ParseChunk(IResultChunk chunk);
+	Task ParseChunkAsync(IResultChunk chunk);
+
+	/// <summary>
+	///     Parse source data stream, result will be store into SFResultChunk.rowset
+	/// </summary>
+	/// <param name="chunk"></param>
+	void ParseChunk(IResultChunk chunk);
 }
