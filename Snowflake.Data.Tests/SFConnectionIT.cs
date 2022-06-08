@@ -674,9 +674,9 @@ class SFConnectionITAsync : SFBaseTestAsync
 				stopwatch.Stop();
 
 				// Should timeout after 5sec
-				Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 5 * 1000);
-				// But never more than 1 sec (max backoff) after the default timeout
-				Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (6) * 1000);
+				Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 5 * 1000 - 30); //The -30 is to account for rounding errors in the Windows timer
+
+				Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (6) * 1000); // But never more than 1 sec (max backoff) after the default timeout
 
 				Assert.AreEqual(ConnectionState.Closed, conn.State);
 				Assert.AreEqual(5, conn.ConnectionTimeout);

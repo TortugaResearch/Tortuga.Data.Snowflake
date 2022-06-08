@@ -1396,3 +1396,7 @@ Then to add flexability, the configuration will flow
 ### SFConfigurationSectionHandler
 
 This isn't used anywhere so it can be deleted.
+
+## Round 21 - Core.Authenticators
+
+Add `#nullable enable` to every each file in the namespace.

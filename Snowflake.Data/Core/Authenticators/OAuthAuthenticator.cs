@@ -1,4 +1,6 @@
-﻿using Tortuga.Data.Snowflake.Core.Messages;
+﻿#nullable enable
+
+using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.Sessions;
 using static Tortuga.Data.Snowflake.Core.Sessions.SFSessionProperty;
 using static Tortuga.Data.Snowflake.SFError;

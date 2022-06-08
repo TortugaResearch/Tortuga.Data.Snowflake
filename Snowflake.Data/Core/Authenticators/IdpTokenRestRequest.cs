@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;
@@ -14,7 +16,7 @@ internal class IdpTokenRestRequest : BaseRestRequest, IRestRequest
 {
 	private static MediaTypeWithQualityHeaderValue jsonHeader = new MediaTypeWithQualityHeaderValue("application/json");
 
-	internal IdpTokenRequest JsonBody { get; set; }
+	internal IdpTokenRequest? JsonBody { get; set; }
 
 	HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
 	{

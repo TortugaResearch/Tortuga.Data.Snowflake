@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 using System.Net.Http.Headers;
 using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
@@ -10,7 +12,7 @@ namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
 class SAMLRestRequest : BaseRestRequest, IRestRequest
 {
-	internal string OnetimeToken { set; get; }
+	internal string? OnetimeToken { set; get; }
 
 	HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
 	{
