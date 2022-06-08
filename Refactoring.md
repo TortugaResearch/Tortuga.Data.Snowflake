@@ -1399,4 +1399,4 @@ This isn't used anywhere so it can be deleted.
 
 ## Round 21 - Core.Authenticators
 
-Add `#nullable enable` to every each file in the namespace.
+Add `#nullable enable` to every each file in the namespace. Update properties where appropriate.
