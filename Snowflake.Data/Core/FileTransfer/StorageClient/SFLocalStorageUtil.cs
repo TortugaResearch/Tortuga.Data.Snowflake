@@ -17,6 +17,13 @@ class SFLocalStorageUtil
 	/// </summary>
 	internal static void UploadOneFileWithRetry(SFFileMetadata fileMetadata)
 	{
+		if (fileMetadata.stageInfo == null)
+			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
+		if (fileMetadata.realSrcFilePath == null)
+			throw new ArgumentException("fileMetadata.realSrcFilePath is null", nameof(fileMetadata));
+		if (fileMetadata.destFileName == null)
+			throw new ArgumentException("fileMetadata.destFileName is null", nameof(fileMetadata));
+
 		// Create directory if doesn't exist
 		Directory.CreateDirectory(fileMetadata.stageInfo.location);
 
@@ -37,6 +44,15 @@ class SFLocalStorageUtil
 	/// </summary>
 	internal static void DownloadOneFile(SFFileMetadata fileMetadata)
 	{
+		if (fileMetadata.stageInfo == null)
+			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
+		if (fileMetadata.srcFileName == null)
+			throw new ArgumentException("fileMetadata.srcFileName is null", nameof(fileMetadata));
+		if (fileMetadata.destFileName == null)
+			throw new ArgumentException("fileMetadata.destFileName is null", nameof(fileMetadata));
+		if (fileMetadata.localLocation == null)
+			throw new ArgumentException("fileMetadata.localLocation is null", nameof(fileMetadata));
+
 		var srcFilePath = fileMetadata.stageInfo.location;
 		var realSrcFilePath = Path.Combine(srcFilePath, fileMetadata.srcFileName);
 		var output = Path.Combine(fileMetadata.localLocation, fileMetadata.destFileName);

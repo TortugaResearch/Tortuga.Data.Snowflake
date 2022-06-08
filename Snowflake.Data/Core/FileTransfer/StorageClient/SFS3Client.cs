@@ -148,6 +148,11 @@ class SFS3Client : ISFRemoteStorageClient
 	/// <returns>The file header of the S3 file.</returns>
 	public FileHeader? GetFileHeader(SFFileMetadata fileMetadata)
 	{
+		if (fileMetadata.stageInfo == null)
+			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
+		if (fileMetadata.client == null)
+			throw new ArgumentException("fileMetadata.client is null", nameof(fileMetadata));
+
 		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
 
 		// Get the client
@@ -247,6 +252,11 @@ class SFS3Client : ISFRemoteStorageClient
 	/// <param name="encryptionMetadata">The encryption metadata for the header.</param>
 	public void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
 	{
+		if (fileMetadata.stageInfo == null)
+			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
+		if (fileMetadata.client == null)
+			throw new ArgumentException("fileMetadata.client is null", nameof(fileMetadata));
+
 		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
 
 		// Get the client
@@ -301,6 +311,11 @@ class SFS3Client : ISFRemoteStorageClient
 	/// <param name="maxConcurrency">Number of max concurrency.</param>
 	public void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency)
 	{
+		if (fileMetadata.stageInfo == null)
+			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
+		if (fileMetadata.client == null)
+			throw new ArgumentException("fileMetadata.client is null", nameof(fileMetadata));
+
 		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
 
 		// Get the client

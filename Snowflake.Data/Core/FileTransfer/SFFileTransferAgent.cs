@@ -2,6 +2,8 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -21,69 +23,60 @@ class SFFileTransferAgent
 	/// <summary>
 	/// Auto-detect keyword for source compression type auto detection.
 	/// </summary>
-	private static readonly string COMPRESSION_AUTO_DETECT = "auto_detect";
+	static readonly string COMPRESSION_AUTO_DETECT = "auto_detect";
 
 	/// <summary>
 	/// The Snowflake query
 	/// </summary>
-	private string Query;
+	string Query;
 
 	/// <summary>
 	/// The Snowflake session
 	/// </summary>
-	private SFSession Session;
+	SFSession Session;
 
 	/// <summary>
 	/// External cancellation token, used to stop the transfer
 	/// </summary>
-	private CancellationToken externalCancellationToken;
+	CancellationToken externalCancellationToken;
 
 	/// <summary>
 	/// The type of transfer either UPLOAD or DOWNLOAD.
 	/// </summary>
-	private readonly CommandTypes CommandType;
+	readonly CommandTypes CommandType;
 
 	/// <summary>
 	/// The file metadata. Applies to all files being uploaded/downloaded
 	/// </summary>
-	private readonly PutGetResponseData TransferMetadata;
-
-	/// <summary>
-	/// The path to the user home directory.
-	/// </summary>
-	private readonly string HomePath = (
-		Environment.OSVersion.Platform == PlatformID.Unix ||
-		Environment.OSVersion.Platform == PlatformID.MacOSX) ?
-		  Environment.GetEnvironmentVariable("HOME") :
-		  Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
+	readonly PutGetResponseData TransferMetadata;
 
 	/// <summary>
 	/// List of metadata for small and large files.
 	/// </summary>
-	private List<SFFileMetadata> FilesMetas = new List<SFFileMetadata>();
+	List<SFFileMetadata> FilesMetas = new();
 
-	private List<SFFileMetadata> SmallFilesMetas = new List<SFFileMetadata>();
-	private List<SFFileMetadata> LargeFilesMetas = new List<SFFileMetadata>();
+	List<SFFileMetadata> SmallFilesMetas = new();
+	List<SFFileMetadata> LargeFilesMetas = new();
 
 	/// <summary>
 	/// List of metadata for the resulting file after upload/download.
 	/// </summary>
-	private List<SFFileMetadata> ResultsMetas = new List<SFFileMetadata>();
+	List<SFFileMetadata> ResultsMetas = new();
 
 	/// <summary>
 	/// List of encryption materials of the files to be uploaded/downloaded.
 	/// </summary>
-	private List<PutGetEncryptionMaterial> EncryptionMaterials = new List<PutGetEncryptionMaterial>();
+	List<PutGetEncryptionMaterial> EncryptionMaterials = new();
 
 	/// <summary>
 	/// Time to wait before uploading the next file.
 	/// </summary>
-	private int INJECT_WAIT_IN_PUT = 0;
+	int INJECT_WAIT_IN_PUT = 0;
 
 	/// <summary>
 	/// String indicating local storage type.
 	/// </summary>
-	private const string LOCAL_FS = "LOCAL_FS";
+	const string LOCAL_FS = "LOCAL_FS";
 
 	/// <summary>
 	/// Constructor.
@@ -182,31 +175,19 @@ class SFFileTransferAgent
 			TransferMetadata.rowSet[index, 4] = ResultsMetas[index].resultStatus;
 
 			if (ResultsMetas[index].lastError != null)
-			{
-				TransferMetadata.rowSet[index, 5] = ResultsMetas[index].lastError.ToString();
-			}
+				TransferMetadata.rowSet[index, 5] = ResultsMetas[index].lastError!.ToString();
 			else
-			{
 				TransferMetadata.rowSet[index, 5] = null;
-			}
 
 			if (ResultsMetas[index].sourceCompression.Name != null)
-			{
 				TransferMetadata.rowSet[index, 6] = ResultsMetas[index].sourceCompression.Name;
-			}
 			else
-			{
 				TransferMetadata.rowSet[index, 6] = null;
-			}
 
 			if (ResultsMetas[index].targetCompression.Name != null)
-			{
 				TransferMetadata.rowSet[index, 7] = ResultsMetas[index].targetCompression.Name;
-			}
 			else
-			{
 				TransferMetadata.rowSet[index, 7] = null;
-			}
 		}
 
 		return new SFResultSet(TransferMetadata, new SFStatement(Session), externalCancellationToken);
@@ -215,7 +196,7 @@ class SFFileTransferAgent
 	/// <summary>
 	/// Upload files sequentially or in parallel.
 	/// </summary>
-	private void upload()
+	void upload()
 	{
 		//Start the upload tasks(for small files upload in parallel using the given parallelism
 		//factor, for large file updload sequentially)
@@ -223,21 +204,17 @@ class SFFileTransferAgent
 		if (0 < LargeFilesMetas.Count)
 		{
 			foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
-			{
 				UploadFilesInSequential(fileMetadata);
-			}
 		}
 
 		if (0 < SmallFilesMetas.Count)
-		{
 			UploadFilesInParallel(SmallFilesMetas, TransferMetadata.parallel);
-		}
 	}
 
 	/// <summary>
 	/// Download files sequentially or in parallel.
 	/// </summary>
-	private void download()
+	void download()
 	{
 		//Start the download tasks(for small files download in parallel using the given parallelism
 		//factor, for large file download sequentially)
@@ -245,42 +222,33 @@ class SFFileTransferAgent
 		if (0 < LargeFilesMetas.Count)
 		{
 			foreach (SFFileMetadata fileMetadata in LargeFilesMetas)
-			{
 				DownloadFilesInSequential(fileMetadata);
-			}
 		}
 		if (0 < SmallFilesMetas.Count)
-		{
 			DownloadFilesInParallel(SmallFilesMetas, TransferMetadata.parallel);
-		}
 	}
 
 	/// <summary>
 	/// Get the presigned URL and update the file metadata.
 	/// </summary>
-	private void updatePresignedUrl()
+	void updatePresignedUrl()
 	{
 		// Presigned url only applies to GCS
 		if (TransferMetadata.stageInfo.locationType == "GCS")
 		{
 			if (CommandTypes.UPLOAD == CommandType)
 			{
-				foreach (SFFileMetadata fileMeta in FilesMetas)
+				foreach (var fileMeta in FilesMetas)
 				{
-					string filePathToReplace = getFilePathFromPutCommand(Query);
-					string fileNameToReplaceWith = fileMeta.destFileName;
-					string queryWithSingleFile = Query;
+					var filePathToReplace = getFilePathFromPutCommand(Query);
+					var fileNameToReplaceWith = fileMeta.destFileName;
+					var queryWithSingleFile = Query;
 					queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
 
-					SFStatement sfStatement = new SFStatement(Session);
+					var sfStatement = new SFStatement(Session);
 					sfStatement.isPutGetQuery = true;
 
-					PutGetExecResponse response =
-						sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
-							0,
-							queryWithSingleFile,
-							null,
-							false);
+					var response = sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(0, queryWithSingleFile, null, false);
 
 					fileMeta.stageInfo = response.data.stageInfo;
 					fileMeta.presignedUrl = response.data.stageInfo.presignedUrl;
@@ -288,10 +256,8 @@ class SFFileTransferAgent
 			}
 			else if (CommandTypes.DOWNLOAD == CommandType)
 			{
-				for (int index = 0; index < FilesMetas.Count; index++)
-				{
+				for (var index = 0; index < FilesMetas.Count; index++)
 					FilesMetas[index].presignedUrl = TransferMetadata.presignedUrls[index];
-				}
 			}
 		}
 	}
@@ -301,42 +267,39 @@ class SFFileTransferAgent
 	/// </summary>
 	/// <param name="query">The query containing the file path</param>
 	/// <returns>The file path contained by the query</returns>
-	private string getFilePathFromPutCommand(string query)
+	string getFilePathFromPutCommand(string query)
 	{
 		// Extract file path from PUT command:
 		// E.g. "PUT file://C:<path-to-file> @DB.SCHEMA.%TABLE;"
-		int startIndex = query.IndexOf("file://") + "file://".Length;
-		int endIndex = query.Substring(startIndex).IndexOf(' ');
-		string filePath = query.Substring(startIndex, endIndex);
+		var startIndex = query.IndexOf("file://") + "file://".Length;
+		var endIndex = query.Substring(startIndex).IndexOf(' ');
+		var filePath = query.Substring(startIndex, endIndex);
 		return filePath;
 	}
 
 	/// <summary>
 	/// Initialize the encryption materials for file encryption.
 	/// </summary>
-	private void initEncryptionMaterial()
+	void initEncryptionMaterial()
 	{
 		if (CommandTypes.UPLOAD == CommandType)
-		{
 			EncryptionMaterials.Add(TransferMetadata.encryptionMaterial[0]);
-		}
 	}
 
 	/// <summary>
 	/// Initialize the file metadata of each file to be uploaded/downloaded.
 	/// </summary>
 	/// <param name="files">List of files to obtain metadata from</param>
-	private void initFileMetadata(
-		List<string> files)
+	void initFileMetadata(List<string> files)
 	{
 		if (CommandTypes.UPLOAD == CommandType)
 		{
-			foreach (string file in files)
+			foreach (var file in files)
 			{
-				FileInfo fileInfo = new FileInfo(file);
+				var fileInfo = new FileInfo(file);
 
 				//  Retrieve / Compute the file actual compression type for each file in the list(most work is for auto - detect)
-				string fileName = fileInfo.Name;
+				var fileName = fileInfo.Name;
 				SFFileCompressionTypes.SFFileCompressionType compressionType;
 
 				if (TransferMetadata.autoCompress &&
@@ -360,7 +323,7 @@ class SFFileTransferAgent
 					throw new SnowflakeDbException("0A000", SFError.INTERNAL_ERROR, compressionType.Name);
 				}
 
-				SFFileMetadata fileMetadata = new SFFileMetadata()
+				var fileMetadata = new SFFileMetadata()
 				{
 					srcFilePath = file,
 					srcFileName = fileName,
@@ -369,14 +332,11 @@ class SFFileTransferAgent
 					overwrite = TransferMetadata.overwrite,
 					// Need to compress before sending only if autoCompress is On and the file is
 					// not compressed yet
-					requireCompress = (
-						TransferMetadata.autoCompress &&
-						(SFFileCompressionTypes.NONE.Equals(compressionType))),
+					requireCompress = (TransferMetadata.autoCompress && (SFFileCompressionTypes.NONE.Equals(compressionType))),
 					sourceCompression = compressionType,
 					presignedUrl = TransferMetadata.stageInfo.presignedUrl,
 					// If the file is under the threshold, don't upload in chunks, set parallel to 1
-					parallel = (fileInfo.Length > TransferMetadata.threshold) ?
-						TransferMetadata.parallel : 1,
+					parallel = (fileInfo.Length > TransferMetadata.threshold) ? TransferMetadata.parallel : 1,
 				};
 
 				if (!fileMetadata.requireCompress)
@@ -393,19 +353,17 @@ class SFFileTransferAgent
 				}
 
 				if (EncryptionMaterials.Count > 0)
-				{
 					fileMetadata.encryptionMaterial = EncryptionMaterials[0];
-				}
 
 				FilesMetas.Add(fileMetadata);
 			}
 		}
 		else if (CommandTypes.DOWNLOAD == CommandType)
 		{
-			for (int index = 0; index < files.Count; index++)
+			for (var index = 0; index < files.Count; index++)
 			{
-				string file = files[index];
-				SFFileMetadata fileMetadata = new SFFileMetadata()
+				var file = files[index];
+				var fileMetadata = new SFFileMetadata()
 				{
 					srcFileName = file,
 					destFileName = file,
@@ -431,12 +389,12 @@ class SFFileTransferAgent
 	/// <returns>The list of file matching the input location</returns>
 	/// <exception cref="DirectoryNotFoundException">Directory not found. Could not find a part of the pat </exception>
 	/// <exception cref="FileNotFoundException">File not found or the path is pointing to a Directory</exception>
-	private List<string> expandFileNames(string location)
+	List<string> expandFileNames(string location)
 	{
 		// Replace ~ with the user home directory path
 		if (location.Contains("~"))
 		{
-			string homePath = (Environment.OSVersion.Platform == PlatformID.Unix ||
+			var homePath = (Environment.OSVersion.Platform == PlatformID.Unix ||
 			Environment.OSVersion.Platform == PlatformID.MacOSX)
 			? Environment.GetEnvironmentVariable("HOME")
 			: Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
@@ -445,26 +403,23 @@ class SFFileTransferAgent
 		}
 
 		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-		{
 			location = Path.GetFullPath(location);
-		}
 
-		String fileName = Path.GetFileName(location);
-		string directoryName = Path.GetDirectoryName(location);
+		var fileName = Path.GetFileName(location);
+		var directoryName = Path.GetDirectoryName(location)!;
 
-		List<string> filePaths = new List<string>();
+		var filePaths = new List<string>();
 		//filePaths.Add(""); //Start with an empty string to build upon
-		if (directoryName.Contains("?") ||
-			directoryName.Contains("*"))
+		if (directoryName.Contains("?") || directoryName.Contains("*"))
 		{
 			// If there is a wildcard in at least one of the directory name in the file path
-			string[] pathParts = location.Split(Path.DirectorySeparatorChar);
+			var pathParts = location.Split(Path.DirectorySeparatorChar);
 
 			string currPart;
-			for (int i = 0; i < pathParts.Length; i++)
+			for (var i = 0; i < pathParts.Length; i++)
 			{
-				List<string> tempPaths = new List<string>();
-				foreach (string filePath in filePaths)
+				var tempPaths = new List<string>();
+				foreach (var filePath in filePaths)
 				{
 					currPart = pathParts[i];
 
@@ -473,34 +428,20 @@ class SFFileTransferAgent
 						if (i < pathParts.Length - 1)
 						{
 							// Expand the directories names
-							tempPaths.AddRange(
-								Directory.GetDirectories(
-									filePath,
-									currPart,
-									SearchOption.TopDirectoryOnly));
+							tempPaths.AddRange(Directory.GetDirectories(filePath, currPart, SearchOption.TopDirectoryOnly));
 						}
 						else
 						{
 							// Expand the files names
-							tempPaths.AddRange(
-								Directory.GetFiles(
-									filePath,
-									currPart,
-									SearchOption.TopDirectoryOnly));
+							tempPaths.AddRange(Directory.GetFiles(filePath, currPart, SearchOption.TopDirectoryOnly));
 						}
 					}
 					else
 					{
-						if (0 < i)
-						{
-							// Keep building the paths
+						if (0 < i) // Keep building the paths
 							tempPaths.Add(filePath + Path.DirectorySeparatorChar + currPart);
-						}
-						else
-						{
-							// First part
+						else // First part
 							tempPaths.Add(currPart);
-						}
 					}
 				}
 				filePaths = tempPaths;
@@ -508,7 +449,7 @@ class SFFileTransferAgent
 		}
 		else if (fileName.Contains("?") || fileName.Contains("*"))
 		{
-			string ext = Path.GetExtension(fileName);
+			var ext = Path.GetExtension(fileName);
 			if ((4 == ext.Length) && (fileName.Contains("*")))
 			{
 				/*
@@ -521,17 +462,11 @@ class SFFileTransferAgent
 					* - In all other cases, the method returns files that exactly match the
 					* specified extension. For example, "*.ai" returns "file.ai" but not "file.aif".
 					*/
-				string[] potentialMatches =
-						Directory.GetFiles(
-							directoryName,
-							fileName,
-							SearchOption.TopDirectoryOnly);
-				foreach (string potentialMatch in potentialMatches)
+				var potentialMatches = Directory.GetFiles(directoryName, fileName, SearchOption.TopDirectoryOnly);
+				foreach (var potentialMatch in potentialMatches)
 				{
 					if (potentialMatch.EndsWith(ext))
-					{
 						filePaths.Add(potentialMatch);
-					}
 				}
 			}
 			else
@@ -547,16 +482,11 @@ class SFFileTransferAgent
 		else
 		{
 			// No wild card, just make sure it's a file
-			FileAttributes attr = File.GetAttributes(location);
+			var attr = File.GetAttributes(location);
 			if (!attr.HasFlag(FileAttributes.Directory))
-			{
 				filePaths.Add(location);
-			}
 			else
-			{
-				throw new FileNotFoundException(
-					"Directories not supported, you need to provide a file path", location);
-			}
+				throw new FileNotFoundException("Directories not supported, you need to provide a file path", location);
 		}
 
 		return filePaths;
@@ -567,20 +497,24 @@ class SFFileTransferAgent
 	/// update the metadata accordingly after the compression is finished.
 	/// </summary>
 	/// <param name="fileMetadata">The metadata for the file to compress.</param>
-	private void compressFileWithGzip(SFFileMetadata fileMetadata)
+	void compressFileWithGzip(SFFileMetadata fileMetadata)
 	{
-		FileInfo fileToCompress = new FileInfo(fileMetadata.srcFilePath);
+		if (fileMetadata.srcFilePath == null)
+			throw new ArgumentException("fileMetadata.srcFilePath is null", nameof(fileMetadata));
+		if (fileMetadata.tmpDir == null)
+			throw new ArgumentException("fileMetadata.tmpDir is null", nameof(fileMetadata));
+
+		var fileToCompress = new FileInfo(fileMetadata.srcFilePath);
 		fileMetadata.realSrcFilePath = Path.Combine(fileMetadata.tmpDir, fileMetadata.srcFileName + "_c.gz");
 
-		using (FileStream originalFileStream = fileToCompress.OpenRead())
+		using (var originalFileStream = fileToCompress.OpenRead())
 		{
 			if ((File.GetAttributes(fileToCompress.FullName) &
 			   FileAttributes.Hidden) != FileAttributes.Hidden)
 			{
-				using (FileStream compressedFileStream = File.Create(fileMetadata.realSrcFilePath))
+				using (var compressedFileStream = File.Create(fileMetadata.realSrcFilePath))
 				{
-					using (GZipStream compressionStream =
-						new GZipStream(compressedFileStream, CompressionMode.Compress))
+					using (var compressionStream = new GZipStream(compressedFileStream, CompressionMode.Compress))
 					{
 						originalFileStream.CopyTo(compressionStream);
 					}
@@ -596,8 +530,11 @@ class SFFileTransferAgent
 	/// Get digest and size of file to be uploaded.
 	/// </summary>
 	/// <param name="fileMetadata">The metadata for the file to get digest.</param>
-	private void getDigestAndSizeForFile(SFFileMetadata fileMetadata)
+	void getDigestAndSizeForFile(SFFileMetadata fileMetadata)
 	{
+		if (fileMetadata.realSrcFilePath == null)
+			throw new ArgumentException("fileMetadata.realSrcFilePath is null", nameof(fileMetadata));
+
 		using (SHA256 SHA256 = SHA256.Create())
 		{
 			using (FileStream fileStream = File.OpenRead(fileMetadata.realSrcFilePath))
@@ -612,16 +549,11 @@ class SFFileTransferAgent
 	/// Renew expired client.
 	/// </summary>
 	/// <returns>The renewed storage client.</returns>
-	private ISFRemoteStorageClient renewExpiredClient()
+	ISFRemoteStorageClient? renewExpiredClient()
 	{
-		SFStatement sfStatement = new SFStatement(Session);
+		var sfStatement = new SFStatement(Session);
 
-		PutGetExecResponse response =
-			sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(
-				0,
-				TransferMetadata.command,
-				null,
-				false);
+		var response = sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(0, TransferMetadata.command, null, false);
 
 		return SFRemoteStorageUtil.GetRemoteStorageType(response.data);
 	}
@@ -631,28 +563,22 @@ class SFFileTransferAgent
 	/// </summary>
 	/// <param name="fileMetadata">The metadata of the file to upload.</param>
 	/// <returns>The result outcome for each file.</returns>
-	private void UploadFilesInSequential(
+	void UploadFilesInSequential(
 		SFFileMetadata fileMetadata)
 	{
 		/// The storage client used to upload/download data from files or streams
 		fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorageType(TransferMetadata);
-		SFFileMetadata resultMetadata = UploadSingleFile(fileMetadata);
+		var resultMetadata = UploadSingleFile(fileMetadata);
 
 		if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
-		{
 			fileMetadata.client = renewExpiredClient();
-		}
 		else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
-		{
 			updatePresignedUrl();
-		}
 
 		ResultsMetas.Add(resultMetadata);
 
 		if (INJECT_WAIT_IN_PUT > 0)
-		{
 			Thread.Sleep(INJECT_WAIT_IN_PUT);
-		}
 	}
 
 	/// <summary>
@@ -660,28 +586,22 @@ class SFFileTransferAgent
 	/// </summary>
 	/// <param name="fileMetadata">The metadata of the file to download.</param>
 	/// <returns>The result outcome for each file.</returns>
-	private void DownloadFilesInSequential(
+	void DownloadFilesInSequential(
 		SFFileMetadata fileMetadata)
 	{
 		/// The storage client used to upload/download data from files or streams
 		fileMetadata.client = SFRemoteStorageUtil.GetRemoteStorageType(TransferMetadata);
-		SFFileMetadata resultMetadata = DownloadSingleFile(fileMetadata);
+		var resultMetadata = DownloadSingleFile(fileMetadata);
 
 		if (resultMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString())
-		{
 			fileMetadata.client = renewExpiredClient();
-		}
 		else if (resultMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
-		{
 			updatePresignedUrl();
-		}
 
 		ResultsMetas.Add(resultMetadata);
 
 		if (INJECT_WAIT_IN_PUT > 0)
-		{
 			Thread.Sleep(INJECT_WAIT_IN_PUT);
-		}
 	}
 
 	/// <summary>
@@ -690,15 +610,13 @@ class SFFileTransferAgent
 	/// <param name="filesMetadata">The list of files to upload in parallel.</param>
 	/// <param name="parallel">The number of files to upload in parallel.</param>
 	/// <returns>The result outcome for each file.</returns>
-	private void UploadFilesInParallel(
+	void UploadFilesInParallel(
 		List<SFFileMetadata> filesMetadata,
 		int parallel)
 	{
 		var listOfActions = new List<Action>();
-		foreach (SFFileMetadata fileMetadata in filesMetadata)
-		{
+		foreach (var fileMetadata in filesMetadata)
 			listOfActions.Add(() => UploadFilesInSequential(fileMetadata));
-		}
 
 		var options = new ParallelOptions { MaxDegreeOfParallelism = parallel };
 		Parallel.Invoke(options, listOfActions.ToArray());
@@ -710,15 +628,13 @@ class SFFileTransferAgent
 	/// <param name="filesMetadata">The list of files to download in parallel.</param>
 	/// <param name="parallel">The number of files to download in parallel.</param>
 	/// <returns>The result outcome for each file.</returns>
-	private void DownloadFilesInParallel(
+	void DownloadFilesInParallel(
 		List<SFFileMetadata> filesMetadata,
 		int parallel)
 	{
 		var listOfActions = new List<Action>();
 		foreach (SFFileMetadata fileMetadata in filesMetadata)
-		{
 			listOfActions.Add(() => DownloadFilesInSequential(fileMetadata));
-		}
 
 		var options = new ParallelOptions { MaxDegreeOfParallelism = parallel };
 		Parallel.Invoke(options, listOfActions.ToArray());
@@ -730,7 +646,7 @@ class SFFileTransferAgent
 	/// <param name="storageClient">Storage client to upload the file with.</param>
 	/// <param name="fileMetadata">The metadata of the file to upload.</param>
 	/// <returns>The result outcome.</returns>
-	private SFFileMetadata UploadSingleFile(
+	SFFileMetadata UploadSingleFile(
 		SFFileMetadata fileMetadata)
 	{
 		fileMetadata.realSrcFilePath = fileMetadata.srcFilePath;
@@ -742,23 +658,17 @@ class SFFileTransferAgent
 		{
 			// Compress the file if needed
 			if (fileMetadata.requireCompress)
-			{
 				compressFileWithGzip(fileMetadata);
-			}
 
 			// Calculate the digest
 			getDigestAndSizeForFile(fileMetadata);
 
 			if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
-			{
 				// Upload the file using the remote client SDK and the file metadata
 				SFRemoteStorageUtil.UploadOneFileWithRetry(fileMetadata);
-			}
 			else
-			{
 				// Upload the file using the local client SDK and the file metadata
 				SFLocalStorageUtil.UploadOneFileWithRetry(fileMetadata);
-			}
 		}
 		finally
 		{
@@ -774,7 +684,7 @@ class SFFileTransferAgent
 	/// <param name="storageClient">Storage client to download the file with.</param>
 	/// <param name="fileMetadata">The metadata of the file to download.</param>
 	/// <returns>The result outcome.</returns>
-	private SFFileMetadata DownloadSingleFile(
+	SFFileMetadata DownloadSingleFile(
 		SFFileMetadata fileMetadata)
 	{
 		// Create tmp folder to store compressed files
@@ -783,15 +693,11 @@ class SFFileTransferAgent
 		try
 		{
 			if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
-			{
 				// Upload the file using the remote client SDK and the file metadata
 				SFRemoteStorageUtil.DownloadOneFile(fileMetadata);
-			}
 			else
-			{
 				// Upload the file using the local client SDK and the file metadata
 				SFLocalStorageUtil.DownloadOneFile(fileMetadata);
-			}
 		}
 		finally
 		{
@@ -808,7 +714,7 @@ class SFFileTransferAgent
 	/// Referenced from: https://stackoverflow.com/a/278457
 	public string GetTemporaryDirectory()
 	{
-		string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+		var tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 		Directory.CreateDirectory(tempDirectory);
 		return tempDirectory;
 	}
@@ -820,15 +726,11 @@ class SFFileTransferAgent
 	/// <returns>The storage client type.</returns>
 	public StorageClientType GetStorageClientType(PutGetStageInfo stageInfo)
 	{
-		string stageLocationType = stageInfo.locationType;
+		var stageLocationType = stageInfo.locationType;
 
 		if (stageLocationType == LOCAL_FS)
-		{
 			return StorageClientType.LOCAL;
-		}
 		else
-		{
 			return StorageClientType.REMOTE;
-		}
 	}
 }

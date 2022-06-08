@@ -1,4 +1,6 @@
-﻿using System.Security.Cryptography;
+﻿#nullable enable
+
+using System.Security.Cryptography;
 using Tortuga.Data.Snowflake.Core.Messages;
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer;
@@ -9,9 +11,9 @@ namespace Tortuga.Data.Snowflake.Core.FileTransfer;
 class EncryptionProvider
 {
 	// The default block size for AES
-	private const int AES_BLOCK_SIZE = 128;
+	const int AES_BLOCK_SIZE = 128;
 
-	private const int blockSize = AES_BLOCK_SIZE / 8;  // in bytes
+	const int blockSize = AES_BLOCK_SIZE / 8;  // in bytes
 
 	/// <summary>
 	/// Encrypt data and write to the outStream.
@@ -20,30 +22,24 @@ class EncryptionProvider
 	/// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
 	/// <param name="encryptionMetadata">Store the encryption metadata into</param>
 	/// <returns>The encrypted bytes of the file to upload.</returns>
-	static public byte[] EncryptFile(
-		string inFile,
-		PutGetEncryptionMaterial encryptionMaterial,
-		SFEncryptionMetadata encryptionMetadata)
+	static public byte[] EncryptFile(string inFile, PutGetEncryptionMaterial encryptionMaterial, SFEncryptionMetadata encryptionMetadata)
 	{
-		byte[] decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
-		int masterKeySize = decodedMasterKey.Length;
+		var decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
+		var masterKeySize = decodedMasterKey.Length;
 
 		// Generate file key
-		byte[] ivData = new byte[blockSize];
-		byte[] keyData = new byte[blockSize];
+		var ivData = new byte[blockSize];
+		var keyData = new byte[blockSize];
 
 		var random = new Random();
 		random.NextBytes(ivData);
 		random.NextBytes(keyData);
 
 		// Byte[] to encrypt data into
-		byte[] encryptedBytes = CreateEncryptedBytes(
-			inFile,
-			keyData,
-			ivData);
+		var encryptedBytes = CreateEncryptedBytes(inFile, keyData, ivData);
 
 		// Encrypt file key
-		byte[] encryptedFileKey = encryptFileKey(decodedMasterKey, keyData);
+		var encryptedFileKey = encryptFileKey(decodedMasterKey, keyData);
 
 		// Store encryption metadata information
 		MaterialDescriptor matDesc = new MaterialDescriptor
@@ -53,11 +49,8 @@ class EncryptionProvider
 			keySize = (masterKeySize * 8).ToString()
 		};
 
-		string ivBase64 = Convert.ToBase64String(ivData);
-		string keyBase64 = Convert.ToBase64String(encryptedFileKey);
-
-		encryptionMetadata.iv = ivBase64;
-		encryptionMetadata.key = keyBase64;
+		encryptionMetadata.iv = Convert.ToBase64String(ivData);
+		encryptionMetadata.key = Convert.ToBase64String(encryptedFileKey);
 		encryptionMetadata.matDesc = Newtonsoft.Json.JsonConvert.SerializeObject(matDesc).ToString();
 
 		return encryptedBytes;
@@ -69,19 +62,21 @@ class EncryptionProvider
 	/// <param name="masterKey">The key to use for encryption.</param>
 	/// <param name="unencryptedFileKey">The file key to encrypt.</param>
 	/// <returns>The encrypted key.</returns>
-	static private byte[] encryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
+	static byte[] encryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
 	{
-		Aes aes = Aes.Create();
+		var aes = Aes.Create();
 		aes.Key = masterKey;
 		aes.Mode = CipherMode.ECB;
 		aes.Padding = PaddingMode.PKCS7;
 
-		MemoryStream cipherStream = new MemoryStream();
-		CryptoStream cryptoStream = new CryptoStream(cipherStream, aes.CreateEncryptor(), CryptoStreamMode.Write);
-		cryptoStream.Write(unencryptedFileKey, 0, unencryptedFileKey.Length);
-		cryptoStream.FlushFinalBlock();
+		using (var cipherStream = new MemoryStream())
+		using (var cryptoStream = new CryptoStream(cipherStream, aes.CreateEncryptor(), CryptoStreamMode.Write))
+		{
+			cryptoStream.Write(unencryptedFileKey, 0, unencryptedFileKey.Length);
+			cryptoStream.FlushFinalBlock();
 
-		return cipherStream.ToArray();
+			return cipherStream.ToArray();
+		}
 	}
 
 	/// <summary>
@@ -91,25 +86,23 @@ class EncryptionProvider
 	/// <param name="key">The encryption key.</param>
 	/// <param name="iv">The encryption IV or null if it needs to be generated.</param>
 	/// <returns>The encrypted bytes.</returns>
-	static private byte[] CreateEncryptedBytes(
-		string inFile,
-		byte[] key,
-		byte[] iv)
+	static byte[] CreateEncryptedBytes(string inFile, byte[] key, byte[] iv)
 	{
-		Aes aes = Aes.Create();
+		var aes = Aes.Create();
 		aes.Key = key;
 		aes.Mode = CipherMode.CBC;
 		aes.Padding = PaddingMode.PKCS7;
 		aes.IV = iv;
 
-		MemoryStream targetStream = new MemoryStream();
-		CryptoStream cryptoStream = new CryptoStream(targetStream, aes.CreateEncryptor(), CryptoStreamMode.Write);
+		using (var targetStream = new MemoryStream())
+		using (var cryptoStream = new CryptoStream(targetStream, aes.CreateEncryptor(), CryptoStreamMode.Write))
+		{
+			var inFileBytes = File.ReadAllBytes(inFile);
+			cryptoStream.Write(inFileBytes, 0, inFileBytes.Length);
+			cryptoStream.FlushFinalBlock();
 
-		byte[] inFileBytes = File.ReadAllBytes(inFile);
-		cryptoStream.Write(inFileBytes, 0, inFileBytes.Length);
-		cryptoStream.FlushFinalBlock();
-
-		return targetStream.ToArray();
+			return targetStream.ToArray();
+		}
 	}
 
 	/// <summary>
@@ -119,33 +112,27 @@ class EncryptionProvider
 	/// <param name="encryptionMaterial">Contains the query stage master key, query id, and smk id.</param>
 	/// <param name="encryptionMetadata">Store the encryption metadata into</param>
 	/// <returns>The encrypted bytes of the file to upload.</returns>
-	static public string DecryptFile(
-		string inFile,
-		PutGetEncryptionMaterial encryptionMaterial,
-		SFEncryptionMetadata encryptionMetadata)
+	static public string DecryptFile(string inFile, PutGetEncryptionMaterial encryptionMaterial, SFEncryptionMetadata encryptionMetadata)
 	{
 		// Get key and iv from metadata
-		string keyBase64 = encryptionMetadata.key;
-		string ivBase64 = encryptionMetadata.iv;
+		var keyBase64 = encryptionMetadata.key ?? throw new ArgumentException("encryptionMetadata.key is null", nameof(encryptionMaterial));
+		var ivBase64 = encryptionMetadata.iv ?? throw new ArgumentException("encryptionMetadata.iv is null", nameof(encryptionMaterial));
 
 		// Get decoded key from base64 encoded value
-		byte[] decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
+		var decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
 
 		// Get key bytes and iv bytes from base64 encoded value
-		byte[] keyBytes = Convert.FromBase64String(keyBase64);
-		byte[] ivBytes = Convert.FromBase64String(ivBase64);
+		var keyBytes = Convert.FromBase64String(keyBase64);
+		var ivBytes = Convert.FromBase64String(ivBase64);
 
 		// Create temp file
-		string tempFileName = Path.Combine(Path.GetTempPath(), Path.GetFileName(inFile));
+		var tempFileName = Path.Combine(Path.GetTempPath(), Path.GetFileName(inFile));
 
 		// Create decipher with file key, iv bytes, and AES CBC
-		byte[] decryptedFileKey = decryptFileKey(decodedMasterKey, keyBytes);
+		var decryptedFileKey = decryptFileKey(decodedMasterKey, keyBytes);
 
 		// Create key decipher with decoded key and AES ECB
-		byte[] decryptedBytes = CreateDecryptedBytes(
-			inFile,
-			decryptedFileKey,
-			ivBytes);
+		var decryptedBytes = CreateDecryptedBytes(inFile, decryptedFileKey, ivBytes);
 
 		File.WriteAllBytes(tempFileName, decryptedBytes);
 
@@ -158,19 +145,21 @@ class EncryptionProvider
 	/// <param name="masterKey">The key to use for encryption.</param>
 	/// <param name="unencryptedFileKey">The file key to encrypt.</param>
 	/// <returns>The encrypted key.</returns>
-	static private byte[] decryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
+	static byte[] decryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
 	{
-		Aes aes = Aes.Create();
+		var aes = Aes.Create();
 		aes.Key = masterKey;
 		aes.Mode = CipherMode.ECB;
 		aes.Padding = PaddingMode.PKCS7;
 
-		MemoryStream cipherStream = new MemoryStream();
-		CryptoStream cryptoStream = new CryptoStream(cipherStream, aes.CreateDecryptor(), CryptoStreamMode.Write);
-		cryptoStream.Write(unencryptedFileKey, 0, unencryptedFileKey.Length);
-		cryptoStream.FlushFinalBlock();
+		using (var cipherStream = new MemoryStream())
+		using (var cryptoStream = new CryptoStream(cipherStream, aes.CreateDecryptor(), CryptoStreamMode.Write))
+		{
+			cryptoStream.Write(unencryptedFileKey, 0, unencryptedFileKey.Length);
+			cryptoStream.FlushFinalBlock();
 
-		return cipherStream.ToArray();
+			return cipherStream.ToArray();
+		}
 	}
 
 	/// <summary>
@@ -180,31 +169,29 @@ class EncryptionProvider
 	/// <param name="key">The encryption key.</param>
 	/// <param name="iv">The encryption IV or null if it needs to be generated.</param>
 	/// <returns>The encrypted bytes.</returns>
-	static private byte[] CreateDecryptedBytes(
-		string inFile,
-		byte[] key,
-		byte[] iv)
+	static byte[] CreateDecryptedBytes(string inFile, byte[] key, byte[] iv)
 	{
-		Aes aes = Aes.Create();
+		var aes = Aes.Create();
 		aes.Key = key;
 		aes.Mode = CipherMode.CBC;
 		aes.Padding = PaddingMode.PKCS7;
 		aes.IV = iv;
 
-		MemoryStream targetStream = new MemoryStream();
-		CryptoStream cryptoStream = new CryptoStream(targetStream, aes.CreateDecryptor(), CryptoStreamMode.Write);
-
-		using (Stream inStream = File.OpenRead(inFile))
+		using (var targetStream = new MemoryStream())
+		using (var cryptoStream = new CryptoStream(targetStream, aes.CreateDecryptor(), CryptoStreamMode.Write))
 		{
-			byte[] buffer = new byte[2048];
-			int bytesRead;
-			while ((bytesRead = inStream.Read(buffer, 0, buffer.Length)) > 0)
+			using (var inStream = File.OpenRead(inFile))
 			{
-				cryptoStream.Write(buffer, 0, bytesRead);
+				var buffer = new byte[2048];
+				int bytesRead;
+				while ((bytesRead = inStream.Read(buffer, 0, buffer.Length)) > 0)
+				{
+					cryptoStream.Write(buffer, 0, bytesRead);
+				}
 			}
-		}
-		cryptoStream.FlushFinalBlock();
+			cryptoStream.FlushFinalBlock();
 
-		return targetStream.ToArray();
+			return targetStream.ToArray();
+		}
 	}
 }

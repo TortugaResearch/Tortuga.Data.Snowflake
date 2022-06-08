@@ -87,6 +87,9 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 	/// <returns>The file header of the Azure file.</returns>
 	public FileHeader? GetFileHeader(SFFileMetadata fileMetadata)
 	{
+		if (fileMetadata.stageInfo == null)
+			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
+
 		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
 
 		// Get the Azure client
@@ -142,6 +145,9 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 	/// <param name="encryptionMetadata">The encryption metadata for the header.</param>
 	public void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
 	{
+		if (fileMetadata.stageInfo == null)
+			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
+
 		// Create the JSON for the encryption data header
 		string encryptionData = JsonConvert.SerializeObject(new EncryptionData
 		{
@@ -165,7 +171,7 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 		});
 
 		// Create the metadata to use for the header
-		var metadata = new Dictionary<string, string>();
+		var metadata = new Dictionary<string, string?>();
 		metadata.Add("encryptiondata", encryptionData);
 		metadata.Add("matdesc", encryptionMetadata.matDesc);
 		metadata.Add("sfcdigest", fileMetadata.sha256Digest);
@@ -216,6 +222,9 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 	/// <param name="maxConcurrency">Number of max concurrency.</param>
 	public void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency)
 	{
+		if (fileMetadata.stageInfo == null)
+			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
+
 		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
 
 		// Get the Azure client

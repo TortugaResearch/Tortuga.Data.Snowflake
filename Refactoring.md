@@ -1424,3 +1424,11 @@ The `SFGCSClient.GetFileHeader` method reports errors by modifying an input para
 
 Methods in `SFRemoteStorageUtil` destroys the stack trace when there is an error.
 
+## Round 23 - Core.FileTransfer
+
+* Add `#nullable enable` to each file in the namespace. Update properties where appropriate.
+* Use `var` where appropriate
+* Add `using` statements where appropriate.
+* Check parameters for null values
+* Remove unused fields
+* 

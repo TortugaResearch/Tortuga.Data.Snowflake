@@ -75,6 +75,11 @@ class SFRemoteStorageUtil
 	/// <param name="fileMetadata">The file metadata of the file to upload</param>
 	internal static void UploadOneFile(SFFileMetadata fileMetadata)
 	{
+		if (fileMetadata.realSrcFilePath == null)
+			throw new ArgumentException("fileMetadata.realSrcFilePath is null", nameof(fileMetadata));
+		if (fileMetadata.client == null)
+			throw new ArgumentException("fileMetadata.client is null", nameof(fileMetadata));
+
 		var encryptionMetadata = new SFEncryptionMetadata();
 		var fileBytes = File.ReadAllBytes(fileMetadata.realSrcFilePath);
 
@@ -159,6 +164,9 @@ class SFRemoteStorageUtil
 	/// <param name="fileMetadata">The file metadata of the file to upload</param>
 	internal static void UploadOneFileWithRetry(SFFileMetadata fileMetadata)
 	{
+		if (fileMetadata.client == null)
+			throw new ArgumentException("fileMetadata.client is null", nameof(fileMetadata));
+
 		var breakFlag = false;
 
 		for (var count = 0; count < 10; count++)
@@ -204,6 +212,13 @@ class SFRemoteStorageUtil
 	/// <param name="fileMetadata">The file metadata of the file to download</param>
 	internal static void DownloadOneFile(SFFileMetadata fileMetadata)
 	{
+		if (fileMetadata.localLocation == null)
+			throw new ArgumentException("fileMetadata.localLocation is null", nameof(fileMetadata));
+		if (fileMetadata.destFileName == null)
+			throw new ArgumentException("fileMetadata.destFileName is null", nameof(fileMetadata));
+		if (fileMetadata.client == null)
+			throw new ArgumentException("fileMetadata.client is null", nameof(fileMetadata));
+
 		var fullDstPath = Path.Combine(fileMetadata.localLocation, fileMetadata.destFileName);
 
 		// Check local location exists
@@ -248,7 +263,7 @@ class SFRemoteStorageUtil
 					var tmpDstName = EncryptionProvider.DecryptFile(
 					  fullDstPath,
 					  fileMetadata.encryptionMaterial,
-					  fileHeader!.encryptionMetadata  //If encryptionMaterial is not null, then we must have seen a file header.
+					  fileHeader!.encryptionMetadata!  //If encryptionMaterial is not null, then we must have seen a file header.
 					  );
 
 					File.Delete(fullDstPath);
