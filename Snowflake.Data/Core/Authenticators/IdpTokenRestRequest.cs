@@ -14,7 +14,7 @@ namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
 internal class IdpTokenRestRequest : BaseRestRequest, IRestRequest
 {
-	private static MediaTypeWithQualityHeaderValue jsonHeader = new MediaTypeWithQualityHeaderValue("application/json");
+	static MediaTypeWithQualityHeaderValue jsonHeader = new MediaTypeWithQualityHeaderValue("application/json");
 
 	internal IdpTokenRequest? JsonBody { get; set; }
 

@@ -2,6 +2,8 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
@@ -14,18 +16,18 @@ namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 /// </summary>
 class SFSnowflakeAzureClient : ISFRemoteStorageClient
 {
-	private const string EXPIRED_TOKEN = "ExpiredToken";
-	private const string NO_SUCH_KEY = "NoSuchKey";
+	const string EXPIRED_TOKEN = "ExpiredToken";
+	const string NO_SUCH_KEY = "NoSuchKey";
 
 	/// <summary>
 	/// The attribute in the credential map containing the shared access signature token.
 	/// </summary>
-	private static readonly string AZURE_SAS_TOKEN = "AZURE_SAS_TOKEN";
+	const string AZURE_SAS_TOKEN = "AZURE_SAS_TOKEN";
 
 	/// <summary>
 	/// The cloud blob client to use to upload and download data on Azure.
 	/// </summary>
-	private BlobServiceClient blobServiceClient;
+	readonly BlobServiceClient m_BlobServiceClient;
 
 	/// <summary>
 	/// Azure client without client-side encryption.
@@ -34,23 +36,29 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 	public SFSnowflakeAzureClient(PutGetStageInfo stageInfo)
 	{
 		// Get the Azure SAS token and create the client
-		if (stageInfo.stageCredentials.TryGetValue(AZURE_SAS_TOKEN, out string sasToken))
+		if (stageInfo.stageCredentials.TryGetValue(AZURE_SAS_TOKEN, out var sasToken))
 		{
 			string blobEndpoint = string.Format("https://{0}.blob.core.windows.net", stageInfo.storageAccount);
-			blobServiceClient = new BlobServiceClient(new Uri(blobEndpoint),
+			m_BlobServiceClient = new BlobServiceClient(new Uri(blobEndpoint),
 				new AzureSasCredential(sasToken));
 		}
+		else
+		{
+			throw new ArgumentException($"{nameof(stageInfo)}.{nameof(stageInfo.stageCredentials)} does not contain an AZURE_SAS_TOKEN", nameof(stageInfo));
+		}
 	}
+
+	RemoteLocation ISFRemoteStorageClient.ExtractBucketNameAndPath(string stageLocation) => ExtractBucketNameAndPath(stageLocation);
 
 	/// <summary>
 	/// Extract the bucket name and path from the stage location.
 	/// </summary>
 	/// <param name="stageLocation">The command stage location.</param>
 	/// <returns>The remote location of the Azure file.</returns>
-	public RemoteLocation ExtractBucketNameAndPath(string stageLocation)
+	static public RemoteLocation ExtractBucketNameAndPath(string stageLocation)
 	{
-		string blobName = stageLocation;
-		string azurePath = null;
+		var blobName = stageLocation;
+		string? azurePath = null;
 
 		// Split stage location as bucket name and path
 		if (stageLocation.Contains("/"))
@@ -77,14 +85,13 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 	/// </summary>
 	/// <param name="fileMetadata">The Azure file metadata.</param>
 	/// <returns>The file header of the Azure file.</returns>
-	public FileHeader GetFileHeader(SFFileMetadata fileMetadata)
+	public FileHeader? GetFileHeader(SFFileMetadata fileMetadata)
 	{
-		PutGetStageInfo stageInfo = fileMetadata.stageInfo;
-		RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
 
 		// Get the Azure client
-		BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-		BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+		var containerClient = m_BlobServiceClient.GetBlobContainerClient(location.bucket);
+		var blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
 
 		BlobProperties response;
 		try
@@ -111,7 +118,7 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 
 		fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
 
-		dynamic encryptionData = JsonConvert.DeserializeObject(response.Metadata["encryptiondata"]);
+		dynamic encryptionData = JsonConvert.DeserializeObject(response.Metadata["encryptiondata"])!;
 		SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata
 		{
 			iv = encryptionData["ContentEncryptionIV"],
@@ -158,24 +165,25 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 		});
 
 		// Create the metadata to use for the header
-		IDictionary<string, string> metadata =
-		   new Dictionary<string, string>();
+		var metadata = new Dictionary<string, string>();
 		metadata.Add("encryptiondata", encryptionData);
 		metadata.Add("matdesc", encryptionMetadata.matDesc);
 		metadata.Add("sfcdigest", fileMetadata.sha256Digest);
 
-		PutGetStageInfo stageInfo = fileMetadata.stageInfo;
-		RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
 
 		// Get the Azure client
-		BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-		BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+		var containerClient = m_BlobServiceClient.GetBlobContainerClient(location.bucket);
+		var blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
 
 		try
 		{
 			// Issue the POST/PUT request
-			blobClient.Upload(new MemoryStream(fileBytes));
-			blobClient.SetMetadata(metadata);
+			using (var content = new MemoryStream(fileBytes))
+			{
+				blobClient.Upload(content);
+				blobClient.SetMetadata(metadata);
+			}
 		}
 		catch (Exception ex)
 		{
@@ -208,18 +216,16 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 	/// <param name="maxConcurrency">Number of max concurrency.</param>
 	public void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency)
 	{
-		PutGetStageInfo stageInfo = fileMetadata.stageInfo;
-		RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
 
 		// Get the Azure client
-		BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(location.bucket);
-		BlobClient blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+		var containerClient = m_BlobServiceClient.GetBlobContainerClient(location.bucket);
+		var blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
 
 		try
 		{
 			// Issue the GET request
-			var task = blobClient.DownloadToAsync(fullDstPath);
-			task.Wait();
+			blobClient.DownloadTo(fullDstPath);
 		}
 		catch (Exception ex)
 		{

@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 
 /// <summary>
@@ -16,15 +18,10 @@ class SFLocalStorageUtil
 	internal static void UploadOneFileWithRetry(SFFileMetadata fileMetadata)
 	{
 		// Create directory if doesn't exist
-		if (!Directory.Exists(fileMetadata.stageInfo.location))
-		{
-			Directory.CreateDirectory(fileMetadata.stageInfo.location);
-		}
+		Directory.CreateDirectory(fileMetadata.stageInfo.location);
 
 		// Create reader stream
-		Stream stream = new MemoryStream(File.ReadAllBytes(fileMetadata.realSrcFilePath));
-
-		// Write stream to file
+		using (var stream = new MemoryStream(File.ReadAllBytes(fileMetadata.realSrcFilePath)))
 		using (var fileStream = File.Create(Path.Combine(fileMetadata.stageInfo.location, fileMetadata.destFileName)))
 		{
 			stream.CopyTo(fileStream);
@@ -40,18 +37,15 @@ class SFLocalStorageUtil
 	/// </summary>
 	internal static void DownloadOneFile(SFFileMetadata fileMetadata)
 	{
-		string srcFilePath = fileMetadata.stageInfo.location;
-		string realSrcFilePath = Path.Combine(srcFilePath, fileMetadata.srcFileName);
-		string output = Path.Combine(fileMetadata.localLocation, fileMetadata.destFileName);
+		var srcFilePath = fileMetadata.stageInfo.location;
+		var realSrcFilePath = Path.Combine(srcFilePath, fileMetadata.srcFileName);
+		var output = Path.Combine(fileMetadata.localLocation, fileMetadata.destFileName);
 
 		// Create directory if doesn't exist
-		if (!Directory.Exists(fileMetadata.localLocation))
-		{
-			Directory.CreateDirectory(fileMetadata.localLocation);
-		}
+		Directory.CreateDirectory(fileMetadata.localLocation);
 
 		// Create stream object for reader and writer
-		Stream stream = new MemoryStream(File.ReadAllBytes(realSrcFilePath));
+		using (var stream = new MemoryStream(File.ReadAllBytes(realSrcFilePath)))
 		using (var fileStream = File.Create(output))
 		{
 			// Write file

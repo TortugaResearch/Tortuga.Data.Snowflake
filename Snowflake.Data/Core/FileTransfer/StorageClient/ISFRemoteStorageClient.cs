@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 
 /// <summary>
@@ -17,7 +19,7 @@ interface ISFRemoteStorageClient
 	/// <summary>
 	/// Encrypt then upload one file.
 	/// </summary>
-	FileHeader GetFileHeader(SFFileMetadata fileMetadata);
+	FileHeader? GetFileHeader(SFFileMetadata fileMetadata);
 
 	/// <summary>
 	/// Attempt upload of a file and retry if fails.

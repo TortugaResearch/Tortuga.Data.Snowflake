@@ -1399,4 +1399,28 @@ This isn't used anywhere so it can be deleted.
 
 ## Round 21 - Core.Authenticators
 
-Add `#nullable enable` to every each file in the namespace. Update properties where appropriate.
+* Add `#nullable enable` to every each file in the namespace. Update properties where appropriate.
+
+## Round 22 - Core.FileTransfer.StorageClient 
+
+* Add `#nullable enable` to each file in the namespace. Update properties where appropriate.
+* Change the public fields in `EncryptionData` to properties
+* Change the public fields in `KeyWrappingMetadataInfo` to properties
+* Replace readonly strings with constants
+* Standardize field names
+* Mark fields as readonly where possible
+* Replace aync calls such as `HttpClient.GetStreamAsync` with sync calls such as `HttpClient.GetStream`. This allows us to remove the `Task.Wait()` calls.
+* Mark methods as static where possible.
+* You don't need to check if a directory already exists before creating it. `Directory.CreateDirectory` does both.
+* Add `using` statements to memory streams. (Technically not necessary, but will prevent compiler warnings later.)
+* The `SFRemoteStorageUtil.DownloadOneFile` method can throw a null exception.
+* Use `var` where appropriate
+* In `SFSnowflakeAzureClient`, m_BlobServiceClient can be null. But some methods assume it won't be.
+
+### Not fixed
+
+
+The `SFGCSClient.GetFileHeader` method reports errors by modifying an input parameter. This is fundementally wrong, but there isn't an obvious way to fix it. And it is causing problems with null checks.
+
+Methods in `SFRemoteStorageUtil` destroys the stack trace when there is an error.
+

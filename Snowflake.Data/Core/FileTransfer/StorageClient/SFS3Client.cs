@@ -2,10 +2,13 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Tortuga.HttpClientUtilities;
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 
@@ -19,68 +22,65 @@ class SFS3Client : ISFRemoteStorageClient
 	/// </summary>
 	internal class S3Metadata
 	{
-		public string HTTP_HEADER_CONTENT_TYPE { get; set; }
-		public string SFC_DIGEST { get; set; }
-		public string AMZ_IV { get; set; }
-		public string AMZ_KEY { get; set; }
-		public string AMZ_MATDESC { get; set; }
+		public string? HTTP_HEADER_CONTENT_TYPE { get; set; }
+		public string? SFC_DIGEST { get; set; }
+		public string? AMZ_IV { get; set; }
+		public string? AMZ_KEY { get; set; }
+		public string? AMZ_MATDESC { get; set; }
 	}
 
 	/// <summary>
 	/// The metadata header keys.
 	/// </summary>
-	private const string AMZ_META_PREFIX = "x-amz-meta-";
+	const string AMZ_META_PREFIX = "x-amz-meta-";
 
-	private const string AMZ_IV = "x-amz-iv";
-	private const string AMZ_KEY = "x-amz-key";
-	private const string AMZ_MATDESC = "x-amz-matdesc";
-	private const string SFC_DIGEST = "sfc-digest";
+	const string AMZ_IV = "x-amz-iv";
+	const string AMZ_KEY = "x-amz-key";
+	const string AMZ_MATDESC = "x-amz-matdesc";
+	const string SFC_DIGEST = "sfc-digest";
 
 	/// <summary>
 	/// The status of the request.
 	/// </summary>
-	private const string EXPIRED_TOKEN = "ExpiredToken";
+	const string EXPIRED_TOKEN = "ExpiredToken";
 
-	private const string NO_SUCH_KEY = "NoSuchKey";
+	const string NO_SUCH_KEY = "NoSuchKey";
 
 	/// <summary>
 	/// The application header type.
 	/// </summary>
-	private const string HTTP_HEADER_VALUE_OCTET_STREAM = "application/octet-stream";
+	const string HTTP_HEADER_VALUE_OCTET_STREAM = "application/octet-stream";
 
 	/// <summary>
 	/// The attribute in the credential map containing the aws access key.
 	/// </summary>
-	private static readonly string AWS_KEY_ID = "AWS_KEY_ID";
+	const string AWS_KEY_ID = "AWS_KEY_ID";
 
 	/// <summary>
 	/// The attribute in the credential map containing the aws secret key id.
 	/// </summary>
-	private static readonly string AWS_SECRET_KEY = "AWS_SECRET_KEY";
+	const string AWS_SECRET_KEY = "AWS_SECRET_KEY";
 
 	/// <summary>
 	/// The attribute in the credential map containing the aws token.
 	/// </summary>
-	private static readonly string AWS_TOKEN = "AWS_TOKEN";
+	const string AWS_TOKEN = "AWS_TOKEN";
 
 	/// <summary>
 	/// The underlying S3 client.
 	/// </summary>
-	private AmazonS3Client S3Client;
+	readonly AmazonS3Client m_S3Client;
 
 	/// <summary>
 	/// S3 client without client-side encryption.
 	/// </summary>
 	/// <param name="stageInfo">The command stage info.</param>
-	public SFS3Client(
-		PutGetStageInfo stageInfo,
-		int maxRetry,
-		int parallel)
+	public SFS3Client(PutGetStageInfo stageInfo, int maxRetry, int parallel)
 	{
 		// Get the key id and secret key from the response
-		stageInfo.stageCredentials.TryGetValue(AWS_KEY_ID, out string awsAccessKeyId);
-		stageInfo.stageCredentials.TryGetValue(AWS_SECRET_KEY, out string awsSecretAccessKey);
-		AmazonS3Config clientConfig = new AmazonS3Config();
+		stageInfo.stageCredentials.TryGetValue(AWS_KEY_ID, out var awsAccessKeyId);
+		stageInfo.stageCredentials.TryGetValue(AWS_SECRET_KEY, out var awsSecretAccessKey);
+		var clientConfig = new AmazonS3Config();
 		setCommonClientConfig(
 			clientConfig,
 			stageInfo.region,
@@ -89,9 +89,9 @@ class SFS3Client : ISFRemoteStorageClient
 			parallel);
 
 		// Get the AWS token value and create the S3 client
-		if (stageInfo.stageCredentials.TryGetValue(AWS_TOKEN, out string awsSessionToken))
+		if (stageInfo.stageCredentials.TryGetValue(AWS_TOKEN, out var awsSessionToken))
 		{
-			S3Client = new AmazonS3Client(
+			m_S3Client = new AmazonS3Client(
 				awsAccessKeyId,
 				awsSecretAccessKey,
 				awsSessionToken,
@@ -99,16 +99,18 @@ class SFS3Client : ISFRemoteStorageClient
 		}
 		else
 		{
-			S3Client = new AmazonS3Client(awsAccessKeyId, awsSecretAccessKey, clientConfig);
+			m_S3Client = new AmazonS3Client(awsAccessKeyId, awsSecretAccessKey, clientConfig);
 		}
 	}
+
+	RemoteLocation ISFRemoteStorageClient.ExtractBucketNameAndPath(string stageLocation) => ExtractBucketNameAndPath(stageLocation);
 
 	/// <summary>
 	/// Extract the bucket name and path from the stage location.
 	/// </summary>
 	/// <param name="stageLocation">The command stage location.</param>
 	/// <returns>The remote location of the S3 file.</returns>
-	public RemoteLocation ExtractBucketNameAndPath(string stageLocation)
+	static public RemoteLocation ExtractBucketNameAndPath(string stageLocation)
 	{
 		// Expand '~' and '~user' expressions
 		//if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -116,8 +118,8 @@ class SFS3Client : ISFRemoteStorageClient
 		//    stageLocation = Path.GetFullPath(stageLocation);
 		//}
 
-		string bucketName = stageLocation;
-		string s3path = "";
+		var bucketName = stageLocation;
+		var s3path = "";
 
 		// Split stage location as bucket name and path
 		if (stageLocation.Contains("/"))
@@ -144,34 +146,30 @@ class SFS3Client : ISFRemoteStorageClient
 	/// </summary>
 	/// <param name="fileMetadata">The S3 file metadata.</param>
 	/// <returns>The file header of the S3 file.</returns>
-	public FileHeader GetFileHeader(SFFileMetadata fileMetadata)
+	public FileHeader? GetFileHeader(SFFileMetadata fileMetadata)
 	{
-		PutGetStageInfo stageInfo = fileMetadata.stageInfo;
-		RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
 
 		// Get the client
-		SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
-		AmazonS3Client client = SFS3Client.S3Client;
+		var SFS3Client = (SFS3Client)fileMetadata.client;
+		var client = SFS3Client.m_S3Client;
 
 		// Create the S3 request object
-		GetObjectRequest request = new GetObjectRequest
+		var request = new GetObjectRequest
 		{
 			BucketName = location.bucket,
 			Key = location.key + fileMetadata.destFileName
 		};
 
-		GetObjectResponse response = null;
+		GetObjectResponse? response = null;
 		try
 		{
 			// Issue the GET request
-			var task = client.GetObjectAsync(request);
-			task.Wait();
 
-			response = task.Result;
+			response = TaskUtilities.RunSynchronously(() => client.GetObjectAsync(request));
 		}
-		catch (Exception ex)
+		catch (AmazonS3Exception err)
 		{
-			AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
 			if (err.ErrorCode == EXPIRED_TOKEN || err.ErrorCode == "400")
 			{
 				fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
@@ -190,7 +188,7 @@ class SFS3Client : ISFRemoteStorageClient
 		// Update the result status of the file metadata
 		fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
 
-		SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata
+		var encryptionMetadata = new SFEncryptionMetadata
 		{
 			iv = response.Metadata[AMZ_IV],
 			key = response.Metadata[AMZ_KEY],
@@ -212,19 +210,13 @@ class SFS3Client : ISFRemoteStorageClient
 	/// <param name="clientConfig">The client config to update.</param>
 	/// <param name="region">The region if any.</param>
 	/// <param name="endpoint">The endpoint if any.</param>
-	private void setCommonClientConfig(
-	AmazonS3Config clientConfig,
-	string region,
-	string endpoint,
-	int maxRetry,
-	int parallel)
+	static private void setCommonClientConfig(AmazonS3Config clientConfig, string region, string endpoint, int maxRetry, int parallel)
 	{
 		// Always return a regional URL
 		clientConfig.USEast1RegionalEndpointValue = S3UsEast1RegionalEndpointValue.Regional;
 		if ((null != region) && (0 != region.Length))
 		{
-			RegionEndpoint regionEndpoint = RegionEndpoint.GetBySystemName(region);
-			clientConfig.RegionEndpoint = regionEndpoint;
+			clientConfig.RegionEndpoint = RegionEndpoint.GetBySystemName(region);
 		}
 
 		// If a specific endpoint is specified use this
@@ -239,8 +231,7 @@ class SFS3Client : ISFRemoteStorageClient
 		// precedence and ServiceUrl will be reset to null.
 		if ((null != region) && (0 != region.Length))
 		{
-			RegionEndpoint regionEndpoint = RegionEndpoint.GetBySystemName(region);
-			clientConfig.RegionEndpoint = regionEndpoint;
+			clientConfig.RegionEndpoint = RegionEndpoint.GetBySystemName(region);
 		}
 
 		// Unavailable for .net framework 4.6
@@ -256,53 +247,50 @@ class SFS3Client : ISFRemoteStorageClient
 	/// <param name="encryptionMetadata">The encryption metadata for the header.</param>
 	public void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
 	{
-		PutGetStageInfo stageInfo = fileMetadata.stageInfo;
-		RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
 
 		// Get the client
-		SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
-		AmazonS3Client client = SFS3Client.S3Client;
+		var client = ((SFS3Client)fileMetadata.client).m_S3Client;
 
 		// Convert file bytes to memory stream
-		Stream stream = new MemoryStream(fileBytes);
-
-		// Create S3 PUT request
-		PutObjectRequest putObjectRequest = new PutObjectRequest
+		using (var stream = new MemoryStream(fileBytes))
 		{
-			BucketName = location.bucket,
-			Key = location.key + fileMetadata.destFileName,
-			InputStream = stream,
-			ContentType = HTTP_HEADER_VALUE_OCTET_STREAM
-		};
-
-		// Populate the S3 Request Metadata
-		putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_IV, encryptionMetadata.iv);
-		putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_KEY, encryptionMetadata.key);
-		putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_MATDESC, encryptionMetadata.matDesc);
-
-		try
-		{
-			// Issue the POST/PUT request
-			var task = client.PutObjectAsync(putObjectRequest);
-			task.Wait();
-		}
-		catch (Exception ex)
-		{
-			AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
-			if (err.ErrorCode == EXPIRED_TOKEN)
+			// Create S3 PUT request
+			PutObjectRequest putObjectRequest = new PutObjectRequest
 			{
-				fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
-			}
-			else
-			{
-				fileMetadata.lastError = err;
-				fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
-			}
-			return;
-		}
+				BucketName = location.bucket,
+				Key = location.key + fileMetadata.destFileName,
+				InputStream = stream,
+				ContentType = HTTP_HEADER_VALUE_OCTET_STREAM
+			};
 
-		fileMetadata.destFileSize = fileMetadata.uploadSize;
-		fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+			// Populate the S3 Request Metadata
+			putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_IV, encryptionMetadata.iv);
+			putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_KEY, encryptionMetadata.key);
+			putObjectRequest.Metadata.Add(AMZ_META_PREFIX + AMZ_MATDESC, encryptionMetadata.matDesc);
+
+			try
+			{
+				// Issue the POST/PUT request
+				TaskUtilities.RunSynchronously(() => client.PutObjectAsync(putObjectRequest));
+			}
+			catch (AmazonS3Exception err)
+			{
+				if (err.ErrorCode == EXPIRED_TOKEN)
+				{
+					fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+				}
+				else
+				{
+					fileMetadata.lastError = err;
+					fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+				}
+				return;
+			}
+
+			fileMetadata.destFileSize = fileMetadata.uploadSize;
+			fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+		}
 	}
 
 	/// <summary>
@@ -313,15 +301,13 @@ class SFS3Client : ISFRemoteStorageClient
 	/// <param name="maxConcurrency">Number of max concurrency.</param>
 	public void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency)
 	{
-		PutGetStageInfo stageInfo = fileMetadata.stageInfo;
-		RemoteLocation location = ExtractBucketNameAndPath(stageInfo.location);
+		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
 
 		// Get the client
-		SFS3Client SFS3Client = (SFS3Client)fileMetadata.client;
-		AmazonS3Client client = SFS3Client.S3Client;
+		var client = ((SFS3Client)fileMetadata.client).m_S3Client;
 
 		// Create S3 GET request
-		GetObjectRequest getObjectRequest = new GetObjectRequest
+		var getObjectRequest = new GetObjectRequest
 		{
 			BucketName = location.bucket,
 			Key = location.key + fileMetadata.destFileName,
@@ -330,19 +316,15 @@ class SFS3Client : ISFRemoteStorageClient
 		try
 		{
 			// Issue the GET request
-			var task = client.GetObjectAsync(getObjectRequest);
-			task.Wait();
-
-			GetObjectResponse response = task.Result;
+			var response = TaskUtilities.RunSynchronously(() => client.GetObjectAsync(getObjectRequest));
 			// Write to file
 			using (var fileStream = File.Create(fullDstPath))
 			{
 				response.ResponseStream.CopyTo(fileStream);
 			}
 		}
-		catch (Exception ex)
+		catch (AmazonS3Exception err)
 		{
-			AmazonS3Exception err = (AmazonS3Exception)ex.InnerException;
 			if (err.ErrorCode == EXPIRED_TOKEN)
 			{
 				fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
