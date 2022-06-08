@@ -2,12 +2,11 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
 
 namespace Tortuga.Data.Snowflake.Core.ResponseProcessing;
 
-internal class S3DownloadRequest : BaseRestRequest, IRestRequest
+internal class S3DownloadRequest : RestRequest
 {
 	private const string SSE_C_ALGORITHM = "x-amz-server-side-encryption-customer-algorithm";
 
@@ -19,7 +18,7 @@ internal class S3DownloadRequest : BaseRestRequest, IRestRequest
 
 	internal Dictionary<string, string> chunkHeaders { get; set; }
 
-	HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
+	internal override HttpRequestMessage ToRequestMessage(HttpMethod method)
 	{
 		HttpRequestMessage message = newMessage(method, Url);
 		if (chunkHeaders != null)

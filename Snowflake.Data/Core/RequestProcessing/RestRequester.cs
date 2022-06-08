@@ -2,8 +2,10 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 using Newtonsoft.Json;
-using Tortuga.Data.Snowflake.Core.Messages;
+using Tortuga.HttpClientUtilities;
 
 namespace Tortuga.Data.Snowflake.Core.RequestProcessing;
 
@@ -16,80 +18,110 @@ internal class RestRequester : IRestRequester
 		_HttpClient = httpClient;
 	}
 
-	public T Post<T>(IRestRequest request)
+	public T Post<T>(RestRequest request)
 	{
-		//Run synchronous in a new thread-pool task.
-		return Task.Run(async () => await (PostAsync<T>(request, CancellationToken.None)).ConfigureAwait(false)).Result;
+		using (var response = Send(HttpMethod.Post, request, default))
+		{
+			var json = response.Content.ReadAsString();
+			return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings)!;
+		}
 	}
 
-	public async Task<T> PostAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+	public async Task<T> PostAsync<T>(RestRequest request, CancellationToken cancellationToken)
 	{
 		using (var response = await SendAsync(HttpMethod.Post, request, cancellationToken).ConfigureAwait(false))
 		{
 			var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-			return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
+			return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings)!;
 		}
 	}
 
-	public T Get<T>(IRestRequest request)
+	public T Get<T>(RestRequest request)
 	{
 		//Run synchronous in a new thread-pool task.
 		return Task.Run(async () => await (GetAsync<T>(request, CancellationToken.None)).ConfigureAwait(false)).Result;
 	}
 
-	public async Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+	public async Task<T> GetAsync<T>(RestRequest request, CancellationToken cancellationToken)
 	{
-		using (HttpResponseMessage response = await GetAsync(request, cancellationToken).ConfigureAwait(false))
+		using (var response = await GetAsync(request, cancellationToken).ConfigureAwait(false))
 		{
 			var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-			return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings);
+			return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings)!;
 		}
 	}
 
-	public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
+	public Task<HttpResponseMessage> GetAsync(RestRequest request, CancellationToken cancellationToken)
 	{
 		return SendAsync(HttpMethod.Get, request, cancellationToken);
 	}
 
-	public HttpResponseMessage Get(IRestRequest request)
+	public HttpResponseMessage Get(RestRequest request)
 	{
-		//Run synchronous in a new thread-pool task.
-		return Task.Run(async () => await (GetAsync(request, CancellationToken.None)).ConfigureAwait(false)).Result;
+		return Send(HttpMethod.Get, request, default);
 	}
 
-	private async Task<HttpResponseMessage> SendAsync(HttpMethod method,
-													  IRestRequest request,
-													  CancellationToken externalCancellationToken)
+	private HttpResponseMessage Send(HttpMethod method, RestRequest request, CancellationToken externalCancellationToken)
 	{
-		HttpRequestMessage message = request.ToRequestMessage(method);
-		return await SendAsync(message, request.GetRestTimeout(), externalCancellationToken).ConfigureAwait(false);
+		return Send(request.ToRequestMessage(method), request.RestTimeout, externalCancellationToken);
 	}
 
-	protected virtual async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message,
-														  TimeSpan restTimeout,
-														  CancellationToken externalCancellationToken)
+	private async Task<HttpResponseMessage> SendAsync(HttpMethod method, RestRequest request, CancellationToken externalCancellationToken)
+	{
+		return await SendAsync(request.ToRequestMessage(method), request.RestTimeout, externalCancellationToken).ConfigureAwait(false);
+	}
+
+	protected virtual HttpResponseMessage Send(HttpRequestMessage message, TimeSpan restTimeout, CancellationToken externalCancellationToken)
 	{
 		// merge multiple cancellation token
-		using (CancellationTokenSource restRequestTimeout = new CancellationTokenSource(restTimeout))
+		using (var restRequestTimeout = new CancellationTokenSource(restTimeout))
 		{
-			using (CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken,
-			restRequestTimeout.Token))
+			using (var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken, restRequestTimeout.Token))
 			{
-				HttpResponseMessage response = null;
+				HttpResponseMessage? response = null;
 				try
 				{
-					response = await _HttpClient
-						.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token)
-						.ConfigureAwait(false);
+					response = _HttpClient.Send(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token);
 					response.EnsureSuccessStatusCode();
 
 					return response;
 				}
-				catch (Exception e)
+				catch (Exception)
 				{
 					// Disposing of the response if not null now that we don't need it anymore
 					response?.Dispose();
-					throw restRequestTimeout.IsCancellationRequested ? new SnowflakeDbException(SFError.REQUEST_TIMEOUT) : e;
+					if (restRequestTimeout.IsCancellationRequested)
+						throw new SnowflakeDbException(SFError.REQUEST_TIMEOUT);
+					else
+						throw;
+				}
+			}
+		}
+	}
+
+	protected virtual async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message, TimeSpan restTimeout, CancellationToken externalCancellationToken)
+	{
+		// merge multiple cancellation token
+		using (var restRequestTimeout = new CancellationTokenSource(restTimeout))
+		{
+			using (var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken, restRequestTimeout.Token))
+			{
+				HttpResponseMessage? response = null;
+				try
+				{
+					response = await _HttpClient.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, linkedCts.Token).ConfigureAwait(false);
+					response.EnsureSuccessStatusCode();
+
+					return response;
+				}
+				catch (Exception)
+				{
+					// Disposing of the response if not null now that we don't need it anymore
+					response?.Dispose();
+					if (restRequestTimeout.IsCancellationRequested)
+						throw new SnowflakeDbException(SFError.REQUEST_TIMEOUT);
+					else
+						throw;
 				}
 			}
 		}

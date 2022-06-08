@@ -1439,4 +1439,16 @@ Methods in `SFRemoteStorageUtil` destroys the stack trace when there is an error
 * Assume any null checks on messages that don't currently exist aren't needed. (Long term, appropriate null checks should be added.)
 * Use string interpolation
 
+## Round 25 - Core.RequestProcessing
 
+* Add `#nullable enable` to each file in the namespace. Update properties where appropriate.
+* Mark static strings as const
+* Lined up parameters in method signatures and calls
+* Drop the `IRestRequest` interface. The `BaseRestRequest` serves the same purpose.
+* Rename `BaseRestRequest` to just `RestRequest`
+* Make `RestRequest.ToRequestMessage` abstract.
+* Use `var` where appropriate
+* Create real sync methods in `RestRequester`
+* Fix missing stack traces in `RestRequester`
+* Changed the proxy test to accept a connection timeout as a valid result.
+* Updated other tests to not expect an aggregate exception

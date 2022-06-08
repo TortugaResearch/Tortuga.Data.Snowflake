@@ -2,7 +2,6 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-
 using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
 
@@ -12,32 +11,32 @@ class MockCloseSessionException : IMockRestRequester
 {
 	static internal readonly int SESSION_CLOSE_ERROR = 390111;
 
-	public T Get<T>(IRestRequest request)
+	public T Get<T>(RestRequest request)
 	{
 		return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None)).Result;
 	}
 
-	public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+	public Task<T> GetAsync<T>(RestRequest request, CancellationToken cancellationToken)
 	{
 		return Task.FromResult<T>((T)(object)null);
 	}
 
-	public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
+	public Task<HttpResponseMessage> GetAsync(RestRequest request, CancellationToken cancellationToken)
 	{
 		return Task.FromResult<HttpResponseMessage>(null);
 	}
 
-	public HttpResponseMessage Get(IRestRequest request)
+	public HttpResponseMessage Get(RestRequest request)
 	{
 		return null;
 	}
 
-	public T Post<T>(IRestRequest postRequest)
+	public T Post<T>(RestRequest postRequest)
 	{
 		return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None)).Result;
 	}
 
-	public Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
+	public Task<T> PostAsync<T>(RestRequest postRequest, CancellationToken cancellationToken)
 	{
 		SFRestRequest sfRequest = (SFRestRequest)postRequest;
 		if (sfRequest.jsonBody is LoginRequest)

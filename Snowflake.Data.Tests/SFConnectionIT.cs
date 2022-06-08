@@ -216,9 +216,9 @@ class SFConnectionIT : SFBaseTest
 					conn.Open();
 					Assert.Fail();
 				}
-				catch (AggregateException e)
+				catch (SnowflakeDbException e)
 				{
-					Assert.AreEqual(SFError.REQUEST_TIMEOUT, ((SnowflakeDbException)e.InnerException).SFErrorCode);
+					Assert.AreEqual(SFError.REQUEST_TIMEOUT, e.SFErrorCode);
 				}
 				stopwatch.Stop();
 
@@ -248,18 +248,15 @@ class SFConnectionIT : SFBaseTest
 				conn.Open();
 				Assert.Fail();
 			}
-			catch (AggregateException e)
+			catch (SnowflakeDbException e)
 			{
-				if (e.InnerException is SnowflakeDbException)
-				{
-					Assert.AreEqual(SFError.REQUEST_TIMEOUT, ((SnowflakeDbException)e.InnerException).SFErrorCode);
+				Assert.AreEqual(SFError.REQUEST_TIMEOUT, e.SFErrorCode);
 
-					stopwatch.Stop();
-					// Should timeout after the default timeout (120 sec)
-					Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 120 * 1000);
-					// But never more than 16 sec (max backoff) after the default timeout
-					Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (120 + 16) * 1000);
-				}
+				stopwatch.Stop();
+				// Should timeout after the default timeout (120 sec)
+				Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 120 * 1000);
+				// But never more than 16 sec (max backoff) after the default timeout
+				Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (120 + 16) * 1000);
 			}
 		}
 	}
@@ -563,8 +560,7 @@ class SFConnectionIT : SFBaseTest
 			catch (SnowflakeDbException e)
 			{
 				// Expected
-				Assert.AreEqual(270001, e.ErrorCode); //Internal error
-				Assert.AreEqual("08006", e.SqlState); // Connection failure
+				Assert.AreEqual(270007, e.ErrorCode); //Timeout error
 			}
 		}
 	}

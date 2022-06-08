@@ -163,7 +163,7 @@ public class SnowflakeDbConnection : DbConnection
 		{
 			// Otherwise when Dispose() is called, the close request would timeout.
 			m_ConnectionState = ConnectionState.Closed;
-			if (!(e.GetType() == typeof(SnowflakeDbException)))
+			if (!(e is SnowflakeDbException))
 				throw new SnowflakeDbException(e, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INTERNAL_ERROR, "Unable to connect. " + e.Message);
 			else
 				throw;

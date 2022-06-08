@@ -7,19 +7,21 @@
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;
-using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
 
 namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
-internal class IdpTokenRestRequest : BaseRestRequest, IRestRequest
+internal class IdpTokenRestRequest : RestRequest
 {
 	static MediaTypeWithQualityHeaderValue jsonHeader = new MediaTypeWithQualityHeaderValue("application/json");
 
 	internal IdpTokenRequest? JsonBody { get; set; }
 
-	HttpRequestMessage IRestRequest.ToRequestMessage(HttpMethod method)
+	internal override HttpRequestMessage ToRequestMessage(HttpMethod method)
 	{
+		if (Url == null)
+			throw new InvalidOperationException($"{nameof(Url)} is null");
+
 		HttpRequestMessage message = newMessage(method, Url);
 		message.Headers.Accept.Add(jsonHeader);
 

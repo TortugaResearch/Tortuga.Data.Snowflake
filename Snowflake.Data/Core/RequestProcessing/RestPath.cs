@@ -1,4 +1,6 @@
-﻿namespace Tortuga.Data.Snowflake.Core.RequestProcessing;
+﻿#nullable enable
+
+namespace Tortuga.Data.Snowflake.Core.RequestProcessing;
 
 internal static class RestPath
 {

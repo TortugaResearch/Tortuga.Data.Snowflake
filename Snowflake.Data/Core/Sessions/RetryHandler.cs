@@ -28,8 +28,8 @@ class RetryHandler : DelegatingHandler
 		p.ConnectionLimit = 20;      // Default value is 2, we need more connections for performing multiple parallel queries
 #pragma warning restore SYSLIB0014 // Type or member is obsolete
 
-		var httpTimeout = requestMessage.GetOptionOrDefault<TimeSpan>(BaseRestRequest.HTTP_REQUEST_TIMEOUT_KEY);
-		var restTimeout = requestMessage.GetOptionOrDefault<TimeSpan>(BaseRestRequest.REST_REQUEST_TIMEOUT_KEY);
+		var httpTimeout = requestMessage.GetOptionOrDefault<TimeSpan>(RestRequest.HTTP_REQUEST_TIMEOUT_KEY);
+		var restTimeout = requestMessage.GetOptionOrDefault<TimeSpan>(RestRequest.REST_REQUEST_TIMEOUT_KEY);
 
 		CancellationTokenSource childCts = null;
 

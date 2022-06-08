@@ -14,29 +14,29 @@ class MockOktaRestRequester : IMockRestRequester
 	public string SSOUrl { get; set; }
 	public StringContent ResponseContent { get; set; }
 
-	public T Get<T>(IRestRequest request)
+	public T Get<T>(RestRequest request)
 	{
 		throw new System.NotImplementedException();
 	}
 
-	public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
+	public Task<T> GetAsync<T>(RestRequest request, CancellationToken cancellationToken)
 	{
 		throw new System.NotImplementedException();
 	}
 
-	public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
+	public Task<HttpResponseMessage> GetAsync(RestRequest request, CancellationToken cancellationToken)
 	{
 		var response = new HttpResponseMessage(System.Net.HttpStatusCode.OK);
 		response.Content = ResponseContent;
 		return Task.FromResult(response);
 	}
 
-	public T Post<T>(IRestRequest postRequest)
+	public T Post<T>(RestRequest postRequest)
 	{
 		return Task.Run(async () => await (PostAsync<T>(postRequest, CancellationToken.None)).ConfigureAwait(false)).Result;
 	}
 
-	public Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
+	public Task<T> PostAsync<T>(RestRequest postRequest, CancellationToken cancellationToken)
 	{
 		if (postRequest is SFRestRequest)
 		{
@@ -64,7 +64,7 @@ class MockOktaRestRequester : IMockRestRequester
 		}
 	}
 
-	public HttpResponseMessage Get(IRestRequest request)
+	public HttpResponseMessage Get(RestRequest request)
 	{
 		return Task.Run(async () => await (GetAsync(request, CancellationToken.None)).ConfigureAwait(false)).Result;
 	}

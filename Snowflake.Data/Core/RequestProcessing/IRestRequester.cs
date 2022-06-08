@@ -2,7 +2,7 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using Tortuga.Data.Snowflake.Core.Messages;
+#nullable enable
 
 namespace Tortuga.Data.Snowflake.Core.RequestProcessing;
 
@@ -11,15 +11,15 @@ namespace Tortuga.Data.Snowflake.Core.RequestProcessing;
 /// </summary>
 internal interface IRestRequester
 {
-	Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken);
+	Task<T> PostAsync<T>(RestRequest postRequest, CancellationToken cancellationToken);
 
-	T Post<T>(IRestRequest postRequest);
+	T Post<T>(RestRequest postRequest);
 
-	Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken);
+	Task<T> GetAsync<T>(RestRequest request, CancellationToken cancellationToken);
 
-	T Get<T>(IRestRequest request);
+	T Get<T>(RestRequest request);
 
-	Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken);
+	Task<HttpResponseMessage> GetAsync(RestRequest request, CancellationToken cancellationToken);
 
-	HttpResponseMessage Get(IRestRequest request);
+	HttpResponseMessage Get(RestRequest request);
 }

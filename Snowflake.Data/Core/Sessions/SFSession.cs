@@ -102,7 +102,7 @@ class SFSession
 		}
 
 		ParameterMap = new Dictionary<SFSessionParameter, object>();
-		int recommendedMinTimeoutSec = BaseRestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT;
+		int recommendedMinTimeoutSec = RestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT;
 		int timeoutInSec = recommendedMinTimeoutSec;
 		try
 		{

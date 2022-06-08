@@ -238,7 +238,7 @@ class SFFileTransferAgent
 					queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
 
 					var sfStatement = new SFStatement(Session);
-					sfStatement.isPutGetQuery = true;
+					sfStatement.m_IsPutGetQuery = true;
 
 					var response = sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(0, queryWithSingleFile, null, false);
 
@@ -543,7 +543,7 @@ class SFFileTransferAgent
 	{
 		var sfStatement = new SFStatement(Session);
 
-		var response = sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(0, TransferMetadata.command, null, false);
+		var response = sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(0, TransferMetadata.command!, null, false);
 
 		return SFRemoteStorageUtil.GetRemoteStorageType(response.data!);
 	}
