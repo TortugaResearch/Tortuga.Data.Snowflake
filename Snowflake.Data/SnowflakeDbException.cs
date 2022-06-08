@@ -23,7 +23,7 @@ public sealed class SnowflakeDbException : DbException
 
 	readonly string? _sqlState;
 
-	public SnowflakeDbException(string sqlState, int vendorCode, string errorMessage, string queryId) :
+	public SnowflakeDbException(string sqlState, int vendorCode, string? errorMessage, string queryId) :
 				base(errorMessage)
 	{
 		_sqlState = sqlState;

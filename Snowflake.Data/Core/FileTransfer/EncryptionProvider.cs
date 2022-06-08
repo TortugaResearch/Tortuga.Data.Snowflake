@@ -24,7 +24,7 @@ class EncryptionProvider
 	/// <returns>The encrypted bytes of the file to upload.</returns>
 	static public byte[] EncryptFile(string inFile, PutGetEncryptionMaterial encryptionMaterial, SFEncryptionMetadata encryptionMetadata)
 	{
-		var decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
+		var decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey!);
 		var masterKeySize = decodedMasterKey.Length;
 
 		// Generate file key
@@ -119,7 +119,7 @@ class EncryptionProvider
 		var ivBase64 = encryptionMetadata.iv ?? throw new ArgumentException("encryptionMetadata.iv is null", nameof(encryptionMaterial));
 
 		// Get decoded key from base64 encoded value
-		var decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey);
+		var decodedMasterKey = Convert.FromBase64String(encryptionMaterial.queryStageMasterKey!);
 
 		// Get key bytes and iv bytes from base64 encoded value
 		var keyBytes = Convert.FromBase64String(keyBase64);

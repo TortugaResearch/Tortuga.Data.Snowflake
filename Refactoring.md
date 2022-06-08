@@ -1433,4 +1433,10 @@ Methods in `SFRemoteStorageUtil` destroys the stack trace when there is an error
 * Remove unused fields
 * Lined up parameters in method signatures and calls
 
+## Round 24 - Core.Messages
+
+* Add `#nullable enable` to each file in the namespace. Update properties where appropriate.
+* Assume any null checks on messages that don't currently exist aren't needed. (Long term, appropriate null checks should be added.)
+* Use string interpolation
+
 

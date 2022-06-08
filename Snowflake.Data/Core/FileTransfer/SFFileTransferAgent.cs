@@ -90,7 +90,7 @@ class SFFileTransferAgent
 		Query = query;
 		Session = session;
 		TransferMetadata = responseData;
-		CommandType = (CommandTypes)Enum.Parse(typeof(CommandTypes), TransferMetadata.command, true);
+		CommandType = (CommandTypes)Enum.Parse(typeof(CommandTypes), TransferMetadata.command!, true);
 		externalCancellationToken = cancellationToken;
 	}
 
@@ -105,8 +105,8 @@ class SFFileTransferAgent
 		if (CommandTypes.UPLOAD == CommandType)
 		{
 			// Initialize the list of actual files to upload
-			List<string> expandedSrcLocations = new List<string>();
-			foreach (string location in TransferMetadata.src_locations)
+			var expandedSrcLocations = new List<string>();
+			foreach (var location in TransferMetadata.src_locations!)
 			{
 				expandedSrcLocations.AddRange(expandFileNames(location));
 			}
@@ -123,37 +123,29 @@ class SFFileTransferAgent
 		}
 		else if (CommandTypes.DOWNLOAD == CommandType)
 		{
-			initFileMetadata(TransferMetadata.src_locations);
+			initFileMetadata(TransferMetadata.src_locations!);
 
-			Directory.CreateDirectory(TransferMetadata.localLocation);
+			Directory.CreateDirectory(TransferMetadata.localLocation!);
 		}
 
 		// Update the file metadata with GCS presigned URL
 		updatePresignedUrl();
 
-		foreach (SFFileMetadata fileMetadata in FilesMetas)
+		foreach (var fileMetadata in FilesMetas)
 		{
 			// If the file is larger than the threshold, add it to the large files list
 			// Otherwise add it to the small files list
 			if (fileMetadata.srcFileSize > TransferMetadata.threshold)
-			{
 				LargeFilesMetas.Add(fileMetadata);
-			}
 			else
-			{
 				SmallFilesMetas.Add(fileMetadata);
-			}
 		}
 
 		// Check command type
 		if (CommandTypes.UPLOAD == CommandType)
-		{
 			upload();
-		}
 		else if (CommandTypes.DOWNLOAD == CommandType)
-		{
 			download();
-		}
 	}
 
 	/// <summary>
@@ -234,7 +226,7 @@ class SFFileTransferAgent
 	void updatePresignedUrl()
 	{
 		// Presigned url only applies to GCS
-		if (TransferMetadata.stageInfo.locationType == "GCS")
+		if (TransferMetadata.stageInfo!.locationType == "GCS")
 		{
 			if (CommandTypes.UPLOAD == CommandType)
 			{
@@ -250,14 +242,14 @@ class SFFileTransferAgent
 
 					var response = sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(0, queryWithSingleFile, null, false);
 
-					fileMeta.stageInfo = response.data.stageInfo;
-					fileMeta.presignedUrl = response.data.stageInfo.presignedUrl;
+					fileMeta.stageInfo = response.data!.stageInfo!;
+					fileMeta.presignedUrl = response.data!.stageInfo!.presignedUrl;
 				}
 			}
 			else if (CommandTypes.DOWNLOAD == CommandType)
 			{
 				for (var index = 0; index < FilesMetas.Count; index++)
-					FilesMetas[index].presignedUrl = TransferMetadata.presignedUrls[index];
+					FilesMetas[index].presignedUrl = TransferMetadata.presignedUrls![index];
 			}
 		}
 	}
@@ -283,7 +275,7 @@ class SFFileTransferAgent
 	void initEncryptionMaterial()
 	{
 		if (CommandTypes.UPLOAD == CommandType)
-			EncryptionMaterials.Add(TransferMetadata.encryptionMaterial[0]);
+			EncryptionMaterials.Add(TransferMetadata.encryptionMaterial![0]);
 	}
 
 	/// <summary>
@@ -302,8 +294,7 @@ class SFFileTransferAgent
 				var fileName = fileInfo.Name;
 				SFFileCompressionTypes.SFFileCompressionType compressionType;
 
-				if (TransferMetadata.autoCompress &&
-					TransferMetadata.sourceCompression.Equals(COMPRESSION_AUTO_DETECT))
+				if (TransferMetadata.autoCompress && TransferMetadata.sourceCompression!.Equals(COMPRESSION_AUTO_DETECT))
 				{
 					// Auto-detect source compression type
 					// Will return NONE if no matching type is found
@@ -312,8 +303,7 @@ class SFFileTransferAgent
 				else
 				{
 					// User defined source compression type
-					compressionType =
-						SFFileCompressionTypes.LookUpByName(TransferMetadata.sourceCompression);
+					compressionType = SFFileCompressionTypes.LookUpByName(TransferMetadata.sourceCompression!);
 				}
 
 				// Verify that the compression type is supported
@@ -334,7 +324,7 @@ class SFFileTransferAgent
 					// not compressed yet
 					requireCompress = (TransferMetadata.autoCompress && (SFFileCompressionTypes.NONE.Equals(compressionType))),
 					sourceCompression = compressionType,
-					presignedUrl = TransferMetadata.stageInfo.presignedUrl,
+					presignedUrl = TransferMetadata.stageInfo!.presignedUrl,
 					// If the file is under the threshold, don't upload in chunks, set parallel to 1
 					parallel = (fileInfo.Length > TransferMetadata.threshold) ? TransferMetadata.parallel : 1,
 				};
@@ -370,9 +360,9 @@ class SFFileTransferAgent
 					localLocation = TransferMetadata.localLocation,
 					stageInfo = TransferMetadata.stageInfo,
 					overwrite = TransferMetadata.overwrite,
-					presignedUrl = TransferMetadata.stageInfo.presignedUrl,
+					presignedUrl = TransferMetadata.stageInfo!.presignedUrl,
 					parallel = TransferMetadata.parallel,
-					encryptionMaterial = TransferMetadata.encryptionMaterial[index]
+					encryptionMaterial = TransferMetadata.encryptionMaterial![index]
 				};
 
 				FilesMetas.Add(fileMetadata);
@@ -555,7 +545,7 @@ class SFFileTransferAgent
 
 		var response = sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(0, TransferMetadata.command, null, false);
 
-		return SFRemoteStorageUtil.GetRemoteStorageType(response.data);
+		return SFRemoteStorageUtil.GetRemoteStorageType(response.data!);
 	}
 
 	/// <summary>
@@ -663,7 +653,7 @@ class SFFileTransferAgent
 			// Calculate the digest
 			getDigestAndSizeForFile(fileMetadata);
 
-			if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
+			if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo!))
 				// Upload the file using the remote client SDK and the file metadata
 				SFRemoteStorageUtil.UploadOneFileWithRetry(fileMetadata);
 			else
@@ -692,7 +682,7 @@ class SFFileTransferAgent
 
 		try
 		{
-			if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo))
+			if (StorageClientType.REMOTE == GetStorageClientType(TransferMetadata.stageInfo!))
 				// Upload the file using the remote client SDK and the file metadata
 				SFRemoteStorageUtil.DownloadOneFile(fileMetadata);
 			else

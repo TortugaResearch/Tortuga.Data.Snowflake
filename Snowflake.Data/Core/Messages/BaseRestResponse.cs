@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 using Newtonsoft.Json;
 
 namespace Tortuga.Data.Snowflake.Core.Messages;
@@ -9,7 +11,7 @@ namespace Tortuga.Data.Snowflake.Core.Messages;
 abstract class BaseRestResponse
 {
 	[JsonProperty(PropertyName = "message")]
-	internal String message { get; set; }
+	internal string? message { get; set; }
 
 	[JsonProperty(PropertyName = "code", NullValueHandling = NullValueHandling.Ignore)]
 	internal int code { get; set; }
@@ -20,9 +22,6 @@ abstract class BaseRestResponse
 	internal void FilterFailedResponse()
 	{
 		if (!success)
-		{
-			SnowflakeDbException e = new SnowflakeDbException("", code, message, "");
-			throw e;
-		}
+			throw new SnowflakeDbException("", code, message, "");
 	}
 }

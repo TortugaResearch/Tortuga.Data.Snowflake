@@ -46,8 +46,8 @@ class OktaAuthenticator : Authenticator
 		var authenticatorRestRequest = BuildAuthenticatorRestRequest();
 		var authenticatorResponse = Session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
 		authenticatorResponse.FilterFailedResponse();
-		var ssoUrl = new Uri(authenticatorResponse.data.ssoUrl);
-		var tokenUrl = new Uri(authenticatorResponse.data.tokenUrl);
+		var ssoUrl = new Uri(authenticatorResponse.data!.ssoUrl!);
+		var tokenUrl = new Uri(authenticatorResponse.data!.tokenUrl!);
 
 		VerifyUrls(ssoUrl, m_OktaUrl);
 		VerifyUrls(tokenUrl, m_OktaUrl);
@@ -73,8 +73,8 @@ class OktaAuthenticator : Authenticator
 		var authenticatorRestRequest = BuildAuthenticatorRestRequest();
 		var authenticatorResponse = await Session.restRequester.PostAsync<AuthenticatorResponse>(authenticatorRestRequest, cancellationToken).ConfigureAwait(false);
 		authenticatorResponse.FilterFailedResponse();
-		var ssoUrl = new Uri(authenticatorResponse.data.ssoUrl);
-		var tokenUrl = new Uri(authenticatorResponse.data.tokenUrl);
+		var ssoUrl = new Uri(authenticatorResponse.data!.ssoUrl!);
+		var tokenUrl = new Uri(authenticatorResponse.data!.tokenUrl!);
 
 		VerifyUrls(ssoUrl, m_OktaUrl);
 		VerifyUrls(tokenUrl, m_OktaUrl);

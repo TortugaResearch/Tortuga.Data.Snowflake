@@ -64,7 +64,7 @@ class ExternalBrowserAuthenticator : Authenticator
 				).ConfigureAwait(false);
 			authenticatorRestResponse.FilterFailedResponse();
 
-			var idpUrl = authenticatorRestResponse.data.ssoUrl;
+			var idpUrl = authenticatorRestResponse.data!.ssoUrl!;
 			_proofKey = authenticatorRestResponse.data.proofKey;
 
 			StartBrowser(idpUrl);
@@ -104,7 +104,7 @@ class ExternalBrowserAuthenticator : Authenticator
 			var authenticatorRestResponse = Session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
 			authenticatorRestResponse.FilterFailedResponse();
 
-			var idpUrl = authenticatorRestResponse.data.ssoUrl;
+			var idpUrl = authenticatorRestResponse.data!.ssoUrl!;
 			_proofKey = authenticatorRestResponse.data.proofKey;
 
 			StartBrowser(idpUrl);

@@ -40,7 +40,7 @@ class SFRemoteStorageUtil
 	internal static ISFRemoteStorageClient? GetRemoteStorageType(PutGetResponseData response)
 	{
 		var stageInfo = response.stageInfo;
-		var stageLocationType = stageInfo.locationType;
+		var stageLocationType = stageInfo!.locationType;
 
 		// Create the storage type based on location type
 		if (stageLocationType == LOCAL_FS)
@@ -49,10 +49,7 @@ class SFRemoteStorageUtil
 		}
 		else if (stageLocationType == S3_FS)
 		{
-			return new SFS3Client(stageInfo,
-				DEFAULT_MAX_RETRY,
-				response.parallel
-				);
+			return new SFS3Client(stageInfo, DEFAULT_MAX_RETRY, response.parallel);
 		}
 		else if (stageLocationType == AZURE_FS)
 		{
