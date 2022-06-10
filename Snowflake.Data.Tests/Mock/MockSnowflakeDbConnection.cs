@@ -60,7 +60,12 @@ class MockSnowflakeDbConnection : SnowflakeDbConnection
 			m_ConnectionState = ConnectionState.Closed;
 			throw;
 		}
-		catch (Exception ex)
+		catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
+		{
+			m_ConnectionState = ConnectionState.Closed;
+			throw;
+		}
+		catch (Exception ex) when (ex is not TaskCanceledException || !cancellationToken.IsCancellationRequested)
 		{
 			m_ConnectionState = ConnectionState.Closed;
 			throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR, "Unable to connect");
