@@ -1622,13 +1622,3 @@ internal DataTable toDataTable()
 }
 ```
 
-## Round 28 - Sessions
-
-* Add `#nullable enable` to each file in the namespace. Update properties where appropriate.
-* Lined up parameters in method signatures and calls
-* Change public fields into public properties
-
-
-### HttpUtil should be a static class
-
-While singletons are a well established pattern, they shouldn't be used indiscriminetly. The class `HttpUtil` implements no interfaces. Nor does it have a base class. So there is no reason to make it an object at all. It can instead be treated as any other static class.

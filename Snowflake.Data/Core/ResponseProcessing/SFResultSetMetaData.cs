@@ -31,7 +31,7 @@ class SFResultSetMetaData
 	/// <summary>
 	///     This map is used to cache column name to column index. Index is 0-based.
 	/// </summary>
-	Dictionary<string, int> columnNameToIndexCache = new Dictionary<string, int>();
+	private Dictionary<string, int> columnNameToIndexCache = new Dictionary<string, int>();
 
 	internal SFResultSetMetaData(QueryExecResponseData queryExecResponseData)
 	{
@@ -71,7 +71,7 @@ class SFResultSetMetaData
 		columnTypes = InitColumnTypes();
 	}
 
-	List<Tuple<SFDataType, Type>> InitColumnTypes()
+	private List<Tuple<SFDataType, Type>> InitColumnTypes()
 	{
 		List<Tuple<SFDataType, Type>> types = new List<Tuple<SFDataType, Type>>();
 		for (int i = 0; i < m_ColumnCount; i++)
@@ -127,7 +127,7 @@ class SFResultSetMetaData
 		return columnTypes[targetIndex];
 	}
 
-	SFDataType GetSFDataType(string? type)
+	private SFDataType GetSFDataType(string? type)
 	{
 		SFDataType result;
 		if (Enum.TryParse(type, true, out result))
@@ -136,7 +136,7 @@ class SFResultSetMetaData
 		throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unknow column type: {type}");
 	}
 
-	Type GetNativeTypeForColumn(SFDataType sfType, ExecResponseRowType col)
+	private Type GetNativeTypeForColumn(SFDataType sfType, ExecResponseRowType col)
 	{
 		switch (sfType)
 		{
@@ -190,7 +190,7 @@ class SFResultSetMetaData
 		return rowTypes[targetIndex].name;
 	}
 
-	SFStatementType findStatementTypeById(long id)
+	private SFStatementType findStatementTypeById(long id)
 	{
 #pragma warning disable CS8605 // Unboxing a possibly null value. Workaround for .NET Core 3.1 warning. Doesn't apply to .NET 4.x or .NET 6
 		foreach (SFStatementType type in Enum.GetValues(typeof(SFStatementType)))

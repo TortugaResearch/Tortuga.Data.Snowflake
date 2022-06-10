@@ -2,22 +2,31 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
-#nullable enable
-
 using System.Net;
 using System.Security.Authentication;
 
 namespace Tortuga.Data.Snowflake.Core.Sessions;
 
-public static class HttpUtil
+public sealed class HttpUtil
 {
-	static readonly object s_HttpClientProviderLock = new();
+	private static readonly HttpUtil instance = new HttpUtil();
 
-	static Dictionary<string, HttpClient> s_HttpClients = new();
-
-	internal static HttpClient GetHttpClient(HttpClientConfig config)
+	private HttpUtil()
 	{
-		lock (s_HttpClientProviderLock)
+	}
+
+	static internal HttpUtil Instance
+	{
+		get { return instance; }
+	}
+
+	private readonly object httpClientProviderLock = new object();
+
+	private Dictionary<string, HttpClient> _HttpClients = new Dictionary<string, HttpClient>();
+
+	internal HttpClient GetHttpClient(HttpClientConfig config)
+	{
+		lock (httpClientProviderLock)
 		{
 			return RegisterNewHttpClientIfNecessary(config);
 		}
@@ -26,7 +35,7 @@ public static class HttpUtil
 	private HttpClient RegisterNewHttpClientIfNecessary(HttpClientConfig config)
 	{
 		string name = config.ConfKey;
-		if (!s_HttpClients.ContainsKey(name))
+		if (!_HttpClients.ContainsKey(name))
 		{
 			var httpClient = new HttpClient(new RetryHandler(setupCustomHttpHandler(config)))
 			{
@@ -34,10 +43,10 @@ public static class HttpUtil
 			};
 
 			// Add the new client key to the list
-			s_HttpClients.Add(name, httpClient);
+			_HttpClients.Add(name, httpClient);
 		}
 
-		return s_HttpClients[name];
+		return _HttpClients[name];
 	}
 
 	private HttpClientHandler setupCustomHttpHandler(HttpClientConfig config)
