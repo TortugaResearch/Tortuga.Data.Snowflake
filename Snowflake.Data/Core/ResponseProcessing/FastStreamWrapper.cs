@@ -28,7 +28,7 @@ public class FastStreamWrapper
 			return ReadByteSlow();
 	}
 
-	private int ReadByteSlow()
+	int ReadByteSlow()
 	{
 		// fast path first
 		if (m_Next < m_Count)

@@ -36,7 +36,7 @@ public class FastMemoryStream
 
 	public int Length => m_Size;
 
-	private void GrowBuffer()
+	void GrowBuffer()
 	{
 		// Create a new array with double the size and copy existing elements to the new array
 		var newBuffer = new byte[m_Buffer.Length * 2];
