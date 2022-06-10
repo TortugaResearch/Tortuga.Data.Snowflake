@@ -10,11 +10,11 @@ namespace Tortuga.Data.Snowflake.Core.ResponseProcessing;
 
 internal class S3DownloadRequest : RestRequest
 {
-	private const string SSE_C_ALGORITHM = "x-amz-server-side-encryption-customer-algorithm";
+	const string SSE_C_ALGORITHM = "x-amz-server-side-encryption-customer-algorithm";
 
-	private const string SSE_C_KEY = "x-amz-server-side-encryption-customer-key";
+	const string SSE_C_KEY = "x-amz-server-side-encryption-customer-key";
 
-	private const string SSE_C_AES = "AES256";
+	const string SSE_C_AES = "AES256";
 
 	internal string? Qrmk { get; set; }
 

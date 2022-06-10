@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 using Microsoft.Extensions.Primitives;
 
 namespace Tortuga.Data.Snowflake.Core.Sessions;

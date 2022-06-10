@@ -2,17 +2,13 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 namespace Tortuga.Data.Snowflake.Core.Sessions;
 
 public class HttpClientConfig
 {
-	public HttpClientConfig(
-		bool crlCheckEnabled,
-		string proxyHost,
-		string proxyPort,
-		string proxyUser,
-		string proxyPassword,
-		string noProxyList)
+	public HttpClientConfig(bool crlCheckEnabled, string proxyHost, string proxyPort, string proxyUser, string proxyPassword, string noProxyList)
 	{
 		CrlCheckEnabled = crlCheckEnabled;
 		ProxyHost = proxyHost;
@@ -21,23 +17,16 @@ public class HttpClientConfig
 		ProxyPassword = proxyPassword;
 		NoProxyList = noProxyList;
 
-		ConfKey = string.Join(";",
-			new string[] {
-				crlCheckEnabled.ToString(),
-				proxyHost,
-				proxyPort,
-				proxyUser,
-				proxyPassword,
-				noProxyList });
+		ConfKey = string.Join(";", new[] { crlCheckEnabled.ToString(), proxyHost, proxyPort, proxyUser, proxyPassword, noProxyList });
 	}
 
-	public readonly bool CrlCheckEnabled;
-	public readonly string ProxyHost;
-	public readonly string ProxyPort;
-	public readonly string ProxyUser;
-	public readonly string ProxyPassword;
-	public readonly string NoProxyList;
+	public bool CrlCheckEnabled { get; }
+	public string ProxyHost { get; }
+	public string ProxyPort { get; }
+	public string ProxyUser { get; }
+	public string ProxyPassword { get; }
+	public string NoProxyList { get; }
 
 	// Key used to identify the HttpClient with the configuration matching the settings
-	public readonly string ConfKey;
+	public string ConfKey { get; }
 }
