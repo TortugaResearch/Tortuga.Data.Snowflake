@@ -1448,10 +1448,137 @@ Methods in `SFRemoteStorageUtil` destroys the stack trace when there is an error
 * Rename `BaseRestRequest` to just `RestRequest`
 * Make `RestRequest.ToRequestMessage` abstract.
 * Use `var` where appropriate
-* Create real sync methods in `RestRequester`
+* Create real sync methods in `RestRequester`. This uses the `HttpContentSynchronously` we created in round 18.
 * Fix missing stack traces in `RestRequester`
 * Changed the proxy test to accept a connection timeout as a valid result.
 * Updated other tests to not expect an aggregate exception
+
+## RetryHandler
+
+Now that we are making sync calls to `HttpClient`, we need to extend the `RetryHandler` to support them. This class modifies the behavior of a `HttpClient` directly.
+
+A bit of non-standard code is the backoff delay. We can't cancel a Thread.Sleep with a cancellationToken, but we can simulate it using small sleeps and checking the token.
+
+```csharp
+var totalBackoffUsed = 0;
+while (totalBackoffUsed < backOffInSec && !cancellationToken.IsCancellationRequested)
+{
+	Thread.Sleep(TimeSpan.FromSeconds(1));
+	totalBackoffUsed += 1;
+}
+```
+
+## Error Handling in SnowflakeDbConnection
+
+While investigating the `RetryHandler` issue, we came across this awkward bit of error handling. 
+
+```csharp
+public override void Open()
+{
+	SetSession();
+	try
+	{
+		SfSession!.Open();
+	}
+	catch (Exception e)
+	{
+		// Otherwise when Dispose() is called, the close request would timeout.
+		m_ConnectionState = ConnectionState.Closed;
+		if (!(e is SnowflakeDbException))
+			throw new SnowflakeDbException(e, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INTERNAL_ERROR, "Unable to connect. " + e.Message);
+		else
+			throw;
+	}
+	m_ConnectionState = ConnectionState.Open;
+}
+
+public override Task OpenAsync(CancellationToken cancellationToken)
+{
+	RegisterConnectionCancellationCallback(cancellationToken);
+	SetSession();
+
+	return SfSession!.OpenAsync(cancellationToken).ContinueWith(
+		previousTask =>
+		{
+			if (previousTask.IsFaulted)
+			{
+				// Exception from SfSession.OpenAsync
+				var sfSessionEx = previousTask.Exception!;
+				m_ConnectionState = ConnectionState.Closed;
+				throw new SnowflakeDbException(sfSessionEx, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INTERNAL_ERROR, "Unable to connect");
+			}
+			else if (previousTask.IsCanceled)
+			{
+				m_ConnectionState = ConnectionState.Closed;
+			}
+			else
+			{
+				// Only continue if the session was opened successfully
+				m_ConnectionState = ConnectionState.Open;
+			}
+		},
+		cancellationToken);
+}
+```
+
+In `Open`, the code's intent would be much clearer if multiple catch blocks were uses.
+
+```
+public override void Open()
+{
+	SetSession();
+	try
+	{
+		SfSession!.Open();
+	}
+	catch (SnowflakeDbException)
+	{
+		m_ConnectionState = ConnectionState.Closed;
+		throw;
+	}
+	catch (Exception e) when (e is not SnowflakeDbException)
+	{
+		// Otherwise when Dispose() is called, the close request would timeout.
+		m_ConnectionState = ConnectionState.Closed;
+		throw new SnowflakeDbException(e, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INTERNAL_ERROR, "Unable to connect. " + e.Message);
+	}
+	m_ConnectionState = ConnectionState.Open;
+}
+```
+
+The `OpenAsync` function uses a really old style of working with tasks. This style was appropriate around the .NET 4 era, but shouldn't be used in modern code.
+
+You can see here how using async/await makes the code nearly identical to the sync version.
+
+```
+public override async Task OpenAsync(CancellationToken cancellationToken)
+{
+	RegisterConnectionCancellationCallback(cancellationToken);
+	SetSession();
+	try
+	{
+		await SfSession!.OpenAsync(cancellationToken).ConfigureAwait(false);
+	}
+	catch (SnowflakeDbException)
+	{
+		m_ConnectionState = ConnectionState.Closed;
+		throw;
+	}
+	catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
+	{
+		m_ConnectionState = ConnectionState.Closed;
+		throw;
+	}
+	catch (Exception ex)
+	{
+		// Otherwise when Dispose() is called, the close request would timeout.
+		m_ConnectionState = ConnectionState.Closed;
+		throw new SnowflakeDbException(ex, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INTERNAL_ERROR, "Unable to connect. " + ex.Message);
+	}
+	m_ConnectionState = ConnectionState.Open;
+}
+```
+
 
 ## Round 26 - Core.ResponseProcessing.Chunks
 

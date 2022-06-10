@@ -201,7 +201,7 @@ class SFConnectionIT : SFBaseTest
 	{
 		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 		{
-			using (IDbConnection conn = new MockSnowflakeDbConnection())
+			using (var conn = new MockSnowflakeDbConnection())
 			{
 				int timeoutSec = 5;
 				string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0}",
@@ -214,6 +214,41 @@ class SFConnectionIT : SFBaseTest
 				try
 				{
 					conn.Open();
+					Assert.Fail("Timeout exception did not occur");
+				}
+				catch (SnowflakeDbException e)
+				{
+					Assert.AreEqual(SFError.REQUEST_TIMEOUT, e.SFErrorCode);
+				}
+				stopwatch.Stop();
+
+				//Should timeout before the default timeout (120 sec) * 1000
+				Assert.Less(stopwatch.ElapsedMilliseconds, 120 * 1000);
+				// Should timeout after the defined connection timeout
+				Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, timeoutSec * 1000);
+				Assert.AreEqual(5, conn.ConnectionTimeout);
+			}
+		}
+	}
+
+	[Test]
+	public async Task TestLoginTimeoutAsync()
+	{
+		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+		{
+			using (var conn = new MockSnowflakeDbConnection())
+			{
+				int timeoutSec = 5;
+				string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0}",
+					timeoutSec);
+
+				conn.ConnectionString = loginTimeOut5sec;
+
+				Assert.AreEqual(conn.State, ConnectionState.Closed);
+				Stopwatch stopwatch = Stopwatch.StartNew();
+				try
+				{
+					await conn.OpenAsync().ConfigureAwait(false);
 					Assert.Fail("Connection did not timeout");
 				}
 				catch (SnowflakeDbException e)
@@ -665,7 +700,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 				}
 				catch (AggregateException e)
 				{
-					Assert.AreEqual(SFError.INTERNAL_ERROR, ((SnowflakeDbException)e.InnerException).SFErrorCode);
+					Assert.AreEqual(SFError.REQUEST_TIMEOUT, ((SnowflakeDbException)e.InnerException).SFErrorCode);
 				}
 				stopwatch.Stop();
 
@@ -698,7 +733,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 			}
 			catch (AggregateException e)
 			{
-				Assert.AreEqual(SFError.INTERNAL_ERROR, ((SnowflakeDbException)e.InnerException).SFErrorCode);
+				Assert.AreEqual(SFError.REQUEST_TIMEOUT, ((SnowflakeDbException)e.InnerException).SFErrorCode);
 			}
 			stopwatch.Stop();
 
