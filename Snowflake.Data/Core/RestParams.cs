@@ -1,4 +1,6 @@
-﻿namespace Tortuga.Data.Snowflake.Core;
+﻿#nullable enable
+
+namespace Tortuga.Data.Snowflake.Core;
 
 internal static class RestParams
 {

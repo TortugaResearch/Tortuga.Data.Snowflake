@@ -1,4 +1,6 @@
-﻿using Tortuga.Data.Snowflake.Core.Messages;
+﻿#nullable enable
+
+using Tortuga.Data.Snowflake.Core.Messages;
 
 namespace Tortuga.Data.Snowflake.Core;
 
@@ -19,7 +21,7 @@ internal class SFEnvironment
 #endif
 		};
 
-		DriverVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
+		DriverVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version!.ToString();
 		DriverName = ".NET";
 	}
 

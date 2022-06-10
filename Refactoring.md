@@ -1656,3 +1656,11 @@ public override int GetHashCode()
 	return base.GetHashCode();
 }
 ```
+
+## Round 29 - Core
+
+* Add `#nullable enable` to each file in the namespace. Update properties where appropriate.
+* Lined up parameters in method signatures and calls
+* Standardize on C# names for types. For example, `int` vs `Int32`.
+
+

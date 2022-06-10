@@ -35,6 +35,9 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 	/// <param name="stageInfo">The command stage info.</param>
 	public SFSnowflakeAzureClient(PutGetStageInfo stageInfo)
 	{
+		if (stageInfo.stageCredentials == null)
+			throw new ArgumentException("stageInfo.stageCredentials is null", nameof(stageInfo));
+
 		// Get the Azure SAS token and create the client
 		if (stageInfo.stageCredentials.TryGetValue(AZURE_SAS_TOKEN, out var sasToken))
 		{
@@ -89,6 +92,8 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 	{
 		if (fileMetadata.stageInfo == null)
 			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
+		if (fileMetadata.stageInfo.location == null)
+			throw new ArgumentException("fileMetadata.stageInfo.location is null", nameof(fileMetadata));
 
 		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
 
@@ -147,6 +152,8 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 	{
 		if (fileMetadata.stageInfo == null)
 			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
+		if (fileMetadata.stageInfo.location == null)
+			throw new ArgumentException("fileMetadata.stageInfo.location is null", nameof(fileMetadata));
 
 		// Create the JSON for the encryption data header
 		string encryptionData = JsonConvert.SerializeObject(new EncryptionData
@@ -224,6 +231,8 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 	{
 		if (fileMetadata.stageInfo == null)
 			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
+		if (fileMetadata.stageInfo.location == null)
+			throw new ArgumentException("fileMetadata.stageInfo.location is null", nameof(fileMetadata));
 
 		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
 

@@ -1,12 +1,14 @@
-﻿using Tortuga.Data.Snowflake.Core.ResponseProcessing;
+﻿#nullable enable
+
+using Tortuga.Data.Snowflake.Core.ResponseProcessing;
 
 namespace Tortuga.Data.Snowflake.Core;
 
 public class FastParser
 {
-	public static Int64 FastParseInt64(byte[] s, int offset, int len)
+	public static long FastParseInt64(byte[] s, int offset, int len)
 	{
-		Int64 result = 0;
+		long result = 0;
 		int i = offset;
 		bool isMinus = false;
 		if (len > 0 && s[i] == '-')
@@ -17,7 +19,7 @@ public class FastParser
 		int end = len + offset;
 		for (; i < end; i++)
 		{
-			if ((UInt64)result > (0x7fffffffffffffff / 10))
+			if ((ulong)result > (0x7fffffffffffffff / 10))
 				throw new OverflowException();
 			int c = s[i] - '0';
 			if (c < 0 || c > 9)
@@ -38,9 +40,9 @@ public class FastParser
 		return result;
 	}
 
-	public static Int32 FastParseInt32(byte[] s, int offset, int len)
+	public static int FastParseInt32(byte[] s, int offset, int len)
 	{
-		Int32 result = 0;
+		int result = 0;
 		int i = offset;
 		bool isMinus = false;
 		if (len > 0 && s[i] == '-')
@@ -51,7 +53,7 @@ public class FastParser
 		int end = len + offset;
 		for (; i < end; i++)
 		{
-			if ((UInt32)result > (0x7fffffff / 10))
+			if ((uint)result > (0x7fffffff / 10))
 				throw new OverflowException();
 			int c = s[i] - '0';
 			if (c < 0 || c > 9)
@@ -91,7 +93,7 @@ public class FastParser
 
 			try
 			{
-				Int64 i1 = FastParseInt64(s, offset, len);
+				long i1 = FastParseInt64(s, offset, len);
 				return (decimal)i1;
 			}
 			catch (OverflowException)
@@ -104,8 +106,8 @@ public class FastParser
 		{
 			decimalPos -= offset;
 			int decimalLen = len - decimalPos - 1;
-			Int64 intPart = 0;
-			Int64 decimalPart = 0;
+			long intPart = 0;
+			long decimalPart = 0;
 			try
 			{
 				intPart = FastParseInt64(s, offset, decimalPos);
@@ -131,9 +133,7 @@ public class FastParser
 			{
 				// Sign is stripped from the Int64 for value of "-0"
 				if (s[offset] == '-')
-				{
 					isMinus = true;
-				}
 			}
 			decimal d1 = new decimal(intPart);
 			decimal d2 = new decimal((int)(decimalPart & 0xffffffff), (int)((decimalPart >> 32) & 0xffffffff), 0, false, (byte)decimalLen);

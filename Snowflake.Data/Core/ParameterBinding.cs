@@ -2,11 +2,13 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 namespace Tortuga.Data.Snowflake.Core;
 
 public class BindingDTO
 {
-	public BindingDTO(string type, object value)
+	public BindingDTO(string type, object? value)
 	{
 		this.type = type;
 		this.value = value;
@@ -14,5 +16,5 @@ public class BindingDTO
 
 	public string type { get; set; }
 
-	public object value { get; set; }
+	public object? value { get; set; }
 }

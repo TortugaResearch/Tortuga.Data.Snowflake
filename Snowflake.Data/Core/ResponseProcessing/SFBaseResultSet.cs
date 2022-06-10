@@ -59,8 +59,11 @@ abstract class SFBaseResultSet
 				var val = GetValue(columnIndex);
 				if (val == DBNull.Value)
 					return null;
-				return SFDataConverter.toDateString((DateTime)val,
-					SFResultSetMetaData.dateOutputFormat);
+
+				if (SFResultSetMetaData.dateOutputFormat == null)
+					throw new InvalidOperationException("SFResultSetMetaData.dateOutputFormat is null");
+
+				return SFDataConverter.toDateString((DateTime)val, SFResultSetMetaData.dateOutputFormat);
 			//TODO: Implement SqlFormat for timestamp type, aka parsing format specified by user and format the value
 			default:
 				return getObjectInternal(columnIndex).SafeToString();

@@ -77,6 +77,9 @@ class SFS3Client : ISFRemoteStorageClient
 	/// <param name="stageInfo">The command stage info.</param>
 	public SFS3Client(PutGetStageInfo stageInfo, int maxRetry, int parallel)
 	{
+		if (stageInfo.stageCredentials == null)
+			throw new ArgumentException("stageInfo.stageCredentials is null", nameof(stageInfo));
+
 		// Get the key id and secret key from the response
 		stageInfo.stageCredentials.TryGetValue(AWS_KEY_ID, out var awsAccessKeyId);
 		stageInfo.stageCredentials.TryGetValue(AWS_SECRET_KEY, out var awsSecretAccessKey);
@@ -152,6 +155,8 @@ class SFS3Client : ISFRemoteStorageClient
 			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
 		if (fileMetadata.client == null)
 			throw new ArgumentException("fileMetadata.client is null", nameof(fileMetadata));
+		if (fileMetadata.stageInfo.location == null)
+			throw new ArgumentException("fileMetadata.stageInfo.location is null", nameof(fileMetadata));
 
 		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
 
@@ -215,7 +220,7 @@ class SFS3Client : ISFRemoteStorageClient
 	/// <param name="clientConfig">The client config to update.</param>
 	/// <param name="region">The region if any.</param>
 	/// <param name="endpoint">The endpoint if any.</param>
-	static private void setCommonClientConfig(AmazonS3Config clientConfig, string region, string endpoint, int maxRetry, int parallel)
+	static private void setCommonClientConfig(AmazonS3Config clientConfig, string? region, string? endpoint, int maxRetry, int parallel)
 	{
 		// Always return a regional URL
 		clientConfig.USEast1RegionalEndpointValue = S3UsEast1RegionalEndpointValue.Regional;
@@ -256,6 +261,8 @@ class SFS3Client : ISFRemoteStorageClient
 			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
 		if (fileMetadata.client == null)
 			throw new ArgumentException("fileMetadata.client is null", nameof(fileMetadata));
+		if (fileMetadata.stageInfo.location == null)
+			throw new ArgumentException("fileMetadata.stageInfo.location is null", nameof(fileMetadata));
 
 		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
 
@@ -315,6 +322,8 @@ class SFS3Client : ISFRemoteStorageClient
 			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
 		if (fileMetadata.client == null)
 			throw new ArgumentException("fileMetadata.client is null", nameof(fileMetadata));
+		if (fileMetadata.stageInfo.location == null)
+			throw new ArgumentException("fileMetadata.stageInfo.location is null", nameof(fileMetadata));
 
 		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
 

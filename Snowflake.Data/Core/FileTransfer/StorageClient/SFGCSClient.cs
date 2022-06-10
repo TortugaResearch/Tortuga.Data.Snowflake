@@ -47,6 +47,9 @@ class SFGCSClient : ISFRemoteStorageClient
 	/// <param name="stageInfo">The command stage info.</param>
 	public SFGCSClient(PutGetStageInfo stageInfo)
 	{
+		if (stageInfo.stageCredentials == null)
+			throw new ArgumentException("stageInfo.stageCredentials is null", nameof(stageInfo));
+
 		if (stageInfo.stageCredentials.TryGetValue(GCS_ACCESS_TOKEN, out string? accessToken))
 		{
 			var creds = GoogleCredential.FromAccessToken(accessToken, null);

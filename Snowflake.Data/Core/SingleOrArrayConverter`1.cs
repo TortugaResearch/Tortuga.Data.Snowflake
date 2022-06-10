@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -15,7 +17,7 @@ internal class SingleOrArrayConverter<T> : JsonConverter
 		return objecType == typeof(List<T>);
 	}
 
-	public override object ReadJson(JsonReader reader, Type objecType, object existingValue,
+	public override object? ReadJson(JsonReader reader, Type objecType, object? existingValue,
 		JsonSerializer serializer)
 	{
 		JToken token = JToken.Load(reader);
@@ -23,7 +25,7 @@ internal class SingleOrArrayConverter<T> : JsonConverter
 		{
 			return token.ToObject<List<T>>();
 		}
-		return new List<T> { token.ToObject<T>() };
+		return new List<T?> { token.ToObject<T>() };
 	}
 
 	public override bool CanWrite
@@ -31,7 +33,7 @@ internal class SingleOrArrayConverter<T> : JsonConverter
 		get { return false; }
 	}
 
-	public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+	public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
 	{
 		throw new NotImplementedException();
 	}
