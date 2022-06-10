@@ -23,9 +23,9 @@ public static class HttpUtil
 		}
 	}
 
-	private HttpClient RegisterNewHttpClientIfNecessary(HttpClientConfig config)
+	static HttpClient RegisterNewHttpClientIfNecessary(HttpClientConfig config)
 	{
-		string name = config.ConfKey;
+		var name = config.ConfKey;
 		if (!s_HttpClients.ContainsKey(name))
 		{
 			var httpClient = new HttpClient(new RetryHandler(setupCustomHttpHandler(config)))
@@ -40,9 +40,9 @@ public static class HttpUtil
 		return s_HttpClients[name];
 	}
 
-	private HttpClientHandler setupCustomHttpHandler(HttpClientConfig config)
+	static HttpClientHandler setupCustomHttpHandler(HttpClientConfig config)
 	{
-		HttpClientHandler httpHandler = new HttpClientHandler()
+		var httpHandler = new HttpClientHandler()
 		{
 			// Verify no certificates have been revoked
 			CheckCertificateRevocationList = config.CrlCheckEnabled,
@@ -52,27 +52,25 @@ public static class HttpUtil
 			UseCookies = false // Disable cookies
 		};
 		// Add a proxy if necessary
-		if (null != config.ProxyHost)
+		if (config.ProxyHost != null)
 		{
 			// Proxy needed
-			WebProxy proxy = new WebProxy(config.ProxyHost, int.Parse(config.ProxyPort));
+			var proxy = new WebProxy(config.ProxyHost, int.Parse(config.ProxyPort!));
 
 			// Add credential if provided
-			if (!String.IsNullOrEmpty(config.ProxyUser))
+			if (!string.IsNullOrEmpty(config.ProxyUser))
 			{
 				ICredentials credentials = new NetworkCredential(config.ProxyUser, config.ProxyPassword);
 				proxy.Credentials = credentials;
 			}
 
 			// Add bypasslist if provided
-			if (!String.IsNullOrEmpty(config.NoProxyList))
+			if (!string.IsNullOrEmpty(config.NoProxyList))
 			{
-				string[] bypassList = config.NoProxyList.Split(
-					new char[] { '|' },
-					StringSplitOptions.RemoveEmptyEntries);
+				var bypassList = config.NoProxyList!.Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
 				// Convert simplified syntax to standard regular expression syntax
-				string entry = null;
-				for (int i = 0; i < bypassList.Length; i++)
+				string? entry = null;
+				for (var i = 0; i < bypassList.Length; i++)
 				{
 					// Get the original entry
 					entry = bypassList[i].Trim();

@@ -42,7 +42,7 @@ class KeyPairAuthenticator : Authenticator
 	internal KeyPairAuthenticator(SFSession session) : base(session)
 	{
 		// Get private key path or private key from connection settings
-		if (!session.properties.ContainsKey(PRIVATE_KEY_FILE) && !session.properties.ContainsKey(PRIVATE_KEY))
+		if (!session.m_Properties.ContainsKey(PRIVATE_KEY_FILE) && !session.m_Properties.ContainsKey(PRIVATE_KEY))
 		{
 			// There is no PRIVATE_KEY_FILE defined, can't authenticate with key-pair
 			throw new SnowflakeDbException(INVALID_CONNECTION_STRING, "Missing required PRIVATE_KEY_FILE or PRIVATE_KEY for key pair authentication");
@@ -84,12 +84,12 @@ class KeyPairAuthenticator : Authenticator
 	/// <returns>The generated JWT token.</returns>
 	private string GenerateJwtToken()
 	{
-		var hasPkPath = Session.properties.TryGetValue(PRIVATE_KEY_FILE, out var pkPath);
-		var hasPkContent = Session.properties.TryGetValue(PRIVATE_KEY, out var pkContent);
-		Session.properties.TryGetValue(PRIVATE_KEY_PWD, out var pkPwd);
+		var hasPkPath = Session.m_Properties.TryGetValue(PRIVATE_KEY_FILE, out var pkPath);
+		var hasPkContent = Session.m_Properties.TryGetValue(PRIVATE_KEY, out var pkContent);
+		Session.m_Properties.TryGetValue(PRIVATE_KEY_PWD, out var pkPwd);
 
 		if (!hasPkPath && !hasPkContent)
-			throw new InvalidOperationException($"Either {nameof(PRIVATE_KEY_FILE)} or {nameof(PRIVATE_KEY)} needs to be set in the {nameof(Session.properties)}");
+			throw new InvalidOperationException($"Either {nameof(PRIVATE_KEY_FILE)} or {nameof(PRIVATE_KEY)} needs to be set in the {nameof(Session.m_Properties)}");
 
 		// Extract the public key from the private key to generate the fingerprints
 		RSAParameters rsaParams;
@@ -160,7 +160,7 @@ class KeyPairAuthenticator : Authenticator
 		 *
 		 * Note : Lifetime = 120sec for Python impl, 60sec for Jdbc and Odbc
 		*/
-		var accountUser = Session.properties[SFSessionProperty.ACCOUNT].ToUpper() + "." + Session.properties[SFSessionProperty.USER].ToUpper();
+		var accountUser = Session.m_Properties[SFSessionProperty.ACCOUNT].ToUpper() + "." + Session.m_Properties[SFSessionProperty.USER].ToUpper();
 		var issuer = accountUser + "." + publicKeyFingerPrint;
 		var claims = new[] {
 						new Claim(JwtRegisteredClaimNames.Iat, secondsSinceEpoch.ToString(), ClaimValueTypes.Integer64),

@@ -43,7 +43,7 @@ class SFBlockingChunkDownloaderV3 : IChunkDownloader
 		m_ChunkHeaders = chunkHeaders;
 		m_NextChunkToDownloadIndex = 0;
 		m_ResultSet = resultSet;
-		m_RestRequester = resultSet.SFStatement.SFSession.restRequester;
+		m_RestRequester = resultSet.SFStatement.SFSession.m_RestRequester;
 		m_PrefetchSlot = Math.Min(chunkInfos.Count, GetPrefetchThreads(resultSet));
 		m_ChunkInfos = chunkInfos;
 		m_NextChunkToConsumeIndex = 0;
@@ -74,7 +74,7 @@ class SFBlockingChunkDownloaderV3 : IChunkDownloader
 			throw new ArgumentException($"resultSet.SFStatement is null", nameof(resultSet));
 
 		var sessionParameters = resultSet.SFStatement.SFSession.ParameterMap;
-		var val = (string)sessionParameters[SFSessionParameter.CLIENT_PREFETCH_THREADS];
+		var val = (string)sessionParameters[SFSessionParameter.CLIENT_PREFETCH_THREADS]!;
 		return int.Parse(val);
 	}
 

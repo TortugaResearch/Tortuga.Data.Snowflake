@@ -36,7 +36,7 @@ class ChunkDownloaderFactory
 					responseData.qrmk!,
 					responseData.chunkHeaders!,
 					cancellationToken,
-					resultSet.SFStatement.SFSession.restRequester, resultSet.Configuration);
+					resultSet.SFStatement.SFSession.m_RestRequester, resultSet.Configuration);
 
 			default:
 				return new SFBlockingChunkDownloaderV3(responseData.rowType!.Count,

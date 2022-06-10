@@ -44,7 +44,7 @@ class OktaAuthenticator : Authenticator
 	public override void Login()
 	{
 		var authenticatorRestRequest = BuildAuthenticatorRestRequest();
-		var authenticatorResponse = Session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
+		var authenticatorResponse = Session.m_RestRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
 		authenticatorResponse.FilterFailedResponse();
 		var ssoUrl = new Uri(authenticatorResponse.data!.ssoUrl!);
 		var tokenUrl = new Uri(authenticatorResponse.data!.tokenUrl!);
@@ -53,11 +53,11 @@ class OktaAuthenticator : Authenticator
 		VerifyUrls(tokenUrl, m_OktaUrl);
 
 		var idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
-		var idpResponse = Session.restRequester.Post<IdpTokenResponse>(idpTokenRestRequest);
+		var idpResponse = Session.m_RestRequester.Post<IdpTokenResponse>(idpTokenRestRequest);
 		var onetimeToken = idpResponse.CookieToken;
 
 		var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
-		using (var samlRawResponse = Session.restRequester.Get(samlRestRequest))
+		using (var samlRawResponse = Session.m_RestRequester.Get(samlRestRequest))
 		{
 			m_SamlRawHtmlString = samlRawResponse.Content.ReadAsString();
 		}
@@ -71,7 +71,7 @@ class OktaAuthenticator : Authenticator
 	async public override Task LoginAsync(CancellationToken cancellationToken)
 	{
 		var authenticatorRestRequest = BuildAuthenticatorRestRequest();
-		var authenticatorResponse = await Session.restRequester.PostAsync<AuthenticatorResponse>(authenticatorRestRequest, cancellationToken).ConfigureAwait(false);
+		var authenticatorResponse = await Session.m_RestRequester.PostAsync<AuthenticatorResponse>(authenticatorRestRequest, cancellationToken).ConfigureAwait(false);
 		authenticatorResponse.FilterFailedResponse();
 		var ssoUrl = new Uri(authenticatorResponse.data!.ssoUrl!);
 		var tokenUrl = new Uri(authenticatorResponse.data!.tokenUrl!);
@@ -80,11 +80,11 @@ class OktaAuthenticator : Authenticator
 		VerifyUrls(tokenUrl, m_OktaUrl);
 
 		var idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
-		var idpResponse = await Session.restRequester.PostAsync<IdpTokenResponse>(idpTokenRestRequest, cancellationToken).ConfigureAwait(false);
+		var idpResponse = await Session.m_RestRequester.PostAsync<IdpTokenResponse>(idpTokenRestRequest, cancellationToken).ConfigureAwait(false);
 		var onetimeToken = idpResponse.CookieToken;
 
 		var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
-		using (var samlRawResponse = await Session.restRequester.GetAsync(samlRestRequest, cancellationToken).ConfigureAwait(false))
+		using (var samlRawResponse = await Session.m_RestRequester.GetAsync(samlRestRequest, cancellationToken).ConfigureAwait(false))
 		{
 			m_SamlRawHtmlString = await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
 		}
@@ -105,7 +105,7 @@ class OktaAuthenticator : Authenticator
 		var fedUrl = Session.BuildUri(RestPath.SF_AUTHENTICATOR_REQUEST_PATH);
 		var data = new AuthenticatorRequestData()
 		{
-			AccountName = Session.properties[SFSessionProperty.ACCOUNT],
+			AccountName = Session.m_Properties[SFSessionProperty.ACCOUNT],
 			Authenticator = m_OktaUrl.ToString(),
 		};
 
@@ -119,12 +119,12 @@ class OktaAuthenticator : Authenticator
 		return new IdpTokenRestRequest()
 		{
 			Url = tokenUrl,
-			RestTimeout = Session.connectionTimeout,
+			RestTimeout = Session.m_ConnectionTimeout,
 			HttpTimeout = TimeSpan.FromSeconds(16),
 			JsonBody = new IdpTokenRequest()
 			{
-				Username = Session.properties[SFSessionProperty.USER],
-				Password = Session.properties[SFSessionProperty.PASSWORD],
+				Username = Session.m_Properties[SFSessionProperty.USER],
+				Password = Session.m_Properties[SFSessionProperty.PASSWORD],
 			},
 		};
 	}
@@ -134,7 +134,7 @@ class OktaAuthenticator : Authenticator
 		return new SAMLRestRequest()
 		{
 			Url = ssoUrl,
-			RestTimeout = Session.connectionTimeout,
+			RestTimeout = Session.m_ConnectionTimeout,
 			HttpTimeout = Timeout.InfiniteTimeSpan,
 			OnetimeToken = onetimeToken,
 		};
@@ -161,8 +161,8 @@ class OktaAuthenticator : Authenticator
 			throw new SnowflakeDbException(SFError.IDP_SAML_POSTBACK_NOTFOUND, e);
 		}
 
-		var sessionHost = Session.properties[SFSessionProperty.HOST];
-		var sessionScheme = Session.properties[SFSessionProperty.SCHEME];
+		var sessionHost = Session.m_Properties[SFSessionProperty.HOST];
+		var sessionScheme = Session.m_Properties[SFSessionProperty.SCHEME];
 		if (postBackUrl.Host != sessionHost ||
 			postBackUrl.Scheme != sessionScheme)
 		{

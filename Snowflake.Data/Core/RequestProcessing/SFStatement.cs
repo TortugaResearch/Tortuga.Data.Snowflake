@@ -44,7 +44,7 @@ class SFStatement
 	internal SFStatement(SFSession session)
 	{
 		SFSession = session;
-		m_RestRequester = session.restRequester;
+		m_RestRequester = session.m_RestRequester;
 	}
 
 	private void AssignQueryRequestId()
@@ -89,9 +89,9 @@ class SFStatement
 		return new SFRestRequest
 		{
 			Url = queryUri,
-			authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.sessionToken),
+			authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken),
 			serviceName = SFSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
-							? (string)SFSession.ParameterMap[SFSessionParameter.SERVICE_NAME] : null,
+							? (string?)SFSession.ParameterMap[SFSessionParameter.SERVICE_NAME] : null,
 			jsonBody = postBody,
 			HttpTimeout = Timeout.InfiniteTimeSpan,
 			RestTimeout = Timeout.InfiniteTimeSpan,
@@ -105,7 +105,7 @@ class SFStatement
 		return new SFRestRequest()
 		{
 			Url = uri,
-			authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.sessionToken),
+			authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken),
 			HttpTimeout = Timeout.InfiniteTimeSpan,
 			RestTimeout = Timeout.InfiniteTimeSpan
 		};
@@ -181,7 +181,7 @@ class SFStatement
 				if (SessionExpired(response))
 				{
 					SFSession.renewSession();
-					queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.sessionToken);
+					queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken);
 				}
 				else
 				{
@@ -244,7 +244,7 @@ class SFStatement
 					if (SessionExpired(response))
 					{
 						SFSession.renewSession();
-						queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.sessionToken);
+						queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken);
 					}
 					else
 					{
@@ -284,7 +284,7 @@ class SFStatement
 			if (m_RequestId == null)
 				return null;
 
-			var parameters = new Dictionary<string, string>()
+			var parameters = new Dictionary<string, string?>()
 				{
 					{ RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
 					{ RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
@@ -299,7 +299,7 @@ class SFStatement
 			return new SFRestRequest()
 			{
 				Url = uri,
-				authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.sessionToken),
+				authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken),
 				jsonBody = postBody
 			};
 		}
@@ -344,7 +344,7 @@ class SFStatement
 				if (SessionExpired(response))
 				{
 					SFSession.renewSession();
-					queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.sessionToken);
+					queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken);
 				}
 				else
 				{

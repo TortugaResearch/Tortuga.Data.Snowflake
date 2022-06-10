@@ -23,7 +23,7 @@ class OAuthAuthenticator : Authenticator
 	internal OAuthAuthenticator(SFSession session) : base(session)
 	{
 		// Get private key path or private key from connection settings
-		if (!session.properties.ContainsKey(TOKEN))
+		if (!session.m_Properties.ContainsKey(TOKEN))
 		{
 			// There is no TOKEN defined, can't authenticate with oauth
 			throw new SnowflakeDbException(INVALID_CONNECTION_STRING, "Missing required TOKEN for Oauth authentication");
@@ -36,7 +36,7 @@ class OAuthAuthenticator : Authenticator
 	protected override void SetSpecializedAuthenticatorData(LoginRequestData data)
 	{
 		// Add the token to the Data attribute
-		data.Token = Session.properties[TOKEN];
+		data.Token = Session.m_Properties[TOKEN];
 		// Remove the login name for an OAuth session
 		data.loginName = "";
 	}

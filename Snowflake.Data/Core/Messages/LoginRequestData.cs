@@ -42,7 +42,7 @@ class LoginRequestData
 	internal string? ProofKey { get; set; }
 
 	[JsonProperty(PropertyName = "SESSION_PARAMETERS", NullValueHandling = NullValueHandling.Ignore)]
-	internal Dictionary<SFSessionParameter, object>? SessionParameters { get; set; }
+	internal Dictionary<SFSessionParameter, object?>? SessionParameters { get; set; }
 
 	public override string ToString() => $"LoginRequestData {{ClientAppVersion: {clientAppVersion},\n AccountName: {accountName},\n loginName: {loginName},\n ClientEnv: {clientEnv?.ToString()},\n authenticator: {Authenticator} }}";
 }

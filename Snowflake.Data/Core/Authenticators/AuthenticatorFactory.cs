@@ -23,7 +23,7 @@ internal class AuthenticatorFactory
 	/// <exception cref="SnowflakeDbException">when authenticator is unknown</exception>
 	internal static Authenticator GetAuthenticator(SFSession session)
 	{
-		var type = session.properties[SFSessionProperty.AUTHENTICATOR];
+		var type = session.m_Properties[SFSessionProperty.AUTHENTICATOR];
 
 		if (type.Equals(BasicAuthenticator.AUTH_NAME, InvariantCultureIgnoreCase))
 		{

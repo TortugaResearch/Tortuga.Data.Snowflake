@@ -211,9 +211,10 @@ class SFResultSet : SFBaseResultSet
 			throw new InvalidOperationException($"{nameof(SFStatement)} is null");
 
 		SFSession session = SFStatement.SFSession;
-		session.database = responseData.finalDatabaseName;
-		session.schema = responseData.finalSchemaName;
+		session.m_Database = responseData.finalDatabaseName;
+		session.m_Schema = responseData.finalSchemaName;
 
-		session.UpdateSessionParameterMap(responseData.parameters);
+		if (responseData.parameters != null)
+			session.UpdateSessionParameterMap(responseData.parameters);
 	}
 }

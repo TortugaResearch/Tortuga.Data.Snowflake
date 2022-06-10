@@ -13,20 +13,20 @@ namespace Tortuga.Data.Snowflake.Core.Sessions;
 /// </summary>
 class RetryCountRule : IRule
 {
-	int _retryCount;
+	int m_RetryCount;
 
 	internal RetryCountRule()
 	{
-		_retryCount = 1;
+		m_RetryCount = 1;
 	}
 
 	public void Apply(Dictionary<string, StringValues> queryParams)
 	{
-		if (_retryCount == 1)
-			queryParams.Add(RestParams.SF_QUERY_RETRY_COUNT, _retryCount.ToString());
+		if (m_RetryCount == 1)
+			queryParams.Add(RestParams.SF_QUERY_RETRY_COUNT, m_RetryCount.ToString());
 		else
-			queryParams[RestParams.SF_QUERY_RETRY_COUNT] = _retryCount.ToString();
+			queryParams[RestParams.SF_QUERY_RETRY_COUNT] = m_RetryCount.ToString();
 
-		_retryCount++;
+		m_RetryCount++;
 	}
 }

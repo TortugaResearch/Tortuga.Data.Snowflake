@@ -58,7 +58,7 @@ class ExternalBrowserAuthenticator : Authenticator
 
 			var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
 			var authenticatorRestResponse =
-				await Session.restRequester.PostAsync<AuthenticatorResponse>(
+				await Session.m_RestRequester.PostAsync<AuthenticatorResponse>(
 					authenticatorRestRequest,
 					cancellationToken
 				).ConfigureAwait(false);
@@ -101,7 +101,7 @@ class ExternalBrowserAuthenticator : Authenticator
 			httpListener.Start();
 
 			var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
-			var authenticatorRestResponse = Session.restRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
+			var authenticatorRestResponse = Session.m_RestRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
 			authenticatorRestResponse.FilterFailedResponse();
 
 			var idpUrl = authenticatorRestResponse.data!.ssoUrl!;
@@ -196,12 +196,12 @@ class ExternalBrowserAuthenticator : Authenticator
 		var fedUrl = Session.BuildUri(RestPath.SF_AUTHENTICATOR_REQUEST_PATH);
 		var data = new AuthenticatorRequestData()
 		{
-			AccountName = Session.properties[SFSessionProperty.ACCOUNT],
+			AccountName = Session.m_Properties[SFSessionProperty.ACCOUNT],
 			Authenticator = AUTH_NAME,
 			BrowserModeRedirectPort = port.ToString(),
 		};
 
-		int connectionTimeoutSec = int.Parse(Session.properties[SFSessionProperty.CONNECTION_TIMEOUT]);
+		int connectionTimeoutSec = int.Parse(Session.m_Properties[SFSessionProperty.CONNECTION_TIMEOUT]);
 
 		return Session.BuildTimeoutRestRequest(fedUrl, new AuthenticatorRequest() { Data = data });
 	}

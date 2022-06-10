@@ -18,13 +18,16 @@ class RetryHandler : DelegatingHandler
 #if NET5_0_OR_GREATER
 	protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
 	{
-		HttpResponseMessage response = null;
-		int backOffInSec = 1;
-		int totalRetryTime = 0;
-		int maxDefaultBackoff = 16;
+		if (request.RequestUri == null)
+			throw new ArgumentNullException("request.RequestUri is null", nameof(request));
+
+		HttpResponseMessage? response = null;
+		var backOffInSec = 1;
+		var totalRetryTime = 0;
+		var maxDefaultBackoff = 16;
 
 #pragma warning disable SYSLIB0014 // Type or member is obsolete. HttpClient alterntaive is not known.
-		ServicePoint p = ServicePointManager.FindServicePoint(request.RequestUri);
+		var p = ServicePointManager.FindServicePoint(request.RequestUri);
 		p.Expect100Continue = false; // Saves about 100 ms per request
 		p.UseNagleAlgorithm = false; // Saves about 200 ms per request
 		p.ConnectionLimit = 20;      // Default value is 2, we need more connections for performing multiple parallel queries
@@ -33,9 +36,9 @@ class RetryHandler : DelegatingHandler
 		var httpTimeout = request.GetOptionOrDefault<TimeSpan>(RestRequest.HTTP_REQUEST_TIMEOUT_KEY);
 		var restTimeout = request.GetOptionOrDefault<TimeSpan>(RestRequest.REST_REQUEST_TIMEOUT_KEY);
 
-		CancellationTokenSource childCts = null;
+		CancellationTokenSource? childCts = null;
 
-		UriUpdater updater = new UriUpdater(request.RequestUri);
+		var updater = new UriUpdater(request.RequestUri);
 
 		while (true)
 		{
@@ -67,9 +70,7 @@ class RetryHandler : DelegatingHandler
 			}
 
 			if (childCts != null)
-			{
 				childCts.Dispose();
-			}
 
 			if (response != null)
 			{
@@ -79,7 +80,7 @@ class RetryHandler : DelegatingHandler
 				}
 				else
 				{
-					bool isRetryable = isRetryableHTTPCode((int)response.StatusCode);
+					bool isRetryable = IsRetryableHTTPCode((int)response.StatusCode);
 					if (!isRetryable)
 					{
 						// No need to keep retrying, stop here
@@ -103,8 +104,7 @@ class RetryHandler : DelegatingHandler
 
 			totalRetryTime += backOffInSec;
 			// Set next backoff time
-			backOffInSec = backOffInSec >= maxDefaultBackoff ?
-					maxDefaultBackoff : backOffInSec * 2;
+			backOffInSec = backOffInSec >= maxDefaultBackoff ? maxDefaultBackoff : backOffInSec * 2;
 
 			if (restTimeout.TotalSeconds > 0 && totalRetryTime + backOffInSec > restTimeout.TotalSeconds)
 			{
@@ -119,13 +119,16 @@ class RetryHandler : DelegatingHandler
 
 	protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
 	{
-		HttpResponseMessage response = null;
-		int backOffInSec = 1;
-		int totalRetryTime = 0;
-		int maxDefaultBackoff = 16;
+		if (request.RequestUri == null)
+			throw new ArgumentNullException("request.RequestUri is null", nameof(request));
+
+		HttpResponseMessage? response = null;
+		var backOffInSec = 1;
+		var totalRetryTime = 0;
+		var maxDefaultBackoff = 16;
 
 #pragma warning disable SYSLIB0014 // Type or member is obsolete. HttpClient alterntaive is not known.
-		ServicePoint p = ServicePointManager.FindServicePoint(request.RequestUri);
+		var p = ServicePointManager.FindServicePoint(request.RequestUri);
 		p.Expect100Continue = false; // Saves about 100 ms per request
 		p.UseNagleAlgorithm = false; // Saves about 200 ms per request
 		p.ConnectionLimit = 20;      // Default value is 2, we need more connections for performing multiple parallel queries
@@ -134,9 +137,9 @@ class RetryHandler : DelegatingHandler
 		var httpTimeout = request.GetOptionOrDefault<TimeSpan>(RestRequest.HTTP_REQUEST_TIMEOUT_KEY);
 		var restTimeout = request.GetOptionOrDefault<TimeSpan>(RestRequest.REST_REQUEST_TIMEOUT_KEY);
 
-		CancellationTokenSource childCts = null;
+		CancellationTokenSource? childCts = null;
 
-		UriUpdater updater = new UriUpdater(request.RequestUri);
+		var updater = new UriUpdater(request.RequestUri);
 
 		while (true)
 		{
@@ -149,8 +152,7 @@ class RetryHandler : DelegatingHandler
 					childCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 					childCts.CancelAfter(httpTimeout);
 				}
-				response = await base.SendAsync(request, childCts == null ?
-					cancellationToken : childCts.Token).ConfigureAwait(false);
+				response = await base.SendAsync(request, childCts == null ? cancellationToken : childCts.Token).ConfigureAwait(false);
 			}
 			catch
 			{
@@ -169,9 +171,7 @@ class RetryHandler : DelegatingHandler
 			}
 
 			if (childCts != null)
-			{
 				childCts.Dispose();
-			}
 
 			if (response != null)
 			{
@@ -181,7 +181,7 @@ class RetryHandler : DelegatingHandler
 				}
 				else
 				{
-					bool isRetryable = isRetryableHTTPCode((int)response.StatusCode);
+					bool isRetryable = IsRetryableHTTPCode((int)response.StatusCode);
 					if (!isRetryable)
 					{
 						// No need to keep retrying, stop here
@@ -198,8 +198,7 @@ class RetryHandler : DelegatingHandler
 			await Task.Delay(TimeSpan.FromSeconds(backOffInSec), cancellationToken).ConfigureAwait(false);
 			totalRetryTime += backOffInSec;
 			// Set next backoff time
-			backOffInSec = backOffInSec >= maxDefaultBackoff ?
-					maxDefaultBackoff : backOffInSec * 2;
+			backOffInSec = backOffInSec >= maxDefaultBackoff ? maxDefaultBackoff : backOffInSec * 2;
 
 			if (restTimeout.TotalSeconds > 0 && totalRetryTime + backOffInSec > restTimeout.TotalSeconds)
 			{
@@ -216,7 +215,7 @@ class RetryHandler : DelegatingHandler
 	/// </summary>
 	/// <param name="statusCode">The http status code.</param>
 	/// <returns>True if the request should be retried, false otherwise.</returns>
-	private bool isRetryableHTTPCode(int statusCode)
+	bool IsRetryableHTTPCode(int statusCode)
 	{
 		return 500 <= statusCode && statusCode < 600 ||
 		// Forbidden

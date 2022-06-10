@@ -42,7 +42,7 @@ class SFBlockingChunkDownloader : IChunkDownloader
 		m_Chunks = new List<SFResultChunk>();
 		m_NextChunkToDownloadIndex = 0;
 		m_ResultSet = resultSet;
-		m_RestRequester = resultSet.SFStatement.SFSession.restRequester;
+		m_RestRequester = resultSet.SFStatement.SFSession.m_RestRequester;
 		m_PrefetchThreads = GetPrefetchThreads(resultSet);
 		m_ExternalCancellationToken = cancellationToken;
 
@@ -59,7 +59,7 @@ class SFBlockingChunkDownloader : IChunkDownloader
 			throw new ArgumentException($"resultSet.SFStatement is null", nameof(resultSet));
 
 		var sessionParameters = resultSet.SFStatement.SFSession.ParameterMap;
-		var val = (string)sessionParameters[SFSessionParameter.CLIENT_PREFETCH_THREADS];
+		var val = (string)sessionParameters[SFSessionParameter.CLIENT_PREFETCH_THREADS]!;
 		return int.Parse(val);
 	}
 

@@ -38,7 +38,7 @@ public class SnowflakeDbConnection : DbConnection
 
 	public override int ConnectionTimeout => this.m_ConnectionTimeout;
 
-	public override string Database => SfSession?.database ?? "";
+	public override string Database => SfSession?.m_Database ?? "";
 
 	/// <summary>
 	///     If the connection to the database is closed, the DataSource returns whatever is contained
@@ -54,7 +54,7 @@ public class SnowflakeDbConnection : DbConnection
 
 	public SecureString? Password { get; set; }
 
-	public override string ServerVersion => SfSession?.serverVersion ?? "";
+	public override string ServerVersion => SfSession?.m_ServerVersion ?? "";
 	public override ConnectionState State => m_ConnectionState;
 	internal SFSession? SfSession { get; set; }
 
@@ -252,7 +252,7 @@ public class SnowflakeDbConnection : DbConnection
 			throw new InvalidOperationException($"{nameof(ConnectionString)} is null");
 
 		SfSession = new SFSession(ConnectionString, Password, Configuration);
-		m_ConnectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
+		m_ConnectionTimeout = (int)SfSession.m_ConnectionTimeout.TotalSeconds;
 		m_ConnectionState = ConnectionState.Connecting;
 	}
 }

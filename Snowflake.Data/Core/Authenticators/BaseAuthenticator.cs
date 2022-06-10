@@ -27,8 +27,8 @@ internal abstract class Authenticator
 		Session = session;
 
 		// Update the value for insecureMode because it can be different for each session
-		m_ClientEnv.insecureMode = session.properties[SFSessionProperty.INSECUREMODE];
-		if (session.properties.TryGetValue(SFSessionProperty.APPLICATION, out var applicationName))
+		m_ClientEnv.insecureMode = session.m_Properties[SFSessionProperty.INSECUREMODE];
+		if (session.m_Properties.TryGetValue(SFSessionProperty.APPLICATION, out var applicationName))
 		{
 			// If an application name has been specified in the connection setting, use it
 			// Otherwise, it will default to the running process name
@@ -50,7 +50,7 @@ internal abstract class Authenticator
 	{
 		var loginRequest = BuildLoginRequest();
 
-		var response = Session.restRequester.Post<LoginResponse>(loginRequest);
+		var response = Session.m_RestRequester.Post<LoginResponse>(loginRequest);
 
 		Session.ProcessLoginResponse(response);
 	}
@@ -59,7 +59,7 @@ internal abstract class Authenticator
 	{
 		var loginRequest = BuildLoginRequest();
 
-		var response = await Session.restRequester.PostAsync<LoginResponse>(loginRequest, cancellationToken).ConfigureAwait(false);
+		var response = await Session.m_RestRequester.PostAsync<LoginResponse>(loginRequest, cancellationToken).ConfigureAwait(false);
 
 		Session.ProcessLoginResponse(response);
 	}
@@ -83,8 +83,8 @@ internal abstract class Authenticator
 
 		LoginRequestData data = new LoginRequestData()
 		{
-			loginName = Session.properties[SFSessionProperty.USER],
-			accountName = Session.properties[SFSessionProperty.ACCOUNT],
+			loginName = Session.m_Properties[SFSessionProperty.USER],
+			accountName = Session.m_Properties[SFSessionProperty.ACCOUNT],
 			clientAppId = SFEnvironment.DriverName,
 			clientAppVersion = SFEnvironment.DriverVersion,
 			clientEnv = m_ClientEnv,

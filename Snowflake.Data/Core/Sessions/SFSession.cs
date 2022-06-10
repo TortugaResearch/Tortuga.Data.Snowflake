@@ -16,45 +16,45 @@ namespace Tortuga.Data.Snowflake.Core.Sessions;
 
 class SFSession
 {
-	private static readonly Regex APPLICATION_REGEX = new Regex(@"^[A-Za-z]([A-Za-z0-9.\-_]){1,50}$");
+	static readonly Regex APPLICATION_REGEX = new Regex(@"^[A-Za-z]([A-Za-z0-9.\-_]){1,50}$");
 
-	private const string SF_AUTHORIZATION_BASIC = "Basic";
+	const string SF_AUTHORIZATION_BASIC = "Basic";
 
-	private const string SF_AUTHORIZATION_SNOWFLAKE_FMT = "Snowflake Token=\"{0}\"";
+	const string SF_AUTHORIZATION_SNOWFLAKE_FMT = "Snowflake Token=\"{0}\"";
 
-	internal string sessionToken;
+	internal string? m_SessionToken;
 
-	internal string masterToken;
+	internal string? m_MasterToken;
 
-	internal IRestRequester restRequester { get; private set; }
+	internal IRestRequester m_RestRequester { get; set; }
 
-	private Authenticator authenticator;
+	Authenticator? m_Authenticator;
 
-	internal SFSessionProperties properties;
+	internal SFSessionProperties m_Properties;
 
-	internal string database;
+	internal string? m_Database;
 
-	internal string schema;
+	internal string? m_Schema;
 
-	internal string serverVersion;
+	internal string? m_ServerVersion;
 
-	internal TimeSpan connectionTimeout;
+	internal TimeSpan m_ConnectionTimeout;
 
-	internal bool InsecureMode;
+	internal bool m_InsecureMode;
 
-	private HttpClient _HttpClient;
+	HttpClient m_HttpClient;
 
 	internal void ProcessLoginResponse(LoginResponse authnResponse)
 	{
 		if (authnResponse.success)
 		{
-			sessionToken = authnResponse.data.token;
-			masterToken = authnResponse.data.masterToken;
-			database = authnResponse.data.authResponseSessionInfo.databaseName;
-			schema = authnResponse.data.authResponseSessionInfo.schemaName;
-			serverVersion = authnResponse.data.serverVersion;
+			m_SessionToken = authnResponse.data!.token!;
+			m_MasterToken = authnResponse.data!.masterToken!;
+			m_Database = authnResponse.data!.authResponseSessionInfo!.databaseName!;
+			m_Schema = authnResponse.data!.authResponseSessionInfo!.schemaName!;
+			m_ServerVersion = authnResponse.data!.serverVersion!;
 
-			UpdateSessionParameterMap(authnResponse.data.nameValueParameter);
+			UpdateSessionParameterMap(authnResponse.data!.nameValueParameter!);
 		}
 		else
 		{
@@ -62,19 +62,16 @@ class SFSession
 		}
 	}
 
-	internal readonly Dictionary<SFSessionParameter, Object> ParameterMap;
+	internal readonly Dictionary<SFSessionParameter, object?> ParameterMap;
 
 	internal Uri BuildLoginUrl()
 	{
-		var queryParams = new Dictionary<string, string>();
-		string warehouseValue;
-		string dbValue;
-		string schemaValue;
-		string roleName;
-		queryParams[RestParams.SF_QUERY_WAREHOUSE] = properties.TryGetValue(SFSessionProperty.WAREHOUSE, out warehouseValue) ? warehouseValue : "";
-		queryParams[RestParams.SF_QUERY_DB] = properties.TryGetValue(SFSessionProperty.DB, out dbValue) ? dbValue : "";
-		queryParams[RestParams.SF_QUERY_SCHEMA] = properties.TryGetValue(SFSessionProperty.SCHEMA, out schemaValue) ? schemaValue : "";
-		queryParams[RestParams.SF_QUERY_ROLE] = properties.TryGetValue(SFSessionProperty.ROLE, out roleName) ? roleName : "";
+		var queryParams = new Dictionary<string, string?>();
+
+		queryParams[RestParams.SF_QUERY_WAREHOUSE] = m_Properties.TryGetValue(SFSessionProperty.WAREHOUSE, out var warehouseValue) ? warehouseValue : "";
+		queryParams[RestParams.SF_QUERY_DB] = m_Properties.TryGetValue(SFSessionProperty.DB, out var dbValue) ? dbValue : "";
+		queryParams[RestParams.SF_QUERY_SCHEMA] = m_Properties.TryGetValue(SFSessionProperty.SCHEMA, out var schemaValue) ? schemaValue : "";
+		queryParams[RestParams.SF_QUERY_ROLE] = m_Properties.TryGetValue(SFSessionProperty.ROLE, out var roleName) ? roleName : "";
 		queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
 		queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
 
@@ -86,47 +83,41 @@ class SFSession
 	///     Constructor
 	/// </summary>
 	/// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
-	internal SFSession(String connectionString, SecureString password, SnowflakeDbConfiguration configuration)
+	internal SFSession(string connectionString, SecureString? password, SnowflakeDbConfiguration configuration)
 	{
 		Configuration = configuration;
-		properties = SFSessionProperties.parseConnectionString(connectionString, password);
+		m_Properties = SFSessionProperties.parseConnectionString(connectionString, password);
 
 		// If there is an "application" setting, verify that it matches the expect pattern
-		properties.TryGetValue(SFSessionProperty.APPLICATION, out string applicationNameSetting);
-		if (!String.IsNullOrEmpty(applicationNameSetting) && !APPLICATION_REGEX.IsMatch(applicationNameSetting))
+		m_Properties.TryGetValue(SFSessionProperty.APPLICATION, out var applicationNameSetting);
+		if (!string.IsNullOrEmpty(applicationNameSetting) && !APPLICATION_REGEX.IsMatch(applicationNameSetting))
 		{
-			throw new SnowflakeDbException(
-				SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-				SFError.INVALID_CONNECTION_PARAMETER_VALUE,
-				applicationNameSetting,
-				SFSessionProperty.APPLICATION.ToString()
-				);
+			throw new SnowflakeDbException(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INVALID_CONNECTION_PARAMETER_VALUE, applicationNameSetting, SFSessionProperty.APPLICATION.ToString());
 		}
 
-		ParameterMap = new Dictionary<SFSessionParameter, object>();
-		int recommendedMinTimeoutSec = RestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT;
-		int timeoutInSec = recommendedMinTimeoutSec;
+		ParameterMap = new();
+		int timeoutInSec;
 		try
 		{
 			ParameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] =
-				Boolean.Parse(properties[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]);
-			timeoutInSec = int.Parse(properties[SFSessionProperty.CONNECTION_TIMEOUT]);
-			InsecureMode = Boolean.Parse(properties[SFSessionProperty.INSECUREMODE]);
-			string proxyHost = null;
-			string proxyPort = null;
-			string noProxyHosts = null;
-			string proxyPwd = null;
-			string proxyUser = null;
-			if (Boolean.Parse(properties[SFSessionProperty.USEPROXY]))
+				Boolean.Parse(m_Properties[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]);
+			timeoutInSec = int.Parse(m_Properties[SFSessionProperty.CONNECTION_TIMEOUT]);
+			m_InsecureMode = Boolean.Parse(m_Properties[SFSessionProperty.INSECUREMODE]);
+			string? proxyHost = null;
+			string? proxyPort = null;
+			string? noProxyHosts = null;
+			string? proxyPwd = null;
+			string? proxyUser = null;
+			if (bool.Parse(m_Properties[SFSessionProperty.USEPROXY]))
 			{
 				// Let's try to get the associated RestRequester
-				properties.TryGetValue(SFSessionProperty.PROXYHOST, out proxyHost);
-				properties.TryGetValue(SFSessionProperty.PROXYPORT, out proxyPort);
-				properties.TryGetValue(SFSessionProperty.NONPROXYHOSTS, out noProxyHosts);
-				properties.TryGetValue(SFSessionProperty.PROXYPASSWORD, out proxyPwd);
-				properties.TryGetValue(SFSessionProperty.PROXYUSER, out proxyUser);
+				m_Properties.TryGetValue(SFSessionProperty.PROXYHOST, out proxyHost);
+				m_Properties.TryGetValue(SFSessionProperty.PROXYPORT, out proxyPort);
+				m_Properties.TryGetValue(SFSessionProperty.NONPROXYHOSTS, out noProxyHosts);
+				m_Properties.TryGetValue(SFSessionProperty.PROXYPASSWORD, out proxyPwd);
+				m_Properties.TryGetValue(SFSessionProperty.PROXYUSER, out proxyUser);
 
-				if (!String.IsNullOrEmpty(noProxyHosts))
+				if (!string.IsNullOrEmpty(noProxyHosts))
 				{
 					// The list is url-encoded
 					// Host names are separated with a URL-escaped pipe symbol (%7C).
@@ -135,44 +126,34 @@ class SFSession
 			}
 
 			// HttpClient config based on the setting in the connection string
-			HttpClientConfig httpClientConfig =
-				new HttpClientConfig(
-					!InsecureMode,
-					proxyHost,
-					proxyPort,
-					proxyUser,
-					proxyPwd,
-					noProxyHosts);
+			var httpClientConfig = new HttpClientConfig(!m_InsecureMode, proxyHost, proxyPort, proxyUser, proxyPwd, noProxyHosts);
 
 			// Get the http client for the config
-			_HttpClient = HttpUtil.Instance.GetHttpClient(httpClientConfig);
-			restRequester = new RestRequester(_HttpClient);
+			m_HttpClient = HttpUtil.GetHttpClient(httpClientConfig);
+			m_RestRequester = new RestRequester(m_HttpClient);
 		}
 		catch (Exception e)
 		{
-			throw new SnowflakeDbException(e.InnerException,
-						SnowflakeDbException.CONNECTION_FAILURE_SSTATE,
-						SFError.INVALID_CONNECTION_STRING,
-						"Unable to connect");
+			throw new SnowflakeDbException(e, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INVALID_CONNECTION_STRING, "Unable to connect");
 		}
 
-		connectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
+		m_ConnectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
 	}
 
 	internal SFSession(String connectionString, SecureString password, IMockRestRequester restRequester, SnowflakeDbConfiguration configuration) : this(connectionString, password, configuration)
 	{
 		// Inject the HttpClient to use with the Mock requester
-		restRequester.setHttpClient(_HttpClient);
+		restRequester.setHttpClient(m_HttpClient);
 		// Override the Rest requester with the mock for testing
-		this.restRequester = restRequester;
+		m_RestRequester = restRequester;
 	}
 
-	internal Uri BuildUri(string path, Dictionary<string, string> queryParams = null)
+	internal Uri BuildUri(string path, Dictionary<string, string?>? queryParams = null)
 	{
-		UriBuilder uriBuilder = new UriBuilder();
-		uriBuilder.Scheme = properties[SFSessionProperty.SCHEME];
-		uriBuilder.Host = properties[SFSessionProperty.HOST];
-		uriBuilder.Port = int.Parse(properties[SFSessionProperty.PORT]);
+		var uriBuilder = new UriBuilder();
+		uriBuilder.Scheme = m_Properties[SFSessionProperty.SCHEME];
+		uriBuilder.Host = m_Properties[SFSessionProperty.HOST];
+		uriBuilder.Port = int.Parse(m_Properties[SFSessionProperty.PORT]);
 		uriBuilder.Path = path;
 
 		if (queryParams != null && queryParams.Any())
@@ -196,95 +177,93 @@ class SFSession
 
 	internal void Open()
 	{
-		if (authenticator == null)
-		{
-			authenticator = AuthenticatorFactory.GetAuthenticator(this);
-		}
+		if (m_Authenticator == null)
+			m_Authenticator = AuthenticatorFactory.GetAuthenticator(this);
 
-		authenticator.Login();
+		m_Authenticator.Login();
 	}
 
 	internal async Task OpenAsync(CancellationToken cancellationToken)
 	{
-		if (authenticator == null)
-		{
-			authenticator = AuthenticatorFactory.GetAuthenticator(this);
-		}
+		if (m_Authenticator == null)
+			m_Authenticator = AuthenticatorFactory.GetAuthenticator(this);
 
-		await authenticator.LoginAsync(cancellationToken).ConfigureAwait(false);
+		await m_Authenticator.LoginAsync(cancellationToken).ConfigureAwait(false);
 	}
 
 	internal void close()
 	{
 		// Nothing to do if the session is not open
-		if (null == sessionToken) return;
+		if (null == m_SessionToken)
+			return;
 
 		// Send a close session request
-		var queryParams = new Dictionary<string, string>();
+		var queryParams = new Dictionary<string, string?>();
 		queryParams[RestParams.SF_QUERY_SESSION_DELETE] = "true";
 		queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
 		queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
 
-		SFRestRequest closeSessionRequest = new SFRestRequest
+		var closeSessionRequest = new SFRestRequest
 		{
 			Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
-			authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)
+			authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, m_SessionToken)
 		};
 
-		restRequester.Post<CloseResponse>(closeSessionRequest);
+		m_RestRequester.Post<CloseResponse>(closeSessionRequest);
 	}
 
 	internal async Task CloseAsync(CancellationToken cancellationToken)
 	{
 		// Nothing to do if the session is not open
-		if (null == sessionToken) return;
+		if (null == m_SessionToken)
+			return;
 
 		// Send a close session request
-		var queryParams = new Dictionary<string, string>();
+		var queryParams = new Dictionary<string, string?>();
 		queryParams[RestParams.SF_QUERY_SESSION_DELETE] = "true";
 		queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
 		queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
 
-		SFRestRequest closeSessionRequest = new SFRestRequest()
+		var closeSessionRequest = new SFRestRequest()
 		{
 			Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
-			authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, sessionToken)
+			authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, m_SessionToken)
 		};
 
-		await restRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
+		await m_RestRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
 	}
 
 	internal void renewSession()
 	{
-		RenewSessionRequest postBody = new RenewSessionRequest()
+		var postBody = new RenewSessionRequest()
 		{
-			oldSessionToken = this.sessionToken,
+			oldSessionToken = this.m_SessionToken,
 			requestType = "RENEW"
 		};
 
-		var parameters = new Dictionary<string, string>
+		var parameters = new Dictionary<string, string?>
 				{
 					{ RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
 					{ RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
 				};
 
-		SFRestRequest renewSessionRequest = new SFRestRequest
+		var renewSessionRequest = new SFRestRequest
 		{
 			jsonBody = postBody,
 			Url = BuildUri(RestPath.SF_TOKEN_REQUEST_PATH, parameters),
-			authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, masterToken),
+			authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, m_MasterToken),
 			RestTimeout = Timeout.InfiniteTimeSpan
 		};
 
-		var response = restRequester.Post<RenewSessionResponse>(renewSessionRequest);
+		var response = m_RestRequester.Post<RenewSessionResponse>(renewSessionRequest);
 		if (!response.success)
 		{
 			throw new SnowflakeDbException("", response.code, response.message, "");
 		}
 		else
 		{
-			sessionToken = response.data.sessionToken;
-			masterToken = response.data.masterToken;
+			m_SessionToken = response.data!.sessionToken!;
+			m_MasterToken = response.data!.masterToken!;
 		}
 	}
 
@@ -295,18 +274,16 @@ class SFSession
 			jsonBody = body,
 			Url = uri,
 			authorizationToken = SF_AUTHORIZATION_BASIC,
-			RestTimeout = connectionTimeout,
+			RestTimeout = m_ConnectionTimeout,
 		};
 	}
 
 	internal void UpdateSessionParameterMap(List<NameValueParameter> parameterList)
 	{
-		foreach (NameValueParameter parameter in parameterList)
+		foreach (var parameter in parameterList)
 		{
 			if (Enum.TryParse(parameter.name, out SFSessionParameter parameterName))
-			{
 				ParameterMap[parameterName] = parameter.value;
-			}
 		}
 	}
 

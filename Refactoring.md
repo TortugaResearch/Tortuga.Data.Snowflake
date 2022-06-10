@@ -1622,13 +1622,37 @@ internal DataTable toDataTable()
 }
 ```
 
-## Round 28 - Sessions
+## Round 28 - Core.Sessions
 
 * Add `#nullable enable` to each file in the namespace. Update properties where appropriate.
 * Lined up parameters in method signatures and calls
 * Change public fields into public properties
+* Assume any null checks on messages that don't currently exist aren't needed. (Long term, appropriate null checks should be added.)
+* Remove unused fields.
 
 
 ### HttpUtil should be a static class
 
 While singletons are a well established pattern, they shouldn't be used indiscriminetly. The class `HttpUtil` implements no interfaces. Nor does it have a base class. So there is no reason to make it an object at all. It can instead be treated as any other static class.
+
+### Unused assignments
+
+In these two lines, the variable `timeoutInSec` has a value assigned to it. But before it is read, the value is over-written. So the assignment should be removed to improve clarity. This in turn means `recommendedMinTimeoutSec` can be deleted entirely.
+
+```csharp
+int recommendedMinTimeoutSec = RestRequest.DEFAULT_REST_RETRY_SECONDS_TIMEOUT;
+int timeoutInSec = recommendedMinTimeoutSec;
+```
+
+### Not fixed
+
+The `SFSessionProperties` class overrides `Equals` without overriding `GetHashCode`.
+
+To supress the compiler warning, a fake override was created. To make it more obvious what's happening, a `#pragma warning disable` will be used instead.
+
+```csharp
+public override int GetHashCode()
+{
+	return base.GetHashCode();
+}
+```

@@ -10,39 +10,32 @@ using Tortuga.Data.Snowflake.Core.Authenticators;
 
 namespace Tortuga.Data.Snowflake.Core.Sessions;
 
-class SFSessionProperties : Dictionary<SFSessionProperty, string>
-{
-	// Connection string properties to obfuscate in the log
-	static private List<SFSessionProperty> secretProps =
-		new List<SFSessionProperty>{
-			SFSessionProperty.PASSWORD,
-			SFSessionProperty.PRIVATE_KEY,
-			SFSessionProperty.TOKEN,
-			SFSessionProperty.PRIVATE_KEY_PWD,
-			SFSessionProperty.PROXYPASSWORD,
-		};
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
 
-	public override bool Equals(object obj)
+class SFSessionProperties : Dictionary<SFSessionProperty, string>
+#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
+{
+	public override bool Equals(object? obj)
 	{
-		if (obj == null) return false;
+		if (obj == null)
+			return false;
+
 		try
 		{
 			SFSessionProperties prop = (SFSessionProperties)obj;
+#pragma warning disable CS8605 // Unboxing a possibly null value. Workaround for nullability bug in .NET Core 3.1
 			foreach (SFSessionProperty sessionProperty in Enum.GetValues(typeof(SFSessionProperty)))
 			{
 				if (ContainsKey(sessionProperty) ^ prop.ContainsKey(sessionProperty))
-				{
 					return false;
-				}
+
 				if (!ContainsKey(sessionProperty))
-				{
 					continue;
-				}
+
 				if (!this[sessionProperty].Equals(prop[sessionProperty]))
-				{
 					return false;
-				}
 			}
+#pragma warning restore CS8605 // Unboxing a possibly null value.
 			return true;
 		}
 		catch (InvalidCastException)
@@ -51,12 +44,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 		}
 	}
 
-	public override int GetHashCode()
-	{
-		return base.GetHashCode();
-	}
-
-	internal static SFSessionProperties parseConnectionString(string connectionString, SecureString password)
+	internal static SFSessionProperties parseConnectionString(string connectionString, SecureString? password)
 	{
 		SFSessionProperties properties = new SFSessionProperties();
 
@@ -138,7 +126,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 			}
 		}
 
-		bool useProxy = false;
+		var useProxy = false;
 		if (properties.ContainsKey(SFSessionProperty.USEPROXY))
 		{
 			try
@@ -160,8 +148,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 		CheckSessionProperties(properties, useProxy);
 
 		// compose host value if not specified
-		if (!properties.ContainsKey(SFSessionProperty.HOST) ||
-			0 == properties[SFSessionProperty.HOST].Length)
+		if (!properties.ContainsKey(SFSessionProperty.HOST) || 0 == properties[SFSessionProperty.HOST].Length)
 		{
 			string hostName = string.Format("{0}.snowflakecomputing.com", properties[SFSessionProperty.ACCOUNT]);
 			// Remove in case it's here but empty
@@ -179,6 +166,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 
 	private static void CheckSessionProperties(SFSessionProperties properties, bool useProxy)
 	{
+#pragma warning disable CS8605 // Unboxing a possibly null value. Workaround for nullability bug in .NET Core 3.1
 		foreach (SFSessionProperty sessionProperty in Enum.GetValues(typeof(SFSessionProperty)))
 		{
 			var isRequired = IsRequired(sessionProperty, properties);
@@ -186,15 +174,11 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 			{
 				// If useProxy is true, then proxyhost and proxy port are mandatory
 				if (sessionProperty is (SFSessionProperty.PROXYHOST or SFSessionProperty.PROXYPORT))
-				{
 					isRequired = true;
-				}
 
 				// If a username is provided, then a password is required
 				if (sessionProperty == SFSessionProperty.PROXYPASSWORD && properties.ContainsKey(SFSessionProperty.PROXYUSER))
-				{
 					isRequired = true;
-				}
 			}
 
 			// if required property, check if exists in the dictionary
@@ -204,12 +188,11 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 			}
 
 			// add default value to the map
-			string defaultVal = sessionProperty.GetAttribute<SFSessionPropertyAttribute>()?.DefaultValue;
+			var defaultVal = sessionProperty.GetAttribute<SFSessionPropertyAttribute>()?.DefaultValue;
 			if (defaultVal != null && !properties.ContainsKey(sessionProperty))
-			{
 				properties.Add(sessionProperty, defaultVal);
-			}
 		}
+#pragma warning restore CS8605 // Unboxing a possibly null value.
 	}
 
 	private static bool IsRequired(SFSessionProperty sessionProperty, SFSessionProperties properties)

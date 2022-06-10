@@ -24,23 +24,17 @@ internal class UriUpdater
 		rules = new List<IRule>();
 
 		if (uri.AbsolutePath.StartsWith(RestPath.SF_QUERY_PATH))
-		{
 			rules.Add(new RetryCountRule());
-		}
 
 		if (uri.Query != null && uri.Query.Contains(RestParams.SF_QUERY_REQUEST_GUID))
-		{
 			rules.Add(new RequestUUIDRule());
-		}
 	}
 
 	internal Uri Update()
 	{
 		// Optimization to bypass parsing if there is no rules at all.
 		if (rules.Count == 0)
-		{
 			return uriBuilder.Uri;
-		}
 
 		var queryParams = QueryHelpers.ParseQuery(uriBuilder.Query);
 

@@ -76,7 +76,7 @@ class MockSnowflakeDbConnection : SnowflakeDbConnection
 	{
 		SfSession = new SFSession(ConnectionString, Password, _restRequester, SnowflakeDbConfiguration.Default);
 
-		m_ConnectionTimeout = (int)SfSession.connectionTimeout.TotalSeconds;
+		m_ConnectionTimeout = (int)SfSession.m_ConnectionTimeout.TotalSeconds;
 
 		m_ConnectionState = ConnectionState.Connecting;
 	}
