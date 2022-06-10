@@ -2,6 +2,8 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
 using Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
@@ -11,40 +13,43 @@ namespace Tortuga.Data.Snowflake.Core.ResponseProcessing;
 
 class SFResultSet : SFBaseResultSet
 {
-	private int _currentChunkRowIdx;
+	int m_CurrentChunkRowIdx;
 
-	private int _currentChunkRowCount;
+	int m_CurrentChunkRowCount;
 
-	private readonly int _totalChunkCount;
+	readonly IChunkDownloader? m_ChunkDownloader;
 
-	private readonly IChunkDownloader _chunkDownloader;
+	IResultChunk m_CurrentChunk;
 
-	private IResultChunk _currentChunk;
-
-	public SFResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base(sfStatement.SfSession.Configuration)
+	public SFResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base(sfStatement.SFSession.Configuration)
 	{
-		columnCount = responseData.rowType.Count;
-		_currentChunkRowIdx = -1;
-		_currentChunkRowCount = responseData.rowSet.GetLength(0);
+		if (responseData.rowType == null)
+			throw new ArgumentException($"responseData.rowType is null", nameof(responseData));
+		if (responseData.rowSet == null)
+			throw new ArgumentException($"responseData.rowSet is null", nameof(responseData));
 
-		this.sfStatement = sfStatement;
+		m_ColumnCount = responseData.rowType.Count;
+		m_CurrentChunkRowIdx = -1;
+		m_CurrentChunkRowCount = responseData.rowSet.GetLength(0);
+
+		SFStatement = sfStatement;
 		updateSessionStatus(responseData);
 
 		if (responseData.chunks != null)
 		{
 			// counting the first chunk
-			_totalChunkCount = responseData.chunks.Count;
-			_chunkDownloader = ChunkDownloaderFactory.GetDownloader(responseData, this, cancellationToken);
+			//_totalChunkCount = responseData.chunks.Count;
+			m_ChunkDownloader = ChunkDownloaderFactory.GetDownloader(responseData, this, cancellationToken);
 		}
 
-		_currentChunk = new SFResultChunk(responseData.rowSet);
+		m_CurrentChunk = new SFResultChunk(responseData.rowSet);
 		responseData.rowSet = null;
 
-		sfResultSetMetaData = new SFResultSetMetaData(responseData);
+		SFResultSetMetaData = new SFResultSetMetaData(responseData);
 
-		isClosed = false;
+		m_IsClosed = false;
 
-		queryId = responseData.queryId;
+		m_QueryId = responseData.queryId;
 	}
 
 	string[] PutGetResponseRowTypeInfo = {
@@ -70,56 +75,59 @@ class SFResultSet : SFBaseResultSet
 		}
 	}
 
-	public SFResultSet(PutGetResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base(sfStatement.SfSession.Configuration)
+	public SFResultSet(PutGetResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base(sfStatement.SFSession.Configuration)
 	{
+		if (responseData.rowSet == null)
+			throw new ArgumentException($"responseData.rowSet is null", nameof(responseData));
+
 		responseData.rowType = new List<ExecResponseRowType>();
 		initializePutGetRowType(responseData.rowType);
 
-		columnCount = responseData.rowType.Count;
-		_currentChunkRowIdx = -1;
-		_currentChunkRowCount = responseData.rowSet.GetLength(0);
+		m_ColumnCount = responseData.rowType.Count;
+		m_CurrentChunkRowIdx = -1;
+		m_CurrentChunkRowCount = responseData.rowSet.GetLength(0);
 
-		this.sfStatement = sfStatement;
+		this.SFStatement = sfStatement;
 
-		_currentChunk = new SFResultChunk(responseData.rowSet);
+		m_CurrentChunk = new SFResultChunk(responseData.rowSet);
 		responseData.rowSet = null;
 
-		sfResultSetMetaData = new SFResultSetMetaData(responseData);
+		SFResultSetMetaData = new SFResultSetMetaData(responseData);
 
-		isClosed = false;
+		m_IsClosed = false;
 
-		queryId = responseData.queryId;
+		m_QueryId = responseData.queryId;
 	}
 
 	internal void resetChunkInfo(IResultChunk nextChunk)
 	{
-		if (_currentChunk is SFResultChunk)
+		if (m_CurrentChunk is SFResultChunk)
 		{
-			((SFResultChunk)_currentChunk).RowSet = null;
+			((SFResultChunk)m_CurrentChunk).RowSet = null;
 		}
-		_currentChunk = nextChunk;
-		_currentChunkRowIdx = 0;
-		_currentChunkRowCount = _currentChunk.GetRowCount();
+		m_CurrentChunk = nextChunk;
+		m_CurrentChunkRowIdx = 0;
+		m_CurrentChunkRowCount = m_CurrentChunk.GetRowCount();
 	}
 
 	internal override async Task<bool> NextAsync()
 	{
-		if (isClosed)
+		if (m_IsClosed)
 		{
 			throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
 		}
 
-		_currentChunkRowIdx++;
-		if (_currentChunkRowIdx < _currentChunkRowCount)
+		m_CurrentChunkRowIdx++;
+		if (m_CurrentChunkRowIdx < m_CurrentChunkRowCount)
 		{
 			return true;
 		}
 
-		if (_chunkDownloader != null)
+		if (m_ChunkDownloader != null)
 		{
 			// GetNextChunk could be blocked if download result is not done yet.
 			// So put this piece of code in a seperate task
-			var nextChunk = await _chunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
+			var nextChunk = await m_ChunkDownloader.GetNextChunkAsync().ConfigureAwait(false);
 			if (nextChunk != null)
 			{
 				resetChunkInfo(nextChunk);
@@ -136,20 +144,20 @@ class SFResultSet : SFBaseResultSet
 
 	internal override bool Next()
 	{
-		if (isClosed)
+		if (m_IsClosed)
 		{
 			throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
 		}
 
-		_currentChunkRowIdx++;
-		if (_currentChunkRowIdx < _currentChunkRowCount)
+		m_CurrentChunkRowIdx++;
+		if (m_CurrentChunkRowIdx < m_CurrentChunkRowCount)
 		{
 			return true;
 		}
 
-		if (_chunkDownloader != null)
+		if (m_ChunkDownloader != null)
 		{
-			var nextChunk = Task.Run(async () => await (_chunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
+			var nextChunk = Task.Run(async () => await (m_ChunkDownloader.GetNextChunkAsync()).ConfigureAwait(false)).Result;
 			if (nextChunk != null)
 			{
 				resetChunkInfo(nextChunk);
@@ -165,15 +173,15 @@ class SFResultSet : SFBaseResultSet
 	/// <returns>True if it works, false otherwise.</returns>
 	internal override bool Rewind()
 	{
-		if (isClosed)
+		if (m_IsClosed)
 		{
 			throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
 		}
 
-		if (_currentChunkRowIdx >= 0)
+		if (m_CurrentChunkRowIdx >= 0)
 		{
-			_currentChunkRowIdx--;
-			if (_currentChunkRowIdx >= _currentChunkRowCount)
+			m_CurrentChunkRowIdx--;
+			if (m_CurrentChunkRowIdx >= m_CurrentChunkRowCount)
 			{
 				return true;
 			}
@@ -182,24 +190,27 @@ class SFResultSet : SFBaseResultSet
 		return false;
 	}
 
-	protected override UTF8Buffer getObjectInternal(int columnIndex)
+	protected override UTF8Buffer? getObjectInternal(int columnIndex)
 	{
-		if (isClosed)
+		if (m_IsClosed)
 		{
 			throw new SnowflakeDbException(SFError.DATA_READER_ALREADY_CLOSED);
 		}
 
-		if (columnIndex < 0 || columnIndex >= columnCount)
+		if (columnIndex < 0 || columnIndex >= m_ColumnCount)
 		{
 			throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, columnIndex);
 		}
 
-		return _currentChunk.ExtractCell(_currentChunkRowIdx, columnIndex);
+		return m_CurrentChunk.ExtractCell(m_CurrentChunkRowIdx, columnIndex);
 	}
 
-	private void updateSessionStatus(QueryExecResponseData responseData)
+	void updateSessionStatus(QueryExecResponseData responseData)
 	{
-		SFSession session = this.sfStatement.SfSession;
+		if (SFStatement == null)
+			throw new InvalidOperationException($"{nameof(SFStatement)} is null");
+
+		SFSession session = SFStatement.SFSession;
 		session.database = responseData.finalDatabaseName;
 		session.schema = responseData.finalSchemaName;
 

@@ -2,24 +2,25 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System.Data;
+#nullable enable
+
 using Tortuga.Data.Snowflake.Core.Messages;
 
 namespace Tortuga.Data.Snowflake.Core.ResponseProcessing;
 
 class SFResultSetMetaData
 {
-	private int columnCount;
+	int m_ColumnCount;
 
-	internal readonly string dateOutputFormat;
+	internal readonly string? dateOutputFormat;
 
-	internal readonly string timeOutputFormat;
+	internal readonly string? timeOutputFormat;
 
-	internal readonly string timestampeNTZOutputFormat;
+	internal readonly string? timestampeNTZOutputFormat;
 
-	internal readonly string timestampeLTZOutputFormat;
+	internal readonly string? timestampeLTZOutputFormat;
 
-	internal readonly string timestampeTZOutputFormat;
+	internal readonly string? timestampeTZOutputFormat;
 
 	internal List<ExecResponseRowType> rowTypes;
 
@@ -34,8 +35,13 @@ class SFResultSetMetaData
 
 	internal SFResultSetMetaData(QueryExecResponseData queryExecResponseData)
 	{
+		if (queryExecResponseData.rowType == null)
+			throw new ArgumentException($"queryExecResponseData.rowType is null", nameof(queryExecResponseData));
+		if (queryExecResponseData.parameters == null)
+			throw new ArgumentException($"queryExecResponseData.parameters is null", nameof(queryExecResponseData));
+
 		rowTypes = queryExecResponseData.rowType;
-		columnCount = rowTypes.Count;
+		m_ColumnCount = rowTypes.Count;
 		statementType = findStatementTypeById(queryExecResponseData.statementTypeId);
 		columnTypes = InitColumnTypes();
 
@@ -56,8 +62,11 @@ class SFResultSetMetaData
 
 	internal SFResultSetMetaData(PutGetResponseData putGetResponseData)
 	{
+		if (putGetResponseData.rowType == null)
+			throw new ArgumentException($"putGetResponseData.rowType is null", nameof(putGetResponseData));
+
 		rowTypes = putGetResponseData.rowType;
-		columnCount = rowTypes.Count;
+		m_ColumnCount = rowTypes.Count;
 		statementType = findStatementTypeById(putGetResponseData.statementTypeId);
 		columnTypes = InitColumnTypes();
 	}
@@ -65,7 +74,7 @@ class SFResultSetMetaData
 	private List<Tuple<SFDataType, Type>> InitColumnTypes()
 	{
 		List<Tuple<SFDataType, Type>> types = new List<Tuple<SFDataType, Type>>();
-		for (int i = 0; i < columnCount; i++)
+		for (int i = 0; i < m_ColumnCount; i++)
 		{
 			var column = rowTypes[i];
 			var dataType = GetSFDataType(column.type);
@@ -104,32 +113,27 @@ class SFResultSetMetaData
 
 	internal SFDataType getColumnTypeByIndex(int targetIndex)
 	{
-		if (targetIndex < 0 || targetIndex >= columnCount)
-		{
+		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
 			throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
-		}
 
 		return columnTypes[targetIndex].Item1;
 	}
 
 	internal Tuple<SFDataType, Type> GetTypesByIndex(int targetIndex)
 	{
-		if (targetIndex < 0 || targetIndex >= columnCount)
-		{
+		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
 			throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
-		}
 
 		return columnTypes[targetIndex];
 	}
 
-	private SFDataType GetSFDataType(string type)
+	private SFDataType GetSFDataType(string? type)
 	{
-		SFDataType rslt;
-		if (Enum.TryParse(type, true, out rslt))
-			return rslt;
+		SFDataType result;
+		if (Enum.TryParse(type, true, out result))
+			return result;
 
-		throw new SnowflakeDbException(SFError.INTERNAL_ERROR,
-			$"Unknow column type: {type}");
+		throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unknow column type: {type}");
 	}
 
 	private Type GetNativeTypeForColumn(SFDataType sfType, ExecResponseRowType col)
@@ -171,53 +175,41 @@ class SFResultSetMetaData
 
 	internal Type getCSharpTypeByIndex(int targetIndex)
 	{
-		if (targetIndex < 0 || targetIndex >= columnCount)
-		{
+		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
 			throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
-		}
 
 		SFDataType sfType = getColumnTypeByIndex(targetIndex);
 		return GetNativeTypeForColumn(sfType, rowTypes[targetIndex]);
 	}
 
-	internal string getColumnNameByIndex(int targetIndex)
+	internal string? getColumnNameByIndex(int targetIndex)
 	{
-		if (targetIndex < 0 || targetIndex >= columnCount)
-		{
+		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
 			throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
-		}
 
 		return rowTypes[targetIndex].name;
 	}
 
-	internal DataTable toDataTable()
-	{
-		return null;
-	}
-
 	private SFStatementType findStatementTypeById(long id)
 	{
+#pragma warning disable CS8605 // Unboxing a possibly null value. Workaround for .NET Core 3.1 warning. Doesn't apply to .NET 4.x or .NET 6
 		foreach (SFStatementType type in Enum.GetValues(typeof(SFStatementType)))
 		{
 			if (id == (long)type)
-			{
 				return type;
-			}
 		}
+#pragma warning restore CS8605 // Unboxing a possibly null value.
 
 		// if specific type not found, we will try to find the range
-		if (id >= (long)SFStatementType.SCL &&
-			id < (long)SFStatementType.SCL + 0x1000)
+		if (id >= (long)SFStatementType.SCL && id < (long)SFStatementType.SCL + 0x1000)
 		{
 			return SFStatementType.SCL;
 		}
-		else if (id >= (long)SFStatementType.TCL &&
-			id < (long)SFStatementType.TCL + 0x1000)
+		else if (id >= (long)SFStatementType.TCL && id < (long)SFStatementType.TCL + 0x1000)
 		{
 			return SFStatementType.TCL;
 		}
-		else if (id >= (long)SFStatementType.DDL &&
-			id < (long)SFStatementType.DDL + 0x1000)
+		else if (id >= (long)SFStatementType.DDL && id < (long)SFStatementType.DDL + 0x1000)
 		{
 			return SFStatementType.DDL;
 		}

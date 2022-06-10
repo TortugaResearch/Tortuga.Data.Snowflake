@@ -214,7 +214,7 @@ class SFConnectionIT : SFBaseTest
 				try
 				{
 					conn.Open();
-					Assert.Fail();
+					Assert.Fail("Connection did not timeout");
 				}
 				catch (SnowflakeDbException e)
 				{
@@ -234,7 +234,7 @@ class SFConnectionIT : SFBaseTest
 	[Test]
 	public void TestDefaultLoginTimeout()
 	{
-		using (IDbConnection conn = new MockSnowflakeDbConnection())
+		using (var conn = new MockSnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 
@@ -246,7 +246,7 @@ class SFConnectionIT : SFBaseTest
 			try
 			{
 				conn.Open();
-				Assert.Fail();
+				Assert.Fail("Connection did not timeout");
 			}
 			catch (SnowflakeDbException e)
 			{

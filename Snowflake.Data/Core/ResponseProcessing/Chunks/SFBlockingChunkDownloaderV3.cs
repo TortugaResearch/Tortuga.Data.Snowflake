@@ -34,14 +34,17 @@ class SFBlockingChunkDownloaderV3 : IChunkDownloader
 
 	readonly List<Task<IResultChunk>> m_TaskQueues;
 
-	public SFBlockingChunkDownloaderV3(int colCount, List<ExecResponseChunk> chunkInfos, string qrmk, Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken, SFBaseResultSet ResultSet)
+	public SFBlockingChunkDownloaderV3(int colCount, List<ExecResponseChunk> chunkInfos, string qrmk, Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken, SFBaseResultSet resultSet)
 	{
+		if (resultSet.SFStatement == null)
+			throw new ArgumentException($"resultSet.SFStatement is null", nameof(resultSet));
+
 		m_Qrmk = qrmk;
 		m_ChunkHeaders = chunkHeaders;
 		m_NextChunkToDownloadIndex = 0;
-		m_ResultSet = ResultSet;
-		m_RestRequester = ResultSet.sfStatement.SfSession.restRequester;
-		m_PrefetchSlot = Math.Min(chunkInfos.Count, GetPrefetchThreads(ResultSet));
+		m_ResultSet = resultSet;
+		m_RestRequester = resultSet.SFStatement.SFSession.restRequester;
+		m_PrefetchSlot = Math.Min(chunkInfos.Count, GetPrefetchThreads(resultSet));
 		m_ChunkInfos = chunkInfos;
 		m_NextChunkToConsumeIndex = 0;
 		m_TaskQueues = new List<Task<IResultChunk>>();
@@ -67,7 +70,10 @@ class SFBlockingChunkDownloaderV3 : IChunkDownloader
 
 	int GetPrefetchThreads(SFBaseResultSet resultSet)
 	{
-		var sessionParameters = resultSet.sfStatement.SfSession.ParameterMap;
+		if (resultSet.SFStatement == null)
+			throw new ArgumentException($"resultSet.SFStatement is null", nameof(resultSet));
+
+		var sessionParameters = resultSet.SFStatement.SFSession.ParameterMap;
 		var val = (string)sessionParameters[SFSessionParameter.CLIENT_PREFETCH_THREADS];
 		return int.Parse(val);
 	}
@@ -117,11 +123,11 @@ class SFBlockingChunkDownloaderV3 : IChunkDownloader
 		var downloadRequest = new S3DownloadRequest()
 		{
 			Url = new UriBuilder(chunk.Url!).Uri,
-			qrmk = downloadContext.qrmk,
+			Qrmk = downloadContext.qrmk,
 			// s3 download request timeout to one hour
 			RestTimeout = TimeSpan.FromHours(1),
 			HttpTimeout = Timeout.InfiniteTimeSpan, // Disable timeout for each request
-			chunkHeaders = downloadContext.chunkHeaders
+			ChunkHeaders = downloadContext.chunkHeaders
 		};
 
 		using (var httpResponse = await m_RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false))

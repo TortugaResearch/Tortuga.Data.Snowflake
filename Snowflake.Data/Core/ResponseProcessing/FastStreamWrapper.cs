@@ -2,26 +2,28 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 namespace Tortuga.Data.Snowflake.Core.ResponseProcessing;
 
 public class FastStreamWrapper
 {
-	Stream wrappedStream;
-	byte[] buffer = new byte[32768];
-	int count = 0;
-	int next = 0;
+	readonly Stream m_WrappedStream;
+	readonly byte[] m_Buffer = new byte[32768];
+	int m_Count = 0;
+	int m_Next = 0;
 
 	public FastStreamWrapper(Stream s)
 	{
-		wrappedStream = s;
+		m_WrappedStream = s;
 	}
 
 	// Small method to encourage inlining
 	public int ReadByte()
 	{
 		// fast path first
-		if (next < count)
-			return buffer[next++];
+		if (m_Next < m_Count)
+			return m_Buffer[m_Next++];
 		else
 			return ReadByteSlow();
 	}
@@ -29,21 +31,21 @@ public class FastStreamWrapper
 	private int ReadByteSlow()
 	{
 		// fast path first
-		if (next < count)
-			return buffer[next++];
+		if (m_Next < m_Count)
+			return m_Buffer[m_Next++];
 
-		if (count >= 0)
+		if (m_Count >= 0)
 		{
-			next = 0;
-			count = wrappedStream.Read(buffer, 0, buffer.Length);
+			m_Next = 0;
+			m_Count = m_WrappedStream.Read(m_Buffer, 0, m_Buffer.Length);
 		}
 
-		if (count <= 0)
+		if (m_Count <= 0)
 		{
-			count = -1;
+			m_Count = -1;
 			return -1;
 		}
 
-		return buffer[next++];
+		return m_Buffer[m_Next++];
 	}
 }

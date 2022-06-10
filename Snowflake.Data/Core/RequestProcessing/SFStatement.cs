@@ -14,7 +14,7 @@ namespace Tortuga.Data.Snowflake.Core.RequestProcessing;
 
 class SFStatement
 {
-	internal SFSession SfSession { get; set; }
+	internal SFSession SFSession { get; set; }
 
 	private const string SF_QUERY_CANCEL_PATH = "/queries/v1/abort-request";
 
@@ -43,7 +43,7 @@ class SFStatement
 
 	internal SFStatement(SFSession session)
 	{
-		SfSession = session;
+		SFSession = session;
 		m_RestRequester = session.restRequester;
 	}
 
@@ -77,7 +77,7 @@ class SFStatement
 				{ RestParams.SF_QUERY_START_TIME, secondsSinceEpoch },
 			};
 
-		var queryUri = SfSession.BuildUri(RestPath.SF_QUERY_PATH, parameters);
+		var queryUri = SFSession.BuildUri(RestPath.SF_QUERY_PATH, parameters);
 
 		var postBody = new QueryRequest()
 		{
@@ -89,9 +89,9 @@ class SFStatement
 		return new SFRestRequest
 		{
 			Url = queryUri,
-			authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
-			serviceName = SfSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
-							? (string)SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME] : null,
+			authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.sessionToken),
+			serviceName = SFSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
+							? (string)SFSession.ParameterMap[SFSessionParameter.SERVICE_NAME] : null,
 			jsonBody = postBody,
 			HttpTimeout = Timeout.InfiniteTimeSpan,
 			RestTimeout = Timeout.InfiniteTimeSpan,
@@ -101,11 +101,11 @@ class SFStatement
 
 	private SFRestRequest BuildResultRequest(string resultPath)
 	{
-		var uri = SfSession.BuildUri(resultPath);
+		var uri = SFSession.BuildUri(resultPath);
 		return new SFRestRequest()
 		{
 			Url = uri,
-			authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
+			authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.sessionToken),
 			HttpTimeout = Timeout.InfiniteTimeSpan,
 			RestTimeout = Timeout.InfiniteTimeSpan
 		};
@@ -130,7 +130,7 @@ class SFStatement
 	private SFBaseResultSet BuildResultSet(QueryExecResponse response, CancellationToken cancellationToken)
 	{
 		if (response.success)
-			return new SFResultSet(response.data, this, cancellationToken);
+			return new SFResultSet(response.data!, this, cancellationToken);
 
 		throw new SnowflakeDbException(response.data!.sqlState!, response.code, response.message, response.data!.queryId!);
 	}
@@ -180,8 +180,8 @@ class SFStatement
 				response = await m_RestRequester.PostAsync<QueryExecResponse>(queryRequest, cancellationToken).ConfigureAwait(false);
 				if (SessionExpired(response))
 				{
-					SfSession.renewSession();
-					queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+					SFSession.renewSession();
+					queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.sessionToken);
 				}
 				else
 				{
@@ -197,7 +197,7 @@ class SFStatement
 				response = await m_RestRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
 
 				if (SessionExpired(response))
-					SfSession.renewSession();
+					SFSession.renewSession();
 				else
 					lastResultUrl = response.data?.getResultUrl;
 			}
@@ -223,7 +223,7 @@ class SFStatement
 				m_IsPutGetQuery = true;
 				var response = ExecuteHelper<PutGetExecResponse, PutGetResponseData>(timeout, sql, bindings, describeOnly);
 
-				var fileTransferAgent = new SFFileTransferAgent(trimmedSql, SfSession, response.data!, CancellationToken.None);
+				var fileTransferAgent = new SFFileTransferAgent(trimmedSql, SFSession, response.data!, CancellationToken.None);
 
 				// Start the file transfer
 				fileTransferAgent.execute();
@@ -243,8 +243,8 @@ class SFStatement
 					response = m_RestRequester.Post<QueryExecResponse>(queryRequest);
 					if (SessionExpired(response))
 					{
-						SfSession.renewSession();
-						queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+						SFSession.renewSession();
+						queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.sessionToken);
 					}
 					else
 					{
@@ -260,7 +260,7 @@ class SFStatement
 
 					if (SessionExpired(response))
 					{
-						SfSession.renewSession();
+						SFSession.renewSession();
 					}
 					else
 					{
@@ -289,7 +289,7 @@ class SFStatement
 					{ RestParams.SF_QUERY_REQUEST_ID, Guid.NewGuid().ToString() },
 					{ RestParams.SF_QUERY_REQUEST_GUID, Guid.NewGuid().ToString() },
 				};
-			var uri = SfSession.BuildUri(SF_QUERY_CANCEL_PATH, parameters);
+			var uri = SFSession.BuildUri(SF_QUERY_CANCEL_PATH, parameters);
 
 			var postBody = new QueryCancelRequest()
 			{
@@ -299,7 +299,7 @@ class SFStatement
 			return new SFRestRequest()
 			{
 				Url = uri,
-				authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
+				authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.sessionToken),
 				jsonBody = postBody
 			};
 		}
@@ -343,8 +343,8 @@ class SFStatement
 				response = m_RestRequester.Post<T>(queryRequest);
 				if (SessionExpired(response))
 				{
-					SfSession.renewSession();
-					queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken);
+					SFSession.renewSession();
+					queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.sessionToken);
 				}
 				else
 				{
@@ -362,7 +362,7 @@ class SFStatement
 					response = m_RestRequester.Get<T>(req);
 
 					if (SessionExpired(response))
-						SfSession.renewSession();
+						SFSession.renewSession();
 					else
 						lastResultUrl = queryResponse.data?.getResultUrl;
 				}

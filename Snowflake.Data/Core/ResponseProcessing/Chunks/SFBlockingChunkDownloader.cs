@@ -32,15 +32,18 @@ class SFBlockingChunkDownloader : IChunkDownloader
 
 	readonly SFBaseResultSet m_ResultSet;
 
-	public SFBlockingChunkDownloader(int colCount, List<ExecResponseChunk> chunkInfos, string qrmk, Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken, SFBaseResultSet ResultSet)
+	public SFBlockingChunkDownloader(int colCount, List<ExecResponseChunk> chunkInfos, string qrmk, Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken, SFBaseResultSet resultSet)
 	{
+		if (resultSet.SFStatement == null)
+			throw new ArgumentException($"resultSet.SFStatement is null", nameof(resultSet));
+
 		m_Qrmk = qrmk;
 		m_ChunkHeaders = chunkHeaders;
 		m_Chunks = new List<SFResultChunk>();
 		m_NextChunkToDownloadIndex = 0;
-		m_ResultSet = ResultSet;
-		m_RestRequester = ResultSet.sfStatement.SfSession.restRequester;
-		m_PrefetchThreads = GetPrefetchThreads(ResultSet);
+		m_ResultSet = resultSet;
+		m_RestRequester = resultSet.SFStatement.SFSession.restRequester;
+		m_PrefetchThreads = GetPrefetchThreads(resultSet);
 		m_ExternalCancellationToken = cancellationToken;
 
 		var idx = 0;
@@ -52,7 +55,10 @@ class SFBlockingChunkDownloader : IChunkDownloader
 
 	int GetPrefetchThreads(SFBaseResultSet resultSet)
 	{
-		var sessionParameters = resultSet.sfStatement.SfSession.ParameterMap;
+		if (resultSet.SFStatement == null)
+			throw new ArgumentException($"resultSet.SFStatement is null", nameof(resultSet));
+
+		var sessionParameters = resultSet.SFStatement.SFSession.ParameterMap;
 		var val = (string)sessionParameters[SFSessionParameter.CLIENT_PREFETCH_THREADS];
 		return int.Parse(val);
 	}
@@ -84,7 +90,7 @@ class SFBlockingChunkDownloader : IChunkDownloader
 	public Task<IResultChunk?> GetNextChunkAsync()
 	{
 		if (m_DownloadTasks == null)
-			throw new InvalidOperationException("m_DownloadTasks is null");
+			throw new InvalidOperationException($"{nameof(m_DownloadTasks)} is null");
 
 		if (m_DownloadTasks.IsCompleted)
 			return Task.FromResult<IResultChunk?>(null);
@@ -104,11 +110,11 @@ class SFBlockingChunkDownloader : IChunkDownloader
 		S3DownloadRequest downloadRequest = new S3DownloadRequest()
 		{
 			Url = new UriBuilder(chunk.Url!).Uri,
-			qrmk = downloadContext.qrmk,
+			Qrmk = downloadContext.qrmk,
 			// s3 download request timeout to one hour
 			RestTimeout = TimeSpan.FromHours(1),
 			HttpTimeout = TimeSpan.FromSeconds(32),
-			chunkHeaders = downloadContext.chunkHeaders
+			ChunkHeaders = downloadContext.chunkHeaders
 		};
 
 		var httpResponse = await m_RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false);

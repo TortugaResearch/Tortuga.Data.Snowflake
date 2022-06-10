@@ -20,27 +20,31 @@ class ChunkDownloaderFactory
 		{
 			case 1:
 				return new SFBlockingChunkDownloader(responseData.rowType!.Count,
-				responseData.chunks!,
-				responseData.qrmk!,
-				responseData.chunkHeaders!,
-				cancellationToken,
-				resultSet);
+					responseData.chunks!,
+					responseData.qrmk!,
+					responseData.chunkHeaders!,
+					cancellationToken,
+					resultSet);
 
 			case 2:
+
+				if (resultSet.SFStatement == null)
+					throw new ArgumentNullException($"resultSet.SFStatement is null", nameof(resultSet));
+
 				return new SFChunkDownloaderV2(responseData.rowType!.Count,
 					responseData.chunks!,
 					responseData.qrmk!,
 					responseData.chunkHeaders!,
 					cancellationToken,
-					resultSet.sfStatement.SfSession.restRequester, resultSet.Configuration);
+					resultSet.SFStatement.SFSession.restRequester, resultSet.Configuration);
 
 			default:
 				return new SFBlockingChunkDownloaderV3(responseData.rowType!.Count,
-				responseData.chunks!,
-				responseData.qrmk!,
-				responseData.chunkHeaders!,
-				cancellationToken,
-				resultSet);
+					responseData.chunks!,
+					responseData.qrmk!,
+					responseData.chunkHeaders!,
+					cancellationToken,
+					resultSet);
 		}
 	}
 }

@@ -23,10 +23,10 @@ internal class SFResultChunk : IResultChunk
 
 	public readonly object syncPrimitive = new object();
 
-	public SFResultChunk(string[,] rowSet)
+	public SFResultChunk(string?[,]? rowSet)
 	{
 		RowSet = rowSet;
-		RowCount = rowSet.GetLength(0);
+		RowCount = rowSet?.GetLength(0) ?? 0;
 		DownloadState = DownloadState.NOT_STARTED;
 	}
 

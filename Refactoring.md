@@ -40,13 +40,13 @@ After adding a `parameters.json` file, all tests are still failing with this err
 
 The problem is in this line of code:
 
-```
+```csharp
 StreamReader reader = new StreamReader("parameters.json");
 ```
 
 An application's current directory is not guaranteed, so tests should use absolute paths. 
 
-```
+```csharp
 var path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "parameters.json");
 StreamReader reader = new StreamReader(path);
 ```
@@ -59,7 +59,7 @@ At this point all remaining tests are passing.
 
 Consider this section of `Snowflake.Data.Tests.csproj`
 
-```
+```xml
   <Target Name="CopyCustomContent" AfterTargets="AfterBuild">
 	<Copy SourceFiles="parameters.json" DestinationFolder="$(OutDir)" />
 	<Copy SourceFiles="App.config" DestinationFolder="$(OutDir)" />
@@ -71,7 +71,7 @@ Should you do it this way? No.
 
 Set the "Copy to Output Directory" flag so that other developers will understand your intentions.
 
-```
+```xml
   <ItemGroup>
 	<None Update="App.config">
 	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -84,7 +84,7 @@ Set the "Copy to Output Directory" flag so that other developers will understand
 
 And while we're at it, remove this silliness.
 
-```
+```xml
   <ItemGroup>
 	<Folder Include="Properties\" />
   </ItemGroup>
@@ -115,7 +115,7 @@ Part of the readability issue in this project is that the statements are so long
 
 By using `namespace Snowflake.Data.Core.Authenticator;` instead of,
 
-```
+```csharp
 namespace Snowflake.Data.Core.Authenticator;
 {
 ```
@@ -124,7 +124,7 @@ we remove a level of indentation. Four spaces don’t sound like much, but it can 
 
 At the same time, we'll do another round of cleaning for the files that have two sets of using statements. 
 
-```
+```csharp
 using System.Data;
 using System.Data.Common;
 using System.Globalization;
@@ -150,7 +150,7 @@ There are a handful of compiler warnings to clear. The first is to remove static
 
 Then remove pointless catch blocks.
 
-```
+```csharp
 catch (Exception ex)
 {
 	throw ex;
@@ -175,7 +175,7 @@ It would be nice if we could remove this field, but we can't because no construc
 
 This is a weird one. Instead of just reading the value of the enum directly, it makes an expensive reflection call to get the number from an attribute.
 
-```
+```csharp
 [SFErrorAttr(errorCode = 270001)]
 INTERNAL_ERROR,
 
@@ -184,7 +184,7 @@ _errorCode = error.GetAttribute<SFErrorAttr>().errorCode;
 
 This easy solution to this is:
 
-```
+```csharp
 readonly SFError _error;
 
 _errorCode = error;
@@ -195,7 +195,7 @@ public override int ErrorCode => (int)_errorCode;
 
 In order for that to work, the `SFError` enum needs to be renumbered.
 
-```
+```csharp
 public enum SFError
 {
 	INTERNAL_ERROR = 270001,
@@ -207,7 +207,7 @@ And now `SFErrorAttr` can be deleted.
 
 Then to make the error codes meaningful, we add this property:
 
-```
+```csharp
 public SFError SFErrorCode => _errorCode;
 ```
 
@@ -237,7 +237,7 @@ So in the end we removed the majority of the logging. The one place where it loo
 
 The way that works is fairly simple. A ` lastStep` variable is updated every few lines and used if there is an exception. 
 
-```
+```csharp
 catch (Exception ex)
 {
     throw new SnowflakeDbException("Okta Authentication in " + lastStep, ex, SFError.INTERNAL_ERROR);
@@ -301,7 +301,7 @@ We left the `Messages` large mainly because we rarely look at it. There is no co
 ### SFDataType
 If an eager developer decides to alphabetize this enum, it will change the number assignments. As we don't currently know if they are important, it's best to just lock those into place by explicitly numbering them.
 
-```
+```csharp
 public enum SFDataType
 {
 	None = 0,
@@ -315,7 +315,7 @@ While this isn't necessary for application code, in a library extra care is need
 
 This is a weird one. Instead of just reading the value of the enum directly, it makes a reflection call to get the number from an attribute. Not only is this an expensive call, developers may not even realize it is necessary. Most will assume the enum is the actual error code.
 
-```
+```csharp
 [SFErrorAttr(errorCode = 270001)]
 INTERNAL_ERROR,
 
@@ -324,7 +324,7 @@ _errorCode = error.GetAttribute<SFErrorAttr>().errorCode;
 
 This easy solution to this is:
 
-```
+```csharp
 readonly SFError _error;
 
 _errorCode = error;
@@ -335,7 +335,7 @@ public override int ErrorCode => (int)_errorCode;
 
 In order for that to work, the `SFError` enum needs to be renumbered.
 
-```
+```csharp
 public enum SFError
 {
 	INTERNAL_ERROR = 270001,
@@ -347,7 +347,7 @@ And now `SFErrorAttr` can be deleted.
 
 Then to make the error codes meaningful, we add this property:
 
-```
+```csharp
 public SFError SFErrorCode => _errorCode;
 ```
 
@@ -361,7 +361,7 @@ The `SFStatementType` enum is treated the same as `SFError`, except it needs to 
 
 This is another example of using attributes on enums. 
 
-```
+```csharp
 	[SFSessionPropertyAttr(required = true)]
 	PASSWORD,
 
@@ -373,7 +373,7 @@ At first glance this seems to be a more reasonable use, but when we dig deeper w
 
 The code below treats attributes on the `SFSessionProperty` enums as a hidden global variable. If after making a request using a proxy, you then make a request that doesn't use a proxy it will behave incorrectly.
 
-```
+```csharp
 // Based on which proxy settings have been provided, update the required settings list
 if (useProxy)
 {
@@ -393,7 +393,7 @@ This code will have to be removed and replaced with `CheckSessionProperties(prop
 
 This `SFSessionPropertyAttr` is being used correctly, but there are a couple of minor implementation mistakes. 
 
-```
+```csharp
 class SFSessionPropertyAttr : Attribute
 {
     public string defaultValue { get; set; }
@@ -409,7 +409,7 @@ Specifically, the mistakes are:
 
 The fixed attribute can be seen below.
 
-```
+```csharp
 [AttributeUsage(AttributeTargets.Field)]
 class SFSessionPropertyAttribute : Attribute
 {
@@ -422,7 +422,7 @@ The usage of the attribute also changes slightly.
 
 Before:
 
-```
+```csharp
 [SFSessionPropertyAttr(required = false)]
 SCHEMA,
 
@@ -435,7 +435,7 @@ USER,
 
 After
 
-```
+```csharp
 [SFSessionProperty]
 SCHEMA,
 
@@ -451,7 +451,7 @@ USER,
 
 To support versions prior to .NET 5, this code is needed. Without it, the `init` keyword doesn't compile.
 
-```
+```csharp
 #if !NET5_0_OR_GREATER
 
 namespace System.Runtime.CompilerServices;
@@ -467,7 +467,7 @@ internal static class IsExternalInit { }
 
 For some reason the type of the `connection` field is `DbConnection` instead of `SnowflakeDbConnection`. Which in turn opens the door for unsafe casts such as:
 
-```
+```csharp
 var session = (connection as SnowflakeDbConnection).SfSession;
 ```
 
@@ -475,7 +475,7 @@ var session = (connection as SnowflakeDbConnection).SfSession;
 
 What do all of these error conditions have in common?
 
-```
+```csharp
 // Unsetting connection not supported.
 throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
 
@@ -488,7 +488,7 @@ throw new SnowflakeDbException(SFError.UNSUPPORTED_FEATURE);
 
 They all return exactly the same error message. The actual error desciption is only available as a comment. We can fix that, and at the same time put in more appropriate exception types.
 
-```
+```csharp
 throw new InvalidOperationException("Unsetting the connection not supported.");
 
 throw new ArgumentException("Connection must be of type SnowflakeDbConnection.", nameof(DbConnection));
@@ -500,7 +500,7 @@ throw new InvalidOperationException("Connection already set.");
 
 Error messages aside, this series of `if` statements can be hard to follow.
 
-```
+```csharp
 set
 {
 	if (value == null)
@@ -537,7 +537,7 @@ The first change is to move the guard statement up top. If the connection is alr
 The we can switch on the `value`. Now it's easy to see the three possible values by glancing at the `case` labels.
 
 
-```
+```csharp
 set
 {
 	if (connection != null && connection != value)
@@ -566,7 +566,7 @@ set
 
 A common beginner mistake is to discard the stack trace of an exception.
 
-```
+```csharp
 catch (Exception ex)
 {
 	logger.Error("The command failed to execute.", ex);
@@ -590,7 +590,7 @@ Speaking of which, **nullable reference types** are not enabled in this library.
  
 The type of exception being thrown is important to caller. It gives them hints about what went wrong so they know where to start their research. Some exceptions such as `InvalidOperationException` say "you can't do that now" while `NotSupportedException` says "you can never do that".
 
-```
+```csharp
 throw new Exception("Can't execute command when connection has never been opened");
 ```
 
@@ -607,7 +607,7 @@ This method and its async version are ignoring then `CommandBehavior` parameter.
 
 This is the code from `DBConnection`, as reported by Visual Studio.
 
-```
+```csharp
         public abstract string ConnectionString
         {
             get;
@@ -618,26 +618,26 @@ This is the code from `DBConnection`, as reported by Visual Studio.
 
 For our first attempt, we just copy it into `SnowflakeDbConnection`.
 
-```
+```csharp
 public override string ConnectionString { get; [param: AllowNull] set; }
 ```
 
 But that gives this compiler error.
 
-```
+```csharp
 Error	CS8765	Nullability of type of parameter 'value' doesn't match overridden member (possibly because of nullability attributes).
 ```
 
 What it really wants is this. 
 
-```
+```csharp
 [AllowNull]
 public override string ConnectionString { get; set; }
 ```
 
 But now we have a non-nullable property that can store and return a null. To fix that issue, we need to normalize incoming nulls to empty strings.
 
-```
+```csharp
 string _connectionString = "";
 
 [AllowNull]
@@ -651,7 +651,7 @@ public override string ConnectionString {
 
 Since the AllowNull attribute doesn’t exist in older frameworks, we need to add it to the project with a conditional compiler flag.
 
-```
+```csharp
 #if !NETCOREAPP3_1_OR_GREATER
 namespace System.Diagnostics.CodeAnalysis
 {
@@ -677,7 +677,7 @@ However, the intention is to make this into a maintained **Tortuga Research** pr
 Since the `Prepare` method isn't implemented, we can block calls to it at compile time using `Obsolete` and hide it from the IDE using `EditorBrowsable`. And we'll change it to a `NotSupportedException` to make it clear that it isn't a planned feature for the future.
 
 
-```
+```csharp
 [Obsolete($"The method {nameof(Prepare)} is not implemented.", true)]
 [EditorBrowsable(EditorBrowsableState.Never)]
 public override void Prepare() => throw new NotSupportedException();
@@ -689,7 +689,7 @@ Enabling Nullable Reference Types reveals a bug in the `SetStatement` method. Sp
 
 In some of the methods, you will also see this pattern.
 
-```
+```csharp
 SetStatement();
 return sfStatement.Execute[...]
 ```
@@ -711,7 +711,7 @@ The `parameterCollection` field can be initialized in its declaration.
 
 As with the `SnowflakeDbCommandBuilder`, properties whose setters shouldn't be called can be blocked. And since they don't provide useful information, the property will be hidden as well.
 
-```
+```csharp
 [EditorBrowsable(EditorBrowsableState.Never)]
 public override bool DesignTimeVisible
 {
@@ -737,7 +737,7 @@ The properties `DbCommandBuilder.QuotePrefix` and `DbCommandBuilder.QuoteSuffix`
 
 Since that's not the case for Snowflake, the properties should be changed to return a constant and the setter marked as not supported. To make this 100% clear to callers, we can further restrict it by marking it as obsolete. 
 
-```
+```csharp
 [Obsolete($"The property {nameof(QuoteSuffix)} cannot be changed.", true)]
 set => throw new NotSupportedException($"The property {nameof(QuotePrefix)} cannot be changed.");
 ```
@@ -747,31 +747,31 @@ set => throw new NotSupportedException($"The property {nameof(QuotePrefix)} cann
 
 In a few places, we see lines of code like this:
 
-```
+```csharp
 return string.Format(CultureInfo.InvariantCulture, "{0}", parameterOrdinal);
 ```
 
 While it will return the correct value, the `Format` function is slow and shouldn't be used if alternatives such as `ToString` are available.
 
-```
+```csharp
 return parameterOrdinal.ToString(CultureInfo.InvariantCulture);
 ```
 
 Here's another example,
 
-```
+```csharp
 return string.Format(CultureInfo.InvariantCulture, "{0}", parameterName);
 ```
 
 We can remove the `Format` call by transforming it into this:
 
-```
+```csharp
 return parameterName.ToString(CultureInfo.InvariantCulture);
 ```
 
 And according to the documentation, that just returns the original string. Leaving us with:
 
-```
+```csharp
 return parameterName;
 ```
 
@@ -786,7 +786,7 @@ Enabling nullable reference types in this file is as easy as adding `#nullable e
 
 In several places, `taskCompletionSource.SetResult` is called with a `null`. While not really problematic, this causes the null checker to complain. So a statically defined marker object can be passed to it instead.
 
-```
+```csharp
 static object s_markerObject = new();
 
 taskCompletionSource.SetResult(s_markerObject);
@@ -794,7 +794,7 @@ taskCompletionSource.SetResult(s_markerObject);
 
 The `Database` property is defined by the expression 
 
-```
+```csharp
 _connectionState == ConnectionState.Open ? SfSession?.database : string.Empty;`
 ```
 
@@ -813,7 +813,7 @@ It should be noted that Microsoft no longer recommends implementing finalizers. 
 
 Consider this method.
 
-```
+```csharp
 private void OnSessionEstablished()
 {
 	_connectionState = ConnectionState.Open;
@@ -829,7 +829,7 @@ Normally calls to `Close` are simply forwarded to `Dispose`. But in the case of 
 In order to properly support this, a change needs to be made.
 
 
-```
+```csharp
 protected override void Dispose(bool disposing)
 {
 	//Remove this check, it prevents a re-opened connection from being disposed.
@@ -865,7 +865,7 @@ The exception being swallowed is a common design pattern for .NET. It is needed 
 
 On that last point, this code is wrong.
 
-```
+```csharp
 new public SnowflakeDbCommand SelectCommand
 {
 	get { return _selectCommand; }
@@ -877,7 +877,7 @@ If the caller uses `DbDataAdapter.SelectCommand` instead of `SnowflakeDbDataAdap
 
 Instead, the code should have looked like this:
 
-```
+```csharp
 new public SnowflakeDbCommand? SelectCommand
 {
 	get { return (SnowflakeDbCommand?)base.SelectCommand; }
@@ -891,7 +891,7 @@ Note how it reuses the base class's property for storing the value. This isn't 1
 
 As per modern conventions, we're going to use expression bodies for simple methods and properties. If the expression has something interesting that the developer needs to be aware of, we'll leave it as the older block style. For example, in `GetByte` we want to call out that all but the first element in the byte array is being discarded. So, we leave that on its own line.
 
-```
+```csharp
 public override byte GetByte(int ordinal)
 {
 	var bytes = m_ResultSet.GetValue<byte[]>(ordinal);
@@ -905,7 +905,7 @@ We are also using `var` where possible to reduce unnecessary boilerplate. This w
 
 The basic pattern for implementing `GetEnumerator` for a `DBDataReader` is this: 
 
-```
+```csharp
 
 public override IEnumerator GetEnumerator()
 {
@@ -936,7 +936,7 @@ class Enumerator : IEnumerator
 
 With `yield return`, we can simplify it to:
 
-```
+```csharp
 public override IEnumerator GetEnumerator()
 {
 	while (Read())
@@ -962,7 +962,7 @@ This method always returns false, so we'll mark it as `EditorBrowsableState.Neve
 
 These are modified to return the invalid value as part of the exception.
 
-```
+```csharp
 throw new ArgumentOutOfRangeException(nameof(dataOffset), "Non negative number is required.");
 
 throw new ArgumentOutOfRangeException(nameof(dataOffset), dataOffset, "Non negative number is required.");
@@ -972,7 +972,7 @@ throw new ArgumentOutOfRangeException(nameof(dataOffset), dataOffset, "Non negat
 
 In theory the parameters for the `SnowflakeDbDataReader` will never be null. In practice mistakes happen, so null checks are added as a precaution.
 
-```
+```csharp
 internal SnowflakeDbDataReader(SFBaseResultSet resultSet, SnowflakeDbConnection connection, CommandBehavior commandBehavior)
 {
 	m_ResultSet = resultSet ?? throw new ArgumentNullException(nameof(resultSet), $"{nameof(resultSet)} is null."); ;
@@ -1019,7 +1019,7 @@ A type-safe version of `Add` should be created.
 
 This code:
 
-```
+```csharp
 public override void AddRange(Array values)
 {
 	IEnumerator e = values.GetEnumerator();
@@ -1032,7 +1032,7 @@ public override void AddRange(Array values)
 
 Can be converted into a normal for-each loop:
 
-```
+```csharp
 public override void AddRange(Array values)
 {
 	foreach(SnowflakeDbParameter value in values)
@@ -1044,7 +1044,7 @@ public override void AddRange(Array values)
 
 The base case is easy to implement with a simple cast.
 
-```
+```csharp
 public override void CopyTo(Array array, int index)
 {
 	_parameterList.CopyTo((SnowflakeDbParameter[])array, index);
@@ -1053,7 +1053,7 @@ public override void CopyTo(Array array, int index)
 
 For the full version, a bit more is needed.
 
-```
+```csharp
 public override void CopyTo(Array array, int index)
 {
 	if (array is SnowflakeDbParameter[] sTypedArray)
@@ -1074,7 +1074,7 @@ Arguably we didn't need to take it quite this far, but it will make it easier on
 
 Though now we run into a code duplication issue. To resolve it, we can leverage array covariance and cast the target collection to `object[]`.
 
-```
+```csharp
 public override void CopyTo(Array array, int index)
 {
 	switch (array)
@@ -1098,7 +1098,7 @@ public override void CopyTo(Array array, int index)
 
 But what if there is another valid array type that we're not aware of? We can just try it and allow the runtime to throw the InvalidCastException.
 
-```
+```csharp
 public override void CopyTo(Array array, int index)
 {
 	if (array is SnowflakeDbParameter[] sTypedArray)
@@ -1114,7 +1114,7 @@ public override void CopyTo(Array array, int index)
 
 At this point, we have to ask why have the special case at all?
 
-```
+```csharp
 public override void CopyTo(Array array, int index)
 {
 	var untypedArray = (object[])array;
@@ -1128,7 +1128,7 @@ public override void CopyTo(Array array, int index)
 
 This function:
 
-```
+```csharp
 public override int IndexOf(string parameterName)
 {
 	int index = 0;
@@ -1146,7 +1146,7 @@ public override int IndexOf(string parameterName)
 
 should be just a normal for loop.
 
-```
+```csharp
 public override int IndexOf(string parameterName)
 {
 	for (int i = 0; i < _parameterList.Count; i++)
@@ -1162,7 +1162,7 @@ There is no need to mark `_parameterList` internal. Anything that reads it can r
 
 For `for` loops, this property is needed.
 
-```
+```csharp
 public new SnowflakeDbParameter this[int index]
 {
 	get => _parameterList[index];
@@ -1190,7 +1190,7 @@ Just like in `SnowflakeDbConnection`, this should swallow exceptions.
 
 The code in this class is surprisingly hard to read. There's not much going on, but the lines are so long that the important parts get lost in the noise. Fortunately, there are a few tricks to deal with that.
 
-```
+```csharp
 if (!session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath) &&
 	!session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY, out var pkContent))
 ```
@@ -1200,7 +1200,7 @@ if (!session.properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var 
 
 Since `session.properties` is used a lot, we can capture it in a local variable.
 
-```
+```csharp
 var properties = session.properties;
 
 [...]
@@ -1214,7 +1214,7 @@ if (!properties.TryGetValue(SFSessionProperty.PRIVATE_KEY_FILE, out var pkPath) 
 
 Next, we introduce a `static using` declaration so we don't need to repeat the enum name.
 
-```
+```csharp
 using static Snowflake.Data.Core.SFSessionProperty;
 
 [...]
@@ -1227,7 +1227,7 @@ if (!properties.TryGetValue(PRIVATE_KEY_FILE, out var pkPath) &&
 
 The output parameters of the `TryGet` methods aren't being used, so we can use discards.
 
-```
+```csharp
 if (!properties.TryGetValue(PRIVATE_KEY_FILE, out _) &&
 	!properties.TryGetValue(PRIVATE_KEY, out _))
 ```
@@ -1236,7 +1236,7 @@ if (!properties.TryGetValue(PRIVATE_KEY_FILE, out _) &&
 
 Though in this case, if we really don't need the value then we can choose a different method. 
 
-```
+```csharp
 if (!properties.ContainsKey(PRIVATE_KEY_FILE) &&
 	!properties.ContainsKey(PRIVATE_KEY))
 ```
@@ -1245,7 +1245,7 @@ if (!properties.ContainsKey(PRIVATE_KEY_FILE) &&
 
 Here is another trick to remove boiler plate.
 
-```
+```csharp
 throw new SnowflakeDbException(
 	SFError.INVALID_CONNECTION_STRING,
 	new object[] { invalidStringDetail });
@@ -1253,7 +1253,7 @@ throw new SnowflakeDbException(
 
 The type `object` is not necessary, as the compiler can infer if from the context.
 
-```
+```csharp
 throw new SnowflakeDbException(
 	SFError.INVALID_CONNECTION_STRING,
 	new[] { invalidStringDetail });
@@ -1265,7 +1265,7 @@ Technically it's inferring a `string[]` array, because that's the type of object
 
 A strange thing about this call is that we didn't need to create the array at all. The parameter is marked with `params`, which means the compiler will create the array for us.
 
-```
+```csharp
 throw new SnowflakeDbException(
 	SFError.INVALID_CONNECTION_STRING,
 	invalidStringDetail);
@@ -1277,7 +1277,7 @@ Part of the readability issue is that the statements were so long that they need
 
 By using `namespace Snowflake.Data.Core.Authenticator;` instead of,
 
-```
+```csharp
 namespace Snowflake.Data.Core.Authenticator;
 {
 ```
@@ -1322,7 +1322,7 @@ This sounds more like an abstract, read-only property than a field.
 
 The `SetSpecializedAuthenticatorData` method incorrectly marks its parameter as `ref`. If a subclass were to replace the parameter `data` insead of just modifying it, the code would fail.
 
-```
+```csharp
 protected abstract void SetSpecializedAuthenticatorData(ref LoginRequestData data);
 ```
 
@@ -1379,7 +1379,7 @@ In order to facility this, the following changes will be made.
 This gives you two ways to change the default configuration:
 
 
-```
+```csharp
 //Modify a copy of existing record
 SnowflakeDbConfiguration.Default = SnowflakeDbConfiguration.Default with { ChunkDownloaderVersion = 2 };
 
@@ -1466,4 +1466,32 @@ Methods in `SFRemoteStorageUtil` destroys the stack trace when there is an error
 * Mark fields as readonly where possible
 * Add missing `.ConfigureAwait(false)`
 * Fix casing on public properties in `SFResultChunk`
+
+## Round 27 - Core.ResponseProcessing
+
+* Add `#nullable enable` to each file in the namespace. Update properties where appropriate.
+* Use `var` where appropriate
+* Mark fields as readonly where possible
+* Fix casing in parameter names
+
+### Exceptions when field or property is null
+
+When a required field or property is null, we throw a `InvalidOperationException` to alert the caller that the object isn't capable of completing the method call. For example, 
+
+```csharp
+if (Url == null)
+	throw new InvalidOperationException($"{nameof(Url)} is null");
+```
+
+
+### Unused, null-returning methods
+
+This method was found in SFResultSetMetaData. It isn't used and can be removed.
+
+```csharp
+internal DataTable toDataTable()
+{
+	return null;
+}
+```
 

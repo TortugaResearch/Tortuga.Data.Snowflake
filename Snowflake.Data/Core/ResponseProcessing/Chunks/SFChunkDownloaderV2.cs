@@ -91,7 +91,7 @@ class SFChunkDownloaderV2 : IChunkDownloader
 	public Task<IResultChunk?> GetNextChunkAsync()
 	{
 		if (m_DownloadTasks == null)
-			throw new InvalidOperationException("m_DownloadTasks is null");
+			throw new InvalidOperationException($"{nameof(m_DownloadTasks)} is null");
 
 		if (m_DownloadTasks.IsAddingCompleted)
 			return Task.FromResult<IResultChunk?>(null);
@@ -111,11 +111,11 @@ class SFChunkDownloaderV2 : IChunkDownloader
 		var downloadRequest = new S3DownloadRequest()
 		{
 			Url = new UriBuilder(chunk.Url!).Uri,
-			qrmk = downloadContext.qrmk,
+			Qrmk = downloadContext.qrmk,
 			// s3 download request timeout to one hour
 			RestTimeout = TimeSpan.FromHours(1),
 			HttpTimeout = TimeSpan.FromSeconds(16),
-			chunkHeaders = downloadContext.chunkHeaders
+			ChunkHeaders = downloadContext.chunkHeaders
 		};
 
 		Stream stream;

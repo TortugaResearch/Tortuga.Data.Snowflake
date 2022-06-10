@@ -2,14 +2,18 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+#nullable enable
+
 namespace Tortuga.Data.Snowflake.Core.ResponseProcessing;
 
 internal static class ResultSetUtil
 {
 	internal static int CalculateUpdateCount(this SFBaseResultSet resultSet)
 	{
-		SFResultSetMetaData metaData = resultSet.sfResultSetMetaData;
-		SFStatementType statementType = metaData.statementType;
+		if (resultSet.SFResultSetMetaData == null)
+			throw new ArgumentException($"resultSet.SFResultSetMetaData is null", nameof(resultSet));
+
+		var statementType = resultSet.SFResultSetMetaData.statementType;
 
 		long updateCount = 0;
 		switch (statementType)
@@ -20,7 +24,7 @@ internal static class ResultSetUtil
 			case SFStatementType.MERGE:
 			case SFStatementType.MULTI_INSERT:
 				resultSet.Next();
-				for (int i = 0; i < resultSet.columnCount; i++)
+				for (var i = 0; i < resultSet.m_ColumnCount; i++)
 				{
 					updateCount += resultSet.GetValue<long>(i);
 				}
@@ -28,7 +32,7 @@ internal static class ResultSetUtil
 				break;
 
 			case SFStatementType.COPY:
-				var index = resultSet.sfResultSetMetaData.getColumnIndexByName("rows_loaded");
+				var index = resultSet.SFResultSetMetaData.getColumnIndexByName("rows_loaded");
 				if (index >= 0)
 				{
 					resultSet.Next();
@@ -38,7 +42,7 @@ internal static class ResultSetUtil
 				break;
 
 			case SFStatementType.COPY_UNLOAD:
-				var rowIndex = resultSet.sfResultSetMetaData.getColumnIndexByName("rows_unloaded");
+				var rowIndex = resultSet.SFResultSetMetaData.getColumnIndexByName("rows_unloaded");
 				if (rowIndex >= 0)
 				{
 					resultSet.Next();

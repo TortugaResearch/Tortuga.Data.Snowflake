@@ -32,7 +32,7 @@ public class SnowflakeDbDataReader : DbDataReader
 
 	public override int Depth => 0;
 
-	public override int FieldCount => m_ResultSet.columnCount;
+	public override int FieldCount => m_ResultSet.m_ColumnCount;
 
 	public override bool HasRows
 	{
@@ -84,10 +84,10 @@ public class SnowflakeDbDataReader : DbDataReader
 
 	public override string GetDataTypeName(int ordinal)
 	{
-		if (m_ResultSet.sfResultSetMetaData == null)
-			throw new InvalidOperationException($"{nameof(m_ResultSet.sfResultSetMetaData)} is null.");
+		if (m_ResultSet.SFResultSetMetaData == null)
+			throw new InvalidOperationException($"{nameof(m_ResultSet.SFResultSetMetaData)} is null.");
 
-		return m_ResultSet.sfResultSetMetaData.getColumnTypeByIndex(ordinal).ToString();
+		return m_ResultSet.SFResultSetMetaData.getColumnTypeByIndex(ordinal).ToString();
 	}
 
 	public override DateTime GetDateTime(int ordinal) => m_ResultSet.GetValue<DateTime>(ordinal);
@@ -106,10 +106,10 @@ public class SnowflakeDbDataReader : DbDataReader
 
 	public override Type GetFieldType(int ordinal)
 	{
-		if (m_ResultSet.sfResultSetMetaData == null)
-			throw new InvalidOperationException($"{nameof(m_ResultSet.sfResultSetMetaData)} is null.");
+		if (m_ResultSet.SFResultSetMetaData == null)
+			throw new InvalidOperationException($"{nameof(m_ResultSet.SFResultSetMetaData)} is null.");
 
-		return m_ResultSet.sfResultSetMetaData.getCSharpTypeByIndex(ordinal);
+		return m_ResultSet.SFResultSetMetaData.getCSharpTypeByIndex(ordinal);
 	}
 
 	public override float GetFloat(int ordinal) => m_ResultSet.GetValue<float>(ordinal);
@@ -124,19 +124,19 @@ public class SnowflakeDbDataReader : DbDataReader
 
 	public override string GetName(int ordinal)
 	{
-		if (m_ResultSet.sfResultSetMetaData == null)
-			throw new InvalidOperationException($"{nameof(m_ResultSet.sfResultSetMetaData)} is null.");
-		return m_ResultSet.sfResultSetMetaData.getColumnNameByIndex(ordinal);
+		if (m_ResultSet.SFResultSetMetaData == null)
+			throw new InvalidOperationException($"{nameof(m_ResultSet.SFResultSetMetaData)} is null.");
+		return m_ResultSet.SFResultSetMetaData.getColumnNameByIndex(ordinal)!;
 	}
 
 	public override int GetOrdinal(string name)
 	{
-		if (m_ResultSet.sfResultSetMetaData == null)
-			throw new InvalidOperationException($"{nameof(m_ResultSet.sfResultSetMetaData)} is null.");
-		return m_ResultSet.sfResultSetMetaData.getColumnIndexByName(name);
+		if (m_ResultSet.SFResultSetMetaData == null)
+			throw new InvalidOperationException($"{nameof(m_ResultSet.SFResultSetMetaData)} is null.");
+		return m_ResultSet.SFResultSetMetaData.getColumnIndexByName(name);
 	}
 
-	public string? GetQueryId() => m_ResultSet.queryId;
+	public string? GetQueryId() => m_ResultSet.m_QueryId;
 
 	public override DataTable GetSchemaTable() => m_SchemaTable;
 
@@ -194,11 +194,11 @@ public class SnowflakeDbDataReader : DbDataReader
 		table.Columns.Add(SchemaTableColumn.AllowDBNull, typeof(bool));
 		table.Columns.Add(SchemaTableColumn.ProviderType, typeof(SFDataType));
 
-		if (resultSet.sfResultSetMetaData == null)
-			throw new ArgumentException($"{nameof(resultSet.sfResultSetMetaData)} is null.", nameof(resultSet));
+		if (resultSet.SFResultSetMetaData == null)
+			throw new ArgumentException($"{nameof(resultSet.SFResultSetMetaData)} is null.", nameof(resultSet));
 
 		var columnOrdinal = 0;
-		var sfResultSetMetaData = resultSet.sfResultSetMetaData;
+		var sfResultSetMetaData = resultSet.SFResultSetMetaData;
 		foreach (var rowType in sfResultSetMetaData.rowTypes)
 		{
 			var row = table.NewRow();
