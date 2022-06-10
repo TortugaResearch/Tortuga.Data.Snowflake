@@ -41,7 +41,7 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 		// Get the Azure SAS token and create the client
 		if (stageInfo.stageCredentials.TryGetValue(AZURE_SAS_TOKEN, out var sasToken))
 		{
-			string blobEndpoint = string.Format("https://{0}.blob.core.windows.net", stageInfo.storageAccount);
+			var blobEndpoint = $"https://{stageInfo.storageAccount}.blob.core.windows.net";
 			m_BlobServiceClient = new BlobServiceClient(new Uri(blobEndpoint),
 				new AzureSasCredential(sasToken));
 		}

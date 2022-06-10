@@ -87,18 +87,8 @@ class SFConnectionIT : SFBaseTest
 	{
 		using (var conn = new SnowflakeDbConnection())
 		{
-			conn.ConnectionString = String.Format("scheme={0};host={1};port={2};" +
-		"account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};",
-				testConfig.protocol,
-				testConfig.host,
-				testConfig.port,
-				testConfig.account,
-				testConfig.role,
-				testConfig.database,
-				testConfig.schema,
-				testConfig.warehouse,
-				"unknown",
-				testConfig.password);
+			conn.ConnectionString = $"scheme={testConfig.protocol};host={testConfig.host};port={testConfig.port};" +
+		$"account={testConfig.account};role={testConfig.role};db={testConfig.database};schema={testConfig.schema};warehouse={testConfig.warehouse};user={"unknown"};password={testConfig.password};";
 
 			Assert.AreEqual(conn.State, ConnectionState.Closed);
 			try
@@ -204,8 +194,7 @@ class SFConnectionIT : SFBaseTest
 			using (var conn = new MockSnowflakeDbConnection())
 			{
 				int timeoutSec = 5;
-				string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0}",
-					timeoutSec);
+				string loginTimeOut5sec = $"{ConnectionString};connection_timeout={timeoutSec}";
 
 				conn.ConnectionString = loginTimeOut5sec;
 
@@ -325,18 +314,8 @@ class SFConnectionIT : SFBaseTest
 	[Test]
 	public void TestValidateDefaultParameters()
 	{
-		string connectionString = String.Format("scheme={0};host={1};port={2};" +
-		"account={3};role={4};db={5};schema={6};warehouse={7};user={8};password={9};",
-				testConfig.protocol,
-				testConfig.host,
-				testConfig.port,
-				testConfig.account,
-				testConfig.role,
-				testConfig.database,
-				testConfig.schema,
-				"WAREHOUSE_NEVER_EXISTS",
-				testConfig.user,
-				testConfig.password);
+		string connectionString = $"scheme={testConfig.protocol};host={testConfig.host};port={testConfig.port};" +
+		$"account={testConfig.account};role={testConfig.role};db={testConfig.database};schema={testConfig.schema};warehouse={"WAREHOUSE_NEVER_EXISTS"};user={testConfig.user};password={testConfig.password};";
 
 		// By default should validate parameters
 		using (IDbConnection conn = new SnowflakeDbConnection())
@@ -461,18 +440,7 @@ class SFConnectionIT : SFBaseTest
 				host = $"{testConfig.account}.snowflakecomputing.com";
 			}
 
-			string connStrFmt = "scheme={0};host={1};port={2};" +
-				"user={3};password={4};account={5};role=public;db=snowflake_sample_data;schema=information_schema;warehouse=WH_NOT_EXISTED;validate_default_parameters=false";
-
-			conn.ConnectionString = string.Format(
-				connStrFmt,
-				testConfig.protocol,
-				testConfig.host,
-				testConfig.port,
-				testConfig.user,
-				testConfig.password,
-				testConfig.account
-				);
+			conn.ConnectionString = $"scheme={testConfig.protocol};host={testConfig.host};port={testConfig.port};user={testConfig.user};password={testConfig.password};account={testConfig.account};role=public;db=snowflake_sample_data;schema=information_schema;warehouse=WH_NOT_EXISTED;validate_default_parameters=false";
 			conn.Open();
 			Assert.AreEqual(conn.State, ConnectionState.Open);
 
@@ -617,11 +585,7 @@ class SFConnectionIT : SFBaseTest
 	{
 		using (var conn = new SnowflakeDbConnection())
 		{
-			conn.ConnectionString
-			= ConnectionString
-			+ String.Format(
-				";useProxy=true;proxyHost=Invalid;proxyPort=8080;nonProxyHosts={0}",
-				"*.foo.com %7C" + testConfig.account + ".snowflakecomputing.com|localhost");
+			conn.ConnectionString = $"{ConnectionString};useProxy=true;proxyHost=Invalid;proxyPort=8080;nonProxyHosts=*.foo.com %7C{testConfig.account}.snowflakecomputing.com|localhost";
 			conn.Open();
 			// Because testConfig.host is in the bypass list, the proxy should not be used
 		}
@@ -638,8 +602,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 		{
 			// No timeout
 			int timeoutSec = 0;
-			string infiniteLoginTimeOut = String.Format(ConnectionString + ";connection_timeout={0}",
-				timeoutSec);
+			string infiniteLoginTimeOut = $"{ConnectionString};connection_timeout={timeoutSec}";
 
 			conn.ConnectionString = infiniteLoginTimeOut;
 
@@ -667,9 +630,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 			}
 			catch (AggregateException e)
 			{
-				Assert.AreEqual(
-					"System.Threading.Tasks.TaskCanceledException",
-					e.InnerException.GetType().ToString());
+				Assert.AreEqual("System.Threading.Tasks.TaskCanceledException", e.InnerException.GetType().ToString());
 			}
 
 			Assert.AreEqual(ConnectionState.Closed, conn.State);
@@ -685,8 +646,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 			using (var conn = new MockSnowflakeDbConnection())
 			{
 				int timeoutSec = 5;
-				string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0}",
-					timeoutSec);
+				string loginTimeOut5sec = $"{ConnectionString};connection_timeout={timeoutSec}";
 				conn.ConnectionString = loginTimeOut5sec;
 
 				Assert.AreEqual(conn.State, ConnectionState.Closed);

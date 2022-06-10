@@ -142,8 +142,8 @@ class ExternalBrowserAuthenticator : Authenticator
 
 	static HttpListener GetHttpListener(int port)
 	{
-		string redirectURI = string.Format("http://{0}:{1}/", IPAddress.Loopback, port);
-		HttpListener listener = new HttpListener();
+		var redirectURI = $"http://{IPAddress.Loopback}:{port}/";
+		var listener = new HttpListener();
 		listener.Prefixes.Add(redirectURI);
 		return listener;
 	}

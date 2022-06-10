@@ -80,8 +80,7 @@ public sealed class SnowflakeDbException : DbException
 
 	public override string ToString()
 	{
-		return string.Format("Error: {0} SqlState: {1}, VendorCode: {2}, QueryId: {3}",
-			Message, SqlState, _errorCode, QueryId);
+		return $"Error: {Message} SqlState: {SqlState}, VendorCode: {_errorCode}, QueryId: {QueryId}";
 	}
 
 	static string GetFormatString(SFError error)

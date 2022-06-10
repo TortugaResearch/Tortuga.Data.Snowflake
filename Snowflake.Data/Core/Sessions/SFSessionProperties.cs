@@ -108,7 +108,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 					{
 						// An equal sign was not doubled or something else happened
 						// making the connection invalid
-						string invalidStringDetail = string.Format("Invalid key value pair {0}", keyVal);
+						var invalidStringDetail = $"Invalid key value pair {keyVal}";
 						throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, new object[] { invalidStringDetail });
 					}
 				}
@@ -150,7 +150,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 		// compose host value if not specified
 		if (!properties.ContainsKey(SFSessionProperty.HOST) || 0 == properties[SFSessionProperty.HOST].Length)
 		{
-			string hostName = string.Format("{0}.snowflakecomputing.com", properties[SFSessionProperty.ACCOUNT]);
+			var hostName = $"{properties[SFSessionProperty.ACCOUNT]}.snowflakecomputing.com";
 			// Remove in case it's here but empty
 			properties.Remove(SFSessionProperty.HOST);
 			properties.Add(SFSessionProperty.HOST, hostName);

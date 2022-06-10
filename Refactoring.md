@@ -1667,3 +1667,19 @@ public override int GetHashCode()
 ## Round 30 - SecretDetector
 
 This internal class is only used by the tests, so it should be moved into the test project.
+
+## Round 32 - String Interpolation
+
+Use string interpolation instead of `string.Format` where appropriate. In most cases, the string interpolation will be easier to read.
+
+```csharp
+string loginTimeOut5sec = String.Format(ConnectionString + "connection_timeout={0}",	timeoutSec);
+string loginTimeOut5sec = $"{ConnectionString}connection_timeout={timeoutSec}";
+```
+
+Once this change is made, it becomes more apparent that there is a `;` missing in the original code.
+
+```csharp
+string loginTimeOut5sec = $"{ConnectionString};connection_timeout={timeoutSec}";
+```
+
