@@ -186,11 +186,16 @@ public class SnowflakeDbConnection : DbConnection
 			m_ConnectionState = ConnectionState.Closed;
 			throw;
 		}
-		catch (Exception e)
+		catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
+		{
+			m_ConnectionState = ConnectionState.Closed;
+			throw;
+		}
+		catch (Exception ex)
 		{
 			// Otherwise when Dispose() is called, the close request would timeout.
 			m_ConnectionState = ConnectionState.Closed;
-			throw new SnowflakeDbException(e, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INTERNAL_ERROR, "Unable to connect. " + e.Message);
+			throw new SnowflakeDbException(ex, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INTERNAL_ERROR, "Unable to connect. " + ex.Message);
 		}
 		m_ConnectionState = ConnectionState.Open;
 	}

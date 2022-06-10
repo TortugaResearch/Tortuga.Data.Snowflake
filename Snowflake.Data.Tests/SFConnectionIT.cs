@@ -700,7 +700,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 				}
 				catch (AggregateException e)
 				{
-					Assert.AreEqual(SFError.INTERNAL_ERROR, ((SnowflakeDbException)e.InnerException).SFErrorCode);
+					Assert.AreEqual(SFError.REQUEST_TIMEOUT, ((SnowflakeDbException)e.InnerException).SFErrorCode);
 				}
 				stopwatch.Stop();
 
@@ -733,7 +733,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 			}
 			catch (AggregateException e)
 			{
-				Assert.AreEqual(SFError.INTERNAL_ERROR, ((SnowflakeDbException)e.InnerException).SFErrorCode);
+				Assert.AreEqual(SFError.REQUEST_TIMEOUT, ((SnowflakeDbException)e.InnerException).SFErrorCode);
 			}
 			stopwatch.Stop();
 
