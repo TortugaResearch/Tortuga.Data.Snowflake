@@ -159,44 +159,40 @@ public class SnowflakeDbConnection : DbConnection
 		{
 			SfSession!.Open();
 		}
+		catch (SnowflakeDbException)
+		{
+			m_ConnectionState = ConnectionState.Closed;
+			throw;
+		}
 		catch (Exception e)
 		{
 			// Otherwise when Dispose() is called, the close request would timeout.
 			m_ConnectionState = ConnectionState.Closed;
-			if (!(e is SnowflakeDbException))
-				throw new SnowflakeDbException(e, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INTERNAL_ERROR, "Unable to connect. " + e.Message);
-			else
-				throw;
+			throw new SnowflakeDbException(e, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INTERNAL_ERROR, "Unable to connect. " + e.Message);
 		}
 		m_ConnectionState = ConnectionState.Open;
 	}
 
-	public override Task OpenAsync(CancellationToken cancellationToken)
+	public override async Task OpenAsync(CancellationToken cancellationToken)
 	{
 		RegisterConnectionCancellationCallback(cancellationToken);
 		SetSession();
-
-		return SfSession!.OpenAsync(cancellationToken).ContinueWith(
-			previousTask =>
-			{
-				if (previousTask.IsFaulted)
-				{
-					// Exception from SfSession.OpenAsync
-					var sfSessionEx = previousTask.Exception!;
-					m_ConnectionState = ConnectionState.Closed;
-					throw new SnowflakeDbException(sfSessionEx, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INTERNAL_ERROR, "Unable to connect");
-				}
-				else if (previousTask.IsCanceled)
-				{
-					m_ConnectionState = ConnectionState.Closed;
-				}
-				else
-				{
-					// Only continue if the session was opened successfully
-					m_ConnectionState = ConnectionState.Open;
-				}
-			},
-			cancellationToken);
+		try
+		{
+			await SfSession!.OpenAsync(cancellationToken).ConfigureAwait(false);
+		}
+		catch (SnowflakeDbException)
+		{
+			m_ConnectionState = ConnectionState.Closed;
+			throw;
+		}
+		catch (Exception e)
+		{
+			// Otherwise when Dispose() is called, the close request would timeout.
+			m_ConnectionState = ConnectionState.Closed;
+			throw new SnowflakeDbException(e, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INTERNAL_ERROR, "Unable to connect. " + e.Message);
+		}
+		m_ConnectionState = ConnectionState.Open;
 	}
 
 	/// <summary>

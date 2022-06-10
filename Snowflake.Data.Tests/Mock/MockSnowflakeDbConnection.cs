@@ -29,42 +29,42 @@ class MockSnowflakeDbConnection : SnowflakeDbConnection
 		try
 		{
 			SfSession.Open();
+			OnSessionEstablished();
 		}
-		catch
+		catch (SnowflakeDbException)
+		{
+			m_ConnectionState = ConnectionState.Closed;
+			throw;
+		}
+		catch (Exception ex)
 		{
 			// Otherwise when Dispose() is called, the close request would timeout.
 			m_ConnectionState = System.Data.ConnectionState.Closed;
-			throw;
+			throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR, "Unable to connect");
 		}
-		OnSessionEstablished();
 	}
 
-	public override Task OpenAsync(CancellationToken cancellationToken)
+	public async override Task OpenAsync(CancellationToken cancellationToken)
 	{
 		RegisterConnectionCancellationCallback(cancellationToken);
 
 		SetMockSession();
 
-		return SfSession.OpenAsync(cancellationToken).ContinueWith(
-			previousTask =>
-			{
-				if (previousTask.IsFaulted)
-				{
-					// Exception from SfSession.OpenAsync
-					Exception sfSessionEx = previousTask.Exception;
-					m_ConnectionState = ConnectionState.Closed;
-					throw new SnowflakeDbException(sfSessionEx.InnerException, SFError.INTERNAL_ERROR, "Unable to connect");
-				}
-				if (previousTask.IsCanceled)
-				{
-					m_ConnectionState = ConnectionState.Closed;
-				}
-				else
-				{
-					OnSessionEstablished();
-				}
-			},
-			cancellationToken);
+		try
+		{
+			await SfSession.OpenAsync(cancellationToken).ConfigureAwait(false);
+			OnSessionEstablished();
+		}
+		catch (SnowflakeDbException)
+		{
+			m_ConnectionState = ConnectionState.Closed;
+			throw;
+		}
+		catch (Exception ex)
+		{
+			m_ConnectionState = ConnectionState.Closed;
+			throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR, "Unable to connect");
+		}
 	}
 
 	private void SetMockSession()
