@@ -2,8 +2,6 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-#nullable enable
-
 using System.Data;
 using System.Globalization;
 using System.Text;

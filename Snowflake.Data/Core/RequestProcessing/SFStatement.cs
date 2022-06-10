@@ -2,8 +2,6 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-#nullable enable
-
 using System.Text;
 using Tortuga.Data.Snowflake.Core.FileTransfer;
 using Tortuga.Data.Snowflake.Core.Messages;

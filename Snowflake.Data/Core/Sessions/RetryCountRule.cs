@@ -2,8 +2,6 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
-#nullable enable
-
 using Microsoft.Extensions.Primitives;
 
 namespace Tortuga.Data.Snowflake.Core.Sessions;
@@ -13,20 +11,20 @@ namespace Tortuga.Data.Snowflake.Core.Sessions;
 /// </summary>
 class RetryCountRule : IRule
 {
-	int m_RetryCount;
+    int m_RetryCount;
 
-	internal RetryCountRule()
-	{
-		m_RetryCount = 1;
-	}
+    internal RetryCountRule()
+    {
+        m_RetryCount = 1;
+    }
 
-	public void Apply(Dictionary<string, StringValues> queryParams)
-	{
-		if (m_RetryCount == 1)
-			queryParams.Add(RestParams.SF_QUERY_RETRY_COUNT, m_RetryCount.ToString());
-		else
-			queryParams[RestParams.SF_QUERY_RETRY_COUNT] = m_RetryCount.ToString();
+    public void Apply(Dictionary<string, StringValues> queryParams)
+    {
+        if (m_RetryCount == 1)
+            queryParams.Add(RestParams.SF_QUERY_RETRY_COUNT, m_RetryCount.ToString());
+        else
+            queryParams[RestParams.SF_QUERY_RETRY_COUNT] = m_RetryCount.ToString();
 
-		m_RetryCount++;
-	}
+        m_RetryCount++;
+    }
 }

@@ -4,8 +4,6 @@
 
 using System.Data.Common;
 
-#nullable enable
-
 namespace Tortuga.Data.Snowflake;
 
 /// <summary>

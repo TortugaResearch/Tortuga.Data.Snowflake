@@ -1683,3 +1683,6 @@ Once this change is made, it becomes more apparent that there is a `;` missing i
 string loginTimeOut5sec = $"{ConnectionString};connection_timeout={timeoutSec}";
 ```
 
+## Round 33 - Nullable Reference Types
+
+Now that all of the classes have been update to be null aware, the project can be marked with ``. This in turn means that `#nullable enable` can be removed from all of the individual files.

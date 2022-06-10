@@ -2,8 +2,6 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
-#nullable enable
-
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;
@@ -13,21 +11,21 @@ namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
 internal class IdpTokenRestRequest : RestRequest
 {
-	static MediaTypeWithQualityHeaderValue jsonHeader = new MediaTypeWithQualityHeaderValue("application/json");
+    static MediaTypeWithQualityHeaderValue jsonHeader = new MediaTypeWithQualityHeaderValue("application/json");
 
-	internal IdpTokenRequest? JsonBody { get; set; }
+    internal IdpTokenRequest? JsonBody { get; set; }
 
-	internal override HttpRequestMessage ToRequestMessage(HttpMethod method)
-	{
-		if (Url == null)
-			throw new InvalidOperationException($"{nameof(Url)} is null");
+    internal override HttpRequestMessage ToRequestMessage(HttpMethod method)
+    {
+        if (Url == null)
+            throw new InvalidOperationException($"{nameof(Url)} is null");
 
-		HttpRequestMessage message = newMessage(method, Url);
-		message.Headers.Accept.Add(jsonHeader);
+        HttpRequestMessage message = newMessage(method, Url);
+        message.Headers.Accept.Add(jsonHeader);
 
-		var json = JsonConvert.SerializeObject(JsonBody, JsonUtils.JsonSettings);
-		message.Content = new StringContent(json, Encoding.UTF8, "application/json");
+        var json = JsonConvert.SerializeObject(JsonBody, JsonUtils.JsonSettings);
+        message.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
-		return message;
-	}
+        return message;
+    }
 }

@@ -2,8 +2,6 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
-#nullable enable
-
 namespace Tortuga.Data.Snowflake.Core.FileTransfer;
 
 /// <summary>
@@ -11,6 +9,6 @@ namespace Tortuga.Data.Snowflake.Core.FileTransfer;
 /// </summary>
 internal enum CommandTypes
 {
-	UPLOAD = 0,
-	DOWNLOAD = 1,
+    UPLOAD = 0,
+    DOWNLOAD = 1,
 }

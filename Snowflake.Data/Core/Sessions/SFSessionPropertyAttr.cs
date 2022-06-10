@@ -2,13 +2,11 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
-#nullable enable
-
 namespace Tortuga.Data.Snowflake.Core.Sessions;
 
 [AttributeUsage(AttributeTargets.Field)]
 class SFSessionPropertyAttribute : Attribute
 {
-	public string? DefaultValue { get; init; }
-	public bool Required { get; init; }
+    public string? DefaultValue { get; init; }
+    public bool Required { get; init; }
 }

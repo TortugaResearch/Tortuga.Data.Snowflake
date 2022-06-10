@@ -2,8 +2,6 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
-#nullable enable
-
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;

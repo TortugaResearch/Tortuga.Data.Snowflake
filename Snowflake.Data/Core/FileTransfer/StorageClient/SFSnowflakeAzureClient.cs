@@ -2,8 +2,6 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
-#nullable enable
-
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;

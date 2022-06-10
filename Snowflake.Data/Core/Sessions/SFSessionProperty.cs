@@ -2,84 +2,82 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
-#nullable enable
-
 namespace Tortuga.Data.Snowflake.Core.Sessions;
 
 internal enum SFSessionProperty
 {
-	[SFSessionProperty(Required = true)]
-	ACCOUNT,
+    [SFSessionProperty(Required = true)]
+    ACCOUNT,
 
-	[SFSessionProperty]
-	DB,
+    [SFSessionProperty]
+    DB,
 
-	[SFSessionProperty]
-	HOST,
+    [SFSessionProperty]
+    HOST,
 
-	[SFSessionProperty(Required = true)]
-	PASSWORD,
+    [SFSessionProperty(Required = true)]
+    PASSWORD,
 
-	[SFSessionProperty(DefaultValue = "443")]
-	PORT,
+    [SFSessionProperty(DefaultValue = "443")]
+    PORT,
 
-	[SFSessionProperty]
-	ROLE,
+    [SFSessionProperty]
+    ROLE,
 
-	[SFSessionProperty]
-	SCHEMA,
+    [SFSessionProperty]
+    SCHEMA,
 
-	[SFSessionProperty(DefaultValue = "https")]
-	SCHEME,
+    [SFSessionProperty(DefaultValue = "https")]
+    SCHEME,
 
-	[SFSessionProperty(Required = true, DefaultValue = "")]
-	USER,
+    [SFSessionProperty(Required = true, DefaultValue = "")]
+    USER,
 
-	[SFSessionProperty]
-	WAREHOUSE,
+    [SFSessionProperty]
+    WAREHOUSE,
 
-	[SFSessionProperty(DefaultValue = "120")]
-	CONNECTION_TIMEOUT,
+    [SFSessionProperty(DefaultValue = "120")]
+    CONNECTION_TIMEOUT,
 
-	[SFSessionProperty(DefaultValue = "snowflake")]
-	AUTHENTICATOR,
+    [SFSessionProperty(DefaultValue = "snowflake")]
+    AUTHENTICATOR,
 
-	[SFSessionProperty(DefaultValue = "true")]
-	VALIDATE_DEFAULT_PARAMETERS,
+    [SFSessionProperty(DefaultValue = "true")]
+    VALIDATE_DEFAULT_PARAMETERS,
 
-	[SFSessionProperty]
-	PRIVATE_KEY_FILE,
+    [SFSessionProperty]
+    PRIVATE_KEY_FILE,
 
-	[SFSessionProperty]
-	PRIVATE_KEY_PWD,
+    [SFSessionProperty]
+    PRIVATE_KEY_PWD,
 
-	[SFSessionProperty]
-	PRIVATE_KEY,
+    [SFSessionProperty]
+    PRIVATE_KEY,
 
-	[SFSessionProperty]
-	TOKEN,
+    [SFSessionProperty]
+    TOKEN,
 
-	[SFSessionProperty(DefaultValue = "false")]
-	INSECUREMODE,
+    [SFSessionProperty(DefaultValue = "false")]
+    INSECUREMODE,
 
-	[SFSessionProperty(DefaultValue = "false")]
-	USEPROXY,
+    [SFSessionProperty(DefaultValue = "false")]
+    USEPROXY,
 
-	[SFSessionProperty]
-	PROXYHOST,
+    [SFSessionProperty]
+    PROXYHOST,
 
-	[SFSessionProperty]
-	PROXYPORT,
+    [SFSessionProperty]
+    PROXYPORT,
 
-	[SFSessionProperty]
-	PROXYUSER,
+    [SFSessionProperty]
+    PROXYUSER,
 
-	[SFSessionProperty]
-	PROXYPASSWORD,
+    [SFSessionProperty]
+    PROXYPASSWORD,
 
-	[SFSessionProperty]
-	NONPROXYHOSTS,
+    [SFSessionProperty]
+    NONPROXYHOSTS,
 
-	[SFSessionProperty]
-	APPLICATION,
+    [SFSessionProperty]
+    APPLICATION,
 }
