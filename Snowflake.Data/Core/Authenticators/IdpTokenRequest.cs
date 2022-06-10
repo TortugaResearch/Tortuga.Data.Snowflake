@@ -8,9 +8,9 @@ namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
 class IdpTokenRequest
 {
-    [JsonProperty(PropertyName = "username")]
-    internal string? Username { get; set; }
+	[JsonProperty(PropertyName = "username")]
+	internal string? Username { get; set; }
 
-    [JsonProperty(PropertyName = "password")]
-    internal string? Password { get; set; }
+	[JsonProperty(PropertyName = "password")]
+	internal string? Password { get; set; }
 }

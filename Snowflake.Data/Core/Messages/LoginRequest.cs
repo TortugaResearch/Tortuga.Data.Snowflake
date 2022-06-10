@@ -8,8 +8,8 @@ namespace Tortuga.Data.Snowflake.Core.Messages;
 
 class LoginRequest
 {
-    [JsonProperty(PropertyName = "data")]
-    internal LoginRequestData? data { get; set; }
+	[JsonProperty(PropertyName = "data")]
+	internal LoginRequestData? data { get; set; }
 
-    public override string ToString() => $"LoginRequest {{data: {data} }}";
+	public override string ToString() => $"LoginRequest {{data: {data} }}";
 }

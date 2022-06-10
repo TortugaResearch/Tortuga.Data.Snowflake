@@ -6,5 +6,5 @@ namespace Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
 
 interface IChunkDownloader
 {
-    Task<IResultChunk?> GetNextChunkAsync();
+	Task<IResultChunk?> GetNextChunkAsync();
 }

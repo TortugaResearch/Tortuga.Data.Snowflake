@@ -8,6 +8,6 @@ namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
 class IdpTokenResponse
 {
-    [JsonProperty(PropertyName = "cookieToken")]
-    internal string? CookieToken { get; set; }
+	[JsonProperty(PropertyName = "cookieToken")]
+	internal string? CookieToken { get; set; }
 }

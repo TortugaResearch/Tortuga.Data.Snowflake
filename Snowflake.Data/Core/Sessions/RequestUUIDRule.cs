@@ -11,8 +11,8 @@ namespace Tortuga.Data.Snowflake.Core.Sessions;
 /// </summary>
 class RequestUUIDRule : IRule
 {
-    public void Apply(Dictionary<string, StringValues> queryParams)
-    {
-        queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
-    }
+	public void Apply(Dictionary<string, StringValues> queryParams)
+	{
+		queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
+	}
 }

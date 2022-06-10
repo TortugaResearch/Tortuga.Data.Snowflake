@@ -8,6 +8,6 @@ namespace Tortuga.Data.Snowflake.Core.Messages;
 
 class QueryCancelRequest
 {
-    [JsonProperty(PropertyName = "requestId")]
-    internal string? requestId { get; set; }
+	[JsonProperty(PropertyName = "requestId")]
+	internal string? requestId { get; set; }
 }

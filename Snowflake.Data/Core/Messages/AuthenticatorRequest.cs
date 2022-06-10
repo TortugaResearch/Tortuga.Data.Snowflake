@@ -8,8 +8,8 @@ namespace Tortuga.Data.Snowflake.Core.Messages;
 
 class AuthenticatorRequest
 {
-    [JsonProperty(PropertyName = "data")]
-    internal AuthenticatorRequestData? Data { get; set; }
+	[JsonProperty(PropertyName = "data")]
+	internal AuthenticatorRequestData? Data { get; set; }
 
-    public override string ToString() => $"AuthenticatorRequest {{data: {Data} }}";
+	public override string ToString() => $"AuthenticatorRequest {{data: {Data} }}";
 }

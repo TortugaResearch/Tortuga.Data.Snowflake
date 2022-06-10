@@ -6,11 +6,11 @@ namespace Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
 
 class DownloadContextV3
 {
-    public SFReusableChunk? chunk { get; set; }
+	public SFReusableChunk? chunk { get; set; }
 
-    public string? qrmk { get; set; }
+	public string? qrmk { get; set; }
 
-    public Dictionary<string, string>? chunkHeaders { get; set; }
+	public Dictionary<string, string>? chunkHeaders { get; set; }
 
-    public CancellationToken cancellationToken { get; set; }
+	public CancellationToken cancellationToken { get; set; }
 }

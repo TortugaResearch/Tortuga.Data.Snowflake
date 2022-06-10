@@ -11,5 +11,5 @@ namespace Tortuga.Data.Snowflake.Core.Sessions;
 /// </summary>
 interface IRule
 {
-    void Apply(Dictionary<string, StringValues> queryParams);
+	void Apply(Dictionary<string, StringValues> queryParams);
 }

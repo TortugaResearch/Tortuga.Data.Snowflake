@@ -9,23 +9,23 @@ namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 /// </summary>
 interface ISFRemoteStorageClient
 {
-    /// <summary>
-    /// Get the bucket name and path.
-    /// </summary>
-    RemoteLocation ExtractBucketNameAndPath(string stageLocation);
+	/// <summary>
+	/// Get the bucket name and path.
+	/// </summary>
+	RemoteLocation ExtractBucketNameAndPath(string stageLocation);
 
-    /// <summary>
-    /// Encrypt then upload one file.
-    /// </summary>
-    FileHeader? GetFileHeader(SFFileMetadata fileMetadata);
+	/// <summary>
+	/// Encrypt then upload one file.
+	/// </summary>
+	FileHeader? GetFileHeader(SFFileMetadata fileMetadata);
 
-    /// <summary>
-    /// Attempt upload of a file and retry if fails.
-    /// </summary>
-    void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata);
+	/// <summary>
+	/// Attempt upload of a file and retry if fails.
+	/// </summary>
+	void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata);
 
-    /// <summary>
-    /// Attempt download of a file and retry if fails.
-    /// </summary>
-    void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency);
+	/// <summary>
+	/// Attempt download of a file and retry if fails.
+	/// </summary>
+	void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency);
 }

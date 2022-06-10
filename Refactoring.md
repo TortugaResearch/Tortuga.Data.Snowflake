@@ -1690,3 +1690,7 @@ Now that all of the classes have been update to be null aware, the project can b
 ## Round 34 - Class Visibility
 
 All classes, interfaces, enums, etc. in the `Core` namespace are changed from public to internal. None of these are meant to be accessed directly by users of the library.
+
+## Round 35 - Formatting
+
+Enable CodeMaid's Format on Save feature. Apply formatting to all files.

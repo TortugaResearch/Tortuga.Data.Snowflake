@@ -8,9 +8,9 @@ namespace Tortuga.Data.Snowflake.Core.Messages;
 
 class RenewSessionRequest
 {
-    [JsonProperty(PropertyName = "oldSessionToken")]
-    internal string? oldSessionToken { get; set; }
+	[JsonProperty(PropertyName = "oldSessionToken")]
+	internal string? oldSessionToken { get; set; }
 
-    [JsonProperty(PropertyName = "requestType")]
-    internal string? requestType { get; set; }
+	[JsonProperty(PropertyName = "requestType")]
+	internal string? requestType { get; set; }
 }
