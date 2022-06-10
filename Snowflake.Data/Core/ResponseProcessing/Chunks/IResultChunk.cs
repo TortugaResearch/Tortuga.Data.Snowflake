@@ -4,11 +4,11 @@
 
 namespace Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
 
-public interface IResultChunk
+interface IResultChunk
 {
-    UTF8Buffer? ExtractCell(int rowIndex, int columnIndex);
+	UTF8Buffer? ExtractCell(int rowIndex, int columnIndex);
 
-    int GetRowCount();
+	int GetRowCount();
 
-    int GetChunkIndex();
+	int GetChunkIndex();
 }

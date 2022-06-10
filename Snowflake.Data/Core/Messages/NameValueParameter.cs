@@ -6,11 +6,11 @@ using Newtonsoft.Json;
 
 namespace Tortuga.Data.Snowflake.Core.Messages;
 
-internal class NameValueParameter
+class NameValueParameter
 {
-    [JsonProperty(PropertyName = "name")]
-    internal string? name { get; set; }
+	[JsonProperty(PropertyName = "name")]
+	internal string? name { get; set; }
 
-    [JsonProperty(PropertyName = "value")]
-    internal string? value { get; set; }
+	[JsonProperty(PropertyName = "value")]
+	internal string? value { get; set; }
 }

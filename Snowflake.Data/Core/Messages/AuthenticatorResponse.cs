@@ -6,8 +6,8 @@ using Newtonsoft.Json;
 
 namespace Tortuga.Data.Snowflake.Core.Messages;
 
-internal class AuthenticatorResponse : BaseRestResponse
+class AuthenticatorResponse : BaseRestResponse
 {
-    [JsonProperty(PropertyName = "data")]
-    internal AuthenticatorResponseData? data { get; set; }
+	[JsonProperty(PropertyName = "data")]
+	internal AuthenticatorResponseData? data { get; set; }
 }

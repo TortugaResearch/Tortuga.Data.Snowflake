@@ -7,8 +7,8 @@ namespace Tortuga.Data.Snowflake.Core.FileTransfer;
 /// <summary>
 /// The command type of the query.
 /// </summary>
-internal enum CommandTypes
+enum CommandTypes
 {
-    UPLOAD = 0,
-    DOWNLOAD = 1,
+	UPLOAD = 0,
+	DOWNLOAD = 1,
 }

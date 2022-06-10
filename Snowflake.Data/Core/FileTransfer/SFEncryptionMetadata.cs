@@ -4,14 +4,14 @@
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer;
 
-public class SFEncryptionMetadata
+class SFEncryptionMetadata
 {
-    /// Initialization vector
-    public string? iv { set; get; }
+	/// Initialization vector
+	public string? iv { set; get; }
 
-    /// File key
-    public string? key { set; get; }
+	/// File key
+	public string? key { set; get; }
 
-    /// Encryption material descriptor
-    public string? matDesc { set; get; }
+	/// Encryption material descriptor
+	public string? matDesc { set; get; }
 }

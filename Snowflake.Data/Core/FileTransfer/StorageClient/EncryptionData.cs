@@ -4,11 +4,11 @@
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 
-internal class EncryptionData
+class EncryptionData
 {
-    public string? EncryptionMode { get; set; }
-    public WrappedContentInfo? WrappedContentKey { get; set; }
-    public EncryptionAgentInfo? EncryptionAgent { get; set; }
-    public string? ContentEncryptionIV { get; set; }
-    public KeyWrappingMetadataInfo? KeyWrappingMetadata { get; set; }
+	public string? EncryptionMode { get; set; }
+	public WrappedContentInfo? WrappedContentKey { get; set; }
+	public EncryptionAgentInfo? EncryptionAgent { get; set; }
+	public string? ContentEncryptionIV { get; set; }
+	public KeyWrappingMetadataInfo? KeyWrappingMetadata { get; set; }
 }

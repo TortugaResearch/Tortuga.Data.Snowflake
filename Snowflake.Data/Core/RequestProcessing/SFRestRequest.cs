@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Tortuga.Data.Snowflake.Core.RequestProcessing;
 
-internal class SFRestRequest : RestRequest
+class SFRestRequest : RestRequest
 {
 	private static MediaTypeWithQualityHeaderValue applicationSnowflake = new MediaTypeWithQualityHeaderValue("application/snowflake");
 	private static MediaTypeWithQualityHeaderValue applicationJson = new MediaTypeWithQualityHeaderValue("application/json");

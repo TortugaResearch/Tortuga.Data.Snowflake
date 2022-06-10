@@ -6,14 +6,14 @@ using Newtonsoft.Json;
 
 namespace Tortuga.Data.Snowflake.Core.Messages;
 
-internal class PutGetEncryptionMaterial
+class PutGetEncryptionMaterial
 {
-    [JsonProperty(PropertyName = "queryStageMasterKey", NullValueHandling = NullValueHandling.Ignore)]
-    internal string? queryStageMasterKey { get; set; }
+	[JsonProperty(PropertyName = "queryStageMasterKey", NullValueHandling = NullValueHandling.Ignore)]
+	internal string? queryStageMasterKey { get; set; }
 
-    [JsonProperty(PropertyName = "queryId", NullValueHandling = NullValueHandling.Ignore)]
-    internal string? queryId { get; set; }
+	[JsonProperty(PropertyName = "queryId", NullValueHandling = NullValueHandling.Ignore)]
+	internal string? queryId { get; set; }
 
-    [JsonProperty(PropertyName = "smkId", NullValueHandling = NullValueHandling.Ignore)]
-    internal long smkId { get; set; }
+	[JsonProperty(PropertyName = "smkId", NullValueHandling = NullValueHandling.Ignore)]
+	internal long smkId { get; set; }
 }

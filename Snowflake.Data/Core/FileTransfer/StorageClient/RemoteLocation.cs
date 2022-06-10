@@ -4,8 +4,8 @@
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 
-internal class RemoteLocation
+class RemoteLocation
 {
-    public string? bucket { get; set; }
-    public string? key { get; set; }
+	public string? bucket { get; set; }
+	public string? key { get; set; }
 }

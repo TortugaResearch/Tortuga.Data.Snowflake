@@ -7,7 +7,7 @@ using Tortuga.HttpClientUtilities;
 
 namespace Tortuga.Data.Snowflake.Core.RequestProcessing;
 
-internal class RestRequester : IRestRequester
+class RestRequester : IRestRequester
 {
 	protected HttpClient _HttpClient;
 

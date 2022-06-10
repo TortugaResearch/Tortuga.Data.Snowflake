@@ -4,8 +4,8 @@
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 
-internal class EncryptionAgentInfo
+class EncryptionAgentInfo
 {
-    public string? Protocol;
-    public string? EncryptionAlgorithm;
+	public string? Protocol;
+	public string? EncryptionAlgorithm;
 }

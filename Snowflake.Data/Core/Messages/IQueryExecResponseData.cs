@@ -4,9 +4,9 @@
 
 namespace Tortuga.Data.Snowflake.Core.Messages;
 
-public interface IQueryExecResponseData
+interface IQueryExecResponseData
 {
-    string? queryId { get; }
+	string? queryId { get; }
 
-    string? sqlState { get; }
+	string? sqlState { get; }
 }

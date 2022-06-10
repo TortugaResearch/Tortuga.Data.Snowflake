@@ -6,8 +6,8 @@ using Newtonsoft.Json;
 
 namespace Tortuga.Data.Snowflake.Core.Messages;
 
-internal class RenewSessionResponse : BaseRestResponse
+class RenewSessionResponse : BaseRestResponse
 {
-    [JsonProperty(PropertyName = "data")]
-    internal RenewSessionResponseData? data { get; set; }
+	[JsonProperty(PropertyName = "data")]
+	internal RenewSessionResponseData? data { get; set; }
 }

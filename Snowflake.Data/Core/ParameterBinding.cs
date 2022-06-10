@@ -4,15 +4,15 @@
 
 namespace Tortuga.Data.Snowflake.Core;
 
-public class BindingDTO
+class BindingDTO
 {
-    public BindingDTO(string type, object? value)
-    {
-        this.type = type;
-        this.value = value;
-    }
+	public BindingDTO(string type, object? value)
+	{
+		this.type = type;
+		this.value = value;
+	}
 
-    public string type { get; set; }
+	public string type { get; set; }
 
-    public object? value { get; set; }
+	public object? value { get; set; }
 }

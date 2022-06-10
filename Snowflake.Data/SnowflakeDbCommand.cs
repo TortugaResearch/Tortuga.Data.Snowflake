@@ -104,7 +104,7 @@ public class SnowflakeDbCommand : DbCommand
 
 	public override int ExecuteNonQuery()
 	{
-		SFBaseResultSet resultSet = ExecuteInternal();
+		var resultSet = ExecuteInternal();
 		return resultSet.CalculateUpdateCount();
 	}
 
@@ -119,7 +119,7 @@ public class SnowflakeDbCommand : DbCommand
 
 	public override object ExecuteScalar()
 	{
-		SFBaseResultSet resultSet = ExecuteInternal();
+		var resultSet = ExecuteInternal();
 
 		if (resultSet.Next())
 			return resultSet.GetValue(0);

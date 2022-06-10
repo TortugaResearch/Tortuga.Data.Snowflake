@@ -6,8 +6,8 @@ using Newtonsoft.Json;
 
 namespace Tortuga.Data.Snowflake.Core.Messages;
 
-internal class CloseResponse : BaseRestResponse
+class CloseResponse : BaseRestResponse
 {
-    [JsonProperty(PropertyName = "data")]
-    internal object? data { get; set; }
+	[JsonProperty(PropertyName = "data")]
+	internal object? data { get; set; }
 }

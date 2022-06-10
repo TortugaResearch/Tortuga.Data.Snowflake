@@ -6,17 +6,17 @@ using Newtonsoft.Json;
 
 namespace Tortuga.Data.Snowflake.Core.Messages;
 
-internal class SessionInfo
+class SessionInfo
 {
-    [JsonProperty(PropertyName = "databaseName")]
-    internal string? databaseName { get; set; }
+	[JsonProperty(PropertyName = "databaseName")]
+	internal string? databaseName { get; set; }
 
-    [JsonProperty(PropertyName = "schemaName")]
-    internal string? schemaName { get; set; }
+	[JsonProperty(PropertyName = "schemaName")]
+	internal string? schemaName { get; set; }
 
-    [JsonProperty(PropertyName = "warehouseName")]
-    internal string? warehouseName { get; set; }
+	[JsonProperty(PropertyName = "warehouseName")]
+	internal string? warehouseName { get; set; }
 
-    [JsonProperty(PropertyName = "roleName")]
-    internal string? roleName { get; set; }
+	[JsonProperty(PropertyName = "roleName")]
+	internal string? roleName { get; set; }
 }

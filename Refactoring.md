@@ -1686,3 +1686,7 @@ string loginTimeOut5sec = $"{ConnectionString};connection_timeout={timeoutSec}";
 ## Round 33 - Nullable Reference Types
 
 Now that all of the classes have been update to be null aware, the project can be marked with ``. This in turn means that `#nullable enable` can be removed from all of the individual files.
+
+## Round 34 - Class Visibility
+
+All classes, interfaces, enums, etc. in the `Core` namespace are changed from public to internal. None of these are meant to be accessed directly by users of the library.

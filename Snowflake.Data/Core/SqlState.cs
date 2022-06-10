@@ -4,7 +4,7 @@
 
 namespace Tortuga.Data.Snowflake.Core;
 
-public class SqlState
+class SqlState
 {
-    public const string WARNING = "01000";
+	public const string WARNING = "01000";
 }

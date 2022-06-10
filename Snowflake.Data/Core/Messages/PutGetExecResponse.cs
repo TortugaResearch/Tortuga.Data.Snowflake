@@ -4,7 +4,7 @@
 
 namespace Tortuga.Data.Snowflake.Core.Messages;
 
-internal class PutGetExecResponse : BaseQueryExecResponse<PutGetResponseData>
+class PutGetExecResponse : BaseQueryExecResponse<PutGetResponseData>
 {
-    // Defined for easy usage/access
+	// Defined for easy usage/access
 }

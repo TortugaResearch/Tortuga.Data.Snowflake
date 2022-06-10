@@ -6,14 +6,14 @@ using Newtonsoft.Json;
 
 namespace Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
 
-internal class ExecResponseChunk
+class ExecResponseChunk
 {
-    [JsonProperty(PropertyName = "url")]
-    internal string? url { get; set; }
+	[JsonProperty(PropertyName = "url")]
+	internal string? url { get; set; }
 
-    [JsonProperty(PropertyName = "rowCount")]
-    internal int rowCount { get; set; }
+	[JsonProperty(PropertyName = "rowCount")]
+	internal int rowCount { get; set; }
 
-    [JsonProperty(PropertyName = "uncompressedSize")]
-    internal int uncompressedSize { get; set; }
+	[JsonProperty(PropertyName = "uncompressedSize")]
+	internal int uncompressedSize { get; set; }
 }

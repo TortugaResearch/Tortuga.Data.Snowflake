@@ -4,7 +4,7 @@
 
 namespace Tortuga.Data.Snowflake.Core.RequestProcessing;
 
-internal interface IMockRestRequester : IRestRequester
+interface IMockRestRequester : IRestRequester
 {
-    void setHttpClient(HttpClient httpClient);
+	void setHttpClient(HttpClient httpClient);
 }

@@ -4,9 +4,9 @@
 
 namespace Tortuga.Data.Snowflake.Core.Sessions;
 
-internal enum SFSessionParameter
+enum SFSessionParameter
 {
-    CLIENT_PREFETCH_THREADS = 0,
-    SERVICE_NAME = 1,
-    CLIENT_VALIDATE_DEFAULT_PARAMETERS = 2
+	CLIENT_PREFETCH_THREADS = 0,
+	SERVICE_NAME = 1,
+	CLIENT_VALIDATE_DEFAULT_PARAMETERS = 2
 }

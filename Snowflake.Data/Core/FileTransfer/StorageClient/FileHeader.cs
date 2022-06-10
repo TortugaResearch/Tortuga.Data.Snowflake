@@ -7,9 +7,9 @@ namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 /// <summary>
 /// The class containing file header information.
 /// </summary>
-internal class FileHeader
+class FileHeader
 {
-    public string? digest { get; set; }
-    public long contentLength { get; set; }
-    public SFEncryptionMetadata? encryptionMetadata { get; set; }
+	public string? digest { get; set; }
+	public long contentLength { get; set; }
+	public SFEncryptionMetadata? encryptionMetadata { get; set; }
 }

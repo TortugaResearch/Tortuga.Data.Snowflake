@@ -4,46 +4,46 @@
 
 namespace Tortuga.Data.Snowflake.Core.ResponseProcessing;
 
-public class FastStreamWrapper
+class FastStreamWrapper
 {
-    readonly Stream m_WrappedStream;
-    readonly byte[] m_Buffer = new byte[32768];
-    int m_Count = 0;
-    int m_Next = 0;
+	readonly Stream m_WrappedStream;
+	readonly byte[] m_Buffer = new byte[32768];
+	int m_Count = 0;
+	int m_Next = 0;
 
-    public FastStreamWrapper(Stream s)
-    {
-        m_WrappedStream = s;
-    }
+	public FastStreamWrapper(Stream s)
+	{
+		m_WrappedStream = s;
+	}
 
-    // Small method to encourage inlining
-    public int ReadByte()
-    {
-        // fast path first
-        if (m_Next < m_Count)
-            return m_Buffer[m_Next++];
-        else
-            return ReadByteSlow();
-    }
+	// Small method to encourage inlining
+	public int ReadByte()
+	{
+		// fast path first
+		if (m_Next < m_Count)
+			return m_Buffer[m_Next++];
+		else
+			return ReadByteSlow();
+	}
 
-    int ReadByteSlow()
-    {
-        // fast path first
-        if (m_Next < m_Count)
-            return m_Buffer[m_Next++];
+	int ReadByteSlow()
+	{
+		// fast path first
+		if (m_Next < m_Count)
+			return m_Buffer[m_Next++];
 
-        if (m_Count >= 0)
-        {
-            m_Next = 0;
-            m_Count = m_WrappedStream.Read(m_Buffer, 0, m_Buffer.Length);
-        }
+		if (m_Count >= 0)
+		{
+			m_Next = 0;
+			m_Count = m_WrappedStream.Read(m_Buffer, 0, m_Buffer.Length);
+		}
 
-        if (m_Count <= 0)
-        {
-            m_Count = -1;
-            return -1;
-        }
+		if (m_Count <= 0)
+		{
+			m_Count = -1;
+			return -1;
+		}
 
-        return m_Buffer[m_Next++];
-    }
+		return m_Buffer[m_Next++];
+	}
 }

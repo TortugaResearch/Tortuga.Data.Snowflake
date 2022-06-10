@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Tortuga.Data.Snowflake.Core.Messages;
 
-internal class AuthenticatorResponseData
+class AuthenticatorResponseData
 {
 	[JsonProperty(PropertyName = "tokenUrl", NullValueHandling = NullValueHandling.Ignore)]
 	internal string? tokenUrl { get; set; }
