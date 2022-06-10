@@ -3,7 +3,6 @@
  */
 
 
-using Tortuga.Data.Snowflake.Logger;
 
 namespace Tortuga.Data.Snowflake.Tests.Mock;
 

@@ -3,7 +3,6 @@
  */
 
 using NUnit.Framework;
-using Tortuga.Data.Snowflake.Logger;
 using Tortuga.Data.Snowflake.Tests.Mock;
 
 namespace Tortuga.Data.Snowflake.Tests;

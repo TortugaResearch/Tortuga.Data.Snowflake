@@ -1664,3 +1664,6 @@ public override int GetHashCode()
 * Standardize on C# names for types. For example, `int` vs `Int32`.
 
 
+## Round 30 - SecretDetector
+
+This internal class is only used by the tests, so it should be moved into the test project.
