@@ -157,19 +157,19 @@ class SFReusableChunkTest
 	public async Task TestParserError1()
 	{
 		// Unterminated escape sequence
-		string data = "[ [\"åäö\\";
-		byte[] bytes = Encoding.UTF8.GetBytes(data);
-		Stream stream = new MemoryStream(bytes);
-		IChunkParser parser = new ReusableChunkParser(stream);
+		var data = "[ [\"åäö\\";
+		var bytes = Encoding.UTF8.GetBytes(data);
+		var stream = new MemoryStream(bytes);
+		var parser = new ReusableChunkParser(stream);
 
-		ExecResponseChunk chunkInfo = new ExecResponseChunk()
+		var chunkInfo = new ExecResponseChunk()
 		{
 			url = "fake",
 			uncompressedSize = bytes.Length,
 			rowCount = 1
 		};
 
-		SFReusableChunk chunk = new SFReusableChunk(1);
+		var chunk = new SFReusableChunk(1);
 		chunk.Reset(chunkInfo, 0);
 
 		try
@@ -187,19 +187,19 @@ class SFReusableChunkTest
 	public async Task TestParserError2()
 	{
 		// Unterminated string
-		string data = "[ [\"åäö";
-		byte[] bytes = Encoding.UTF8.GetBytes(data);
-		Stream stream = new MemoryStream(bytes);
-		IChunkParser parser = new ReusableChunkParser(stream);
+		var data = "[ [\"åäö";
+		var bytes = Encoding.UTF8.GetBytes(data);
+		var stream = new MemoryStream(bytes);
+		var parser = new ReusableChunkParser(stream);
 
-		ExecResponseChunk chunkInfo = new ExecResponseChunk()
+		var chunkInfo = new ExecResponseChunk()
 		{
 			url = "fake",
 			uncompressedSize = bytes.Length,
 			rowCount = 1
 		};
 
-		SFReusableChunk chunk = new SFReusableChunk(1);
+		var chunk = new SFReusableChunk(1);
 		chunk.Reset(chunkInfo, 0);
 
 		try
@@ -217,23 +217,22 @@ class SFReusableChunkTest
 	public async Task TestParserWithTab()
 	{
 		// Unterminated string
-		string data = "[[\"abc\t\"]]";
-		byte[] bytes = Encoding.UTF8.GetBytes(data);
-		Stream stream = new MemoryStream(bytes);
-		IChunkParser parser = new ReusableChunkParser(stream);
+		var data = "[[\"abc\t\"]]";
+		var bytes = Encoding.UTF8.GetBytes(data);
+		var stream = new MemoryStream(bytes);
+		var parser = new ReusableChunkParser(stream);
 
-		ExecResponseChunk chunkInfo = new ExecResponseChunk()
+		var chunkInfo = new ExecResponseChunk()
 		{
 			url = "fake",
 			uncompressedSize = bytes.Length,
 			rowCount = 1
 		};
 
-		SFReusableChunk chunk = new SFReusableChunk(1);
+		var chunk = new SFReusableChunk(1);
 		chunk.Reset(chunkInfo, 0);
 
 		await parser.ParseChunkAsync(chunk);
-		string val = chunk.ExtractCell(0, 0).SafeToString();
 		Assert.AreEqual("abc\t", chunk.ExtractCell(0, 0).SafeToString());
 	}
 }

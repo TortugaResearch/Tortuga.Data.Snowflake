@@ -11,7 +11,7 @@ static class ResultSetUtil
 		if (resultSet.SFResultSetMetaData == null)
 			throw new ArgumentException($"resultSet.SFResultSetMetaData is null", nameof(resultSet));
 
-		var statementType = resultSet.SFResultSetMetaData.statementType;
+		var statementType = resultSet.SFResultSetMetaData.m_StatementType;
 
 		long updateCount = 0;
 		switch (statementType)
@@ -30,7 +30,7 @@ static class ResultSetUtil
 				break;
 
 			case SFStatementType.COPY:
-				var index = resultSet.SFResultSetMetaData.getColumnIndexByName("rows_loaded");
+				var index = resultSet.SFResultSetMetaData.GetColumnIndexByName("rows_loaded");
 				if (index >= 0)
 				{
 					resultSet.Next();
@@ -40,7 +40,7 @@ static class ResultSetUtil
 				break;
 
 			case SFStatementType.COPY_UNLOAD:
-				var rowIndex = resultSet.SFResultSetMetaData.getColumnIndexByName("rows_unloaded");
+				var rowIndex = resultSet.SFResultSetMetaData.GetColumnIndexByName("rows_unloaded");
 				if (rowIndex >= 0)
 				{
 					resultSet.Next();

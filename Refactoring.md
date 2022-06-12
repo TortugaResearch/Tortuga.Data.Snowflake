@@ -1694,3 +1694,56 @@ All classes, interfaces, enums, etc. in the `Core` namespace are changed from pu
 ## Round 35 - Formatting
 
 Enable CodeMaid's Format on Save feature. Apply formatting to all files.
+
+## Round 36 - Compiler Messages
+
+Compiler messages are less significant than warnings. Often these are stylistic choices such as whether or not to use `var`. Occasionally, however, they do reflect a more serious issue. So it is best to clear them from time to time by either fixing the 'issue', suppressing the message, or reconfiguring the analyzer’s settings. In this project, those settings are stored in the `.editorconfig` file.
+
+The types of issues caught in this pass included…
+
+* Use `var` where possible.
+*  Use target typed `new` where possible
+* Mark fields as `readonly` where possible
+* Fix spelling errors
+* Use initializers
+* Capitalize methods correctly 
+* Capitalize properties correctly. (Use `JsonProperty` in cases where the class may be serialized, as serialization may be case sensitive.)
+* Fields that are never read
+* Methods that can be marked as `static`
+* Use `nameof(…)` when referring to parameter names
+* Replace string literals with char literals
+
+### Constants and Unreachable Code
+
+While adding `readonly`, it was noticed that ` INJECT_WAIT_IN_PUT` could instead be marked as a constant. Once that was done, the compiler was able to detect that a `Thread.Sleep` call could never actually occur. This demonstrates the advantage of being as strict as possible when using `readonly` and `const`.
+
+```csharp
+const int INJECT_WAIT_IN_PUT = 0;
+
+if (INJECT_WAIT_IN_PUT > 0)
+     Thread.Sleep(INJECT_WAIT_IN_PUT);
+```
+
+### Unused Fields and Parameters
+
+One of the messages indicated that the `magicBytes` field was read, so it could be removed. This in turn meant the matching constructor parameter can be removed.
+
+## Simplify Null Checks
+
+The `?.` syntax can be used to remove explicit null checks.
+
+```csharp
+return v == null ? null : v.ToString();
+return v?.ToString();
+```
+
+Pattern matching can also be used to remove a null check.
+
+```csharp
+var parameter = value as SnowflakeDbParameter;
+return parameter != null && m_ParameterList.Contains(parameter);
+
+return value is SnowflakeDbParameter parameter && m_ParameterList.Contains(parameter);
+```
+
+

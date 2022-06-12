@@ -21,9 +21,9 @@ class SecretDetectorTest : SFBaseTest
 	public void BasicMasking(string text)
 	{
 		mask = SecretDetector.MaskSecrets(text);
-		Assert.IsFalse(mask.isMasked);
-		Assert.AreEqual(text, mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsFalse(mask.IsMasked);
+		Assert.AreEqual(text, mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 	}
 
 	[Test]
@@ -48,17 +48,17 @@ class SecretDetectorTest : SFBaseTest
 	public void TestExceptionInMasking()
 	{
 		mask = MockSecretDetector.MaskSecrets("This string will raise an exception");
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual("Test exception", mask.maskedText);
-		Assert.AreEqual("Test exception", mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual("Test exception", mask.MaskedText);
+		Assert.AreEqual("Test exception", mask.ErrStr);
 	}
 
 	public void BasicMasking(string text, string expectedText)
 	{
 		mask = SecretDetector.MaskSecrets(text);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(expectedText, mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual(expectedText, mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 	}
 
 	[Test]
@@ -217,7 +217,7 @@ class SecretDetectorTest : SFBaseTest
 	[Test]
 	public void TestMaskToken()
 	{
-		string longToken = "_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" +
+		var longToken = "_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" +
 			 "KyJH9DS=nFzzWnfZKGV+C7GopWCGD4Lj" +
 			 "OLLFZKOE26LXHDt3pTi4iI1qwKuSpf/F" +
 			 "mClCMBSissVsU3Ei590FP0lPQQhcSGcD" +
@@ -227,96 +227,96 @@ class SecretDetectorTest : SFBaseTest
 			 "FoloNIkBPXCwFTv+1RVUHgVA2g8A9Lw5" +
 			 "XdJYuI8vhg=f0bKSq7AhQ2Bh";
 
-		string tokenStrWithPrefix = "Token =" + longToken;
+		var tokenStrWithPrefix = "Token =" + longToken;
 		mask = SecretDetector.MaskSecrets(tokenStrWithPrefix);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(@"Token =****", mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual(@"Token =****", mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 
-		string idTokenStrWithPrefix = "idToken : " + longToken;
+		var idTokenStrWithPrefix = "idToken : " + longToken;
 		mask = SecretDetector.MaskSecrets(idTokenStrWithPrefix);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(@"idToken : ****", mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual(@"idToken : ****", mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 
-		string sessionTokenStrWithPrefix = "sessionToken : " + longToken;
+		var sessionTokenStrWithPrefix = "sessionToken : " + longToken;
 		mask = SecretDetector.MaskSecrets(sessionTokenStrWithPrefix);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(@"sessionToken : ****", mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual(@"sessionToken : ****", mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 
-		string masterTokenStrWithPrefix = "masterToken : " + longToken;
+		var masterTokenStrWithPrefix = "masterToken : " + longToken;
 		mask = SecretDetector.MaskSecrets(masterTokenStrWithPrefix);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(@"masterToken : ****", mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual(@"masterToken : ****", mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 
-		string assertionStrWithPrefix = "assertion content: " + longToken;
+		var assertionStrWithPrefix = "assertion content: " + longToken;
 		mask = SecretDetector.MaskSecrets(assertionStrWithPrefix);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(@"assertion content: ****", mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual(@"assertion content: ****", mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 
-		string snowFlakeAuthToken = "Authorization: Snowflake Token=\"ver:1-hint:92019676298218-ETMsDgAAAXswwgJhABRBRVMvQ0JDL1BLQ1M1UGFkZGluZwEAABAAEF1tbNM3myWX6A9sNSK6rpIAAACA6StojDJS4q1Vi3ID+dtFEucCEvGMOte0eapK+reb39O6hTHYxLfOgSGsbvbM5grJ4dYdNJjrzDf1r07tID4I2RJJRYjS4/DWBJn98Untd3xeNnXE1/45HgvwKVHlmZQLVwfWAxI7ifl2MVDwJlcXBufLZoVMYhUd4np121d7zFwAFGQzKyzUYQwI3M9Nqja9syHgaotG\"";
+		var snowFlakeAuthToken = "Authorization: Snowflake Token=\"ver:1-hint:92019676298218-ETMsDgAAAXswwgJhABRBRVMvQ0JDL1BLQ1M1UGFkZGluZwEAABAAEF1tbNM3myWX6A9sNSK6rpIAAACA6StojDJS4q1Vi3ID+dtFEucCEvGMOte0eapK+reb39O6hTHYxLfOgSGsbvbM5grJ4dYdNJjrzDf1r07tID4I2RJJRYjS4/DWBJn98Untd3xeNnXE1/45HgvwKVHlmZQLVwfWAxI7ifl2MVDwJlcXBufLZoVMYhUd4np121d7zFwAFGQzKyzUYQwI3M9Nqja9syHgaotG\"";
 		mask = SecretDetector.MaskSecrets(snowFlakeAuthToken);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(@"Authorization: Snowflake Token=""****""", mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual(@"Authorization: Snowflake Token=""****""", mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 	}
 
 	[Test]
 	public void TestTokenFalsePositive()
 	{
-		string falsePositiveToken = "2020-04-30 23:06:04,069 - MainThread auth.py:397" +
+		var falsePositiveToken = "2020-04-30 23:06:04,069 - MainThread auth.py:397" +
 			" - write_temporary_credential() - DEBUG - no ID " +
 			"token is given when try to store temporary credential";
 
 		mask = SecretDetector.MaskSecrets(falsePositiveToken);
-		Assert.IsFalse(mask.isMasked);
-		Assert.AreEqual(falsePositiveToken, mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsFalse(mask.IsMasked);
+		Assert.AreEqual(falsePositiveToken, mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 	}
 
 	[Test]
 	public void TestPasswords()
 	{
-		string randomPassword = "Fh[+2J~AcqeqW%?";
+		var randomPassword = "Fh[+2J~AcqeqW%?";
 
-		string randomPasswordWithPrefix = "password:" + randomPassword;
+		var randomPasswordWithPrefix = "password:" + randomPassword;
 		mask = SecretDetector.MaskSecrets(randomPasswordWithPrefix);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(@"password:****", mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual(@"password:****", mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 
-		string randomPasswordCaps = "PASSWORD:" + randomPassword;
+		var randomPasswordCaps = "PASSWORD:" + randomPassword;
 		mask = SecretDetector.MaskSecrets(randomPasswordCaps);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(@"PASSWORD:****", mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual(@"PASSWORD:****", mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 
-		string randomPasswordMixCase = "PassWorD:" + randomPassword;
+		var randomPasswordMixCase = "PassWorD:" + randomPassword;
 		mask = SecretDetector.MaskSecrets(randomPasswordMixCase);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(@"PassWorD:****", mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual(@"PassWorD:****", mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 
-		string randomPasswordEqualSign = "password = " + randomPassword;
+		var randomPasswordEqualSign = "password = " + randomPassword;
 		mask = SecretDetector.MaskSecrets(randomPasswordEqualSign);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(@"password = ****", mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual(@"password = ****", mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 
-		string randomPwdWithPrefix = "pwd:" + randomPassword;
+		var randomPwdWithPrefix = "pwd:" + randomPassword;
 		mask = SecretDetector.MaskSecrets(randomPwdWithPrefix);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(@"pwd:****", mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual(@"pwd:****", mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 	}
 
 	[Test]
 	public void TestTokenPassword()
 	{
-		string longToken = "_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" +
+		var longToken = "_Y1ZNETTn5/qfUWj3Jedby7gipDzQs=U" +
 			 "KyJH9DS=nFzzWnfZKGV+C7GopWCGD4Lj" +
 			 "OLLFZKOE26LXHDt3pTi4iI1qwKuSpf/F" +
 			 "mClCMBSissVsU3Ei590FP0lPQQhcSGcD" +
@@ -326,97 +326,59 @@ class SecretDetectorTest : SFBaseTest
 			 "FoloNIkBPXCwFTv+1RVUHgVA2g8A9Lw5" +
 			 "XdJYuI8vhg=f0bKSq7AhQ2Bh";
 
-		string longToken2 = "ktL57KJemuq4-M+Q0pdRjCIMcf1mzcr" +
+		var longToken2 = "ktL57KJemuq4-M+Q0pdRjCIMcf1mzcr" +
 			  "MwKteDS5DRE/Pb+5MzvWjDH7LFPV5b_" +
 			  "/tX/yoLG3b4TuC6Q5qNzsARPPn_zs/j" +
 			  "BbDOEg1-IfPpdsbwX6ETeEnhxkHIL4H" +
 			  "sP-V";
 
-		string randomPwd = "Fh[+2J~AcqeqW%?";
-		string randomPwd2 = randomPwd + "vdkav13";
+		var randomPwd = "Fh[+2J~AcqeqW%?";
+		var randomPwd2 = randomPwd + "vdkav13";
 
-		string testStringWithPrefix = "token=" + longToken +
-					   " random giberish " +
-					   "password:" + randomPwd;
+		var testStringWithPrefix = $"token={longToken} random giberish password:{randomPwd}";
 		mask = SecretDetector.MaskSecrets(testStringWithPrefix);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(
-			"token=****" +
-			" random giberish " +
-			"password:****",
-			mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual("token=**** random giberish password:****", mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 
 		// order reversed
-		testStringWithPrefix = "password:" + randomPwd +
-		   " random giberish " +
-		   "token=" + longToken;
+		testStringWithPrefix = $"password:{randomPwd} random giberish token={longToken}";
 		mask = SecretDetector.MaskSecrets(testStringWithPrefix);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(
-			"password:****" +
-			" random giberish " +
-			"token=****",
-			mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual("password:**** random giberish token=****", mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 
 		// multiple tokens and password
-		testStringWithPrefix = "token=" + longToken +
-			" random giberish " +
-			"password:" + randomPwd +
-			" random giberish " +
-			"idToken:" + longToken2;
+		testStringWithPrefix = $"token={longToken} random giberish password:{randomPwd} random giberish idToken:{longToken2}";
 		mask = SecretDetector.MaskSecrets(testStringWithPrefix);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(
-			"token=****" +
-			" random giberish " +
-			"password:****" +
-			" random giberish " +
-			"idToken:****",
-			mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual("token=**** random giberish password:**** random giberish idToken:****", mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 
 		// two passwords
-		testStringWithPrefix = "password=" + randomPwd +
-			" random giberish " +
-			"pwd:" + randomPwd2;
+		testStringWithPrefix = $"password={randomPwd} random giberish pwd:{randomPwd2}";
 		mask = SecretDetector.MaskSecrets(testStringWithPrefix);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(
-			"password=****" +
-			" random giberish " +
-			"pwd:****",
-			mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual("password=**** random giberish pwd:****", mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 
 		// multiple passwords
-		testStringWithPrefix = "password=" + randomPwd +
-			" random giberish " +
-			"password=" + randomPwd2 +
-			" random giberish " +
-			"password=" + randomPwd;
+		testStringWithPrefix = $"password={randomPwd} random giberish password={randomPwd2} random giberish password={randomPwd}";
 		mask = SecretDetector.MaskSecrets(testStringWithPrefix);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(
-			"password=****" +
-			" random giberish " +
-			"password=****" +
-			" random giberish " +
-			"password=****",
-			mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual("password=**** random giberish password=**** random giberish password=****", mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 	}
 
 	[Test]
 	public void TestCustomPattern()
 	{
-		string[] regex = new string[2]
+		var regex = new string[2]
 		{
 			@"(testCustomPattern\s*:\s*""([a-z]{8,})"")",
 			@"(testCustomPattern\s*:\s*""([0-9]{8,})"")"
 		};
-		string[] masks = new string[2]
+		var masks = new string[2]
 		{
 			"maskCustomPattern1",
 			"maskCustomPattern2"
@@ -425,61 +387,61 @@ class SecretDetectorTest : SFBaseTest
 		SecretDetector.SetCustomPatterns(regex, masks);
 
 		// Mask custom pattern
-		string testString = "testCustomPattern: \"abcdefghijklmnop\"";
+		var testString = "testCustomPattern: \"abcdefghijklmnop\"";
 		mask = SecretDetector.MaskSecrets(testString);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(masks[0], mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual(masks[0], mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 
 		testString = "testCustomPattern: \"1234567890\"";
 		mask = SecretDetector.MaskSecrets(testString);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(masks[1], mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual(masks[1], mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 
 		// Mask password and custom pattern
 		testString = "password: abcdefghijklmnop testCustomPattern: \"abcdefghijklmnop\"";
 		mask = SecretDetector.MaskSecrets(testString);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual("password: **** " + masks[0], mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual("password: **** " + masks[0], mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 
 		testString = "password: abcdefghijklmnop testCustomPattern: \"1234567890\"";
 		mask = SecretDetector.MaskSecrets(testString);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual("password: **** " + masks[1], mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual("password: **** " + masks[1], mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 	}
 
 	[Test]
 	public void TestCustomPatternClear()
 	{
-		string[] regex = new string[1] { @"(testCustomPattern\s*:\s*""([a-z]{8,})"")" };
-		string[] masks = new string[1] { "maskCustomPattern1" };
+		var regex = new string[1] { @"(testCustomPattern\s*:\s*""([a-z]{8,})"")" };
+		var masks = new string[1] { "maskCustomPattern1" };
 
 		SecretDetector.SetCustomPatterns(regex, masks);
 
 		// Mask custom pattern
-		string testString = "testCustomPattern: \"abcdefghijklmnop\"";
+		var testString = "testCustomPattern: \"abcdefghijklmnop\"";
 		mask = SecretDetector.MaskSecrets(testString);
-		Assert.IsTrue(mask.isMasked);
-		Assert.AreEqual(masks[0], mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsTrue(mask.IsMasked);
+		Assert.AreEqual(masks[0], mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 
 		// Clear custom patterns
 		SecretDetector.ClearCustomPatterns();
 		testString = "testCustomPattern: \"abcdefghijklmnop\"";
 		mask = SecretDetector.MaskSecrets(testString);
-		Assert.IsFalse(mask.isMasked);
-		Assert.AreEqual(testString, mask.maskedText);
-		Assert.IsNull(mask.errStr);
+		Assert.IsFalse(mask.IsMasked);
+		Assert.AreEqual(testString, mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 	}
 
 	[Test]
 	public void TestCustomPatternUnequalCount()
 	{
-		string[] regex = new string[0];
-		string[] masks = new string[1] { "maskCustomPattern1" };
+		var regex = Array.Empty<string>();
+		var masks = new string[1] { "maskCustomPattern1" };
 
 		// Masks count is greater than regex
 		try
@@ -519,9 +481,9 @@ class SecretDetectorTest : SFBaseTest
 			"\"newClientForUpgrade\" : null," +
 			"\"sessionId\" : 1234";
 
-		string randomHttpResponseWithPrefix = "Post response: " + randomHttpResponse;
+		var randomHttpResponseWithPrefix = "Post response: " + randomHttpResponse;
 		mask = SecretDetector.MaskSecrets(randomHttpResponseWithPrefix);
-		Assert.IsTrue(mask.isMasked);
+		Assert.IsTrue(mask.IsMasked);
 		Assert.AreEqual(
 			"Post response: " +
 			"\"data\" : {" +
@@ -531,7 +493,7 @@ class SecretDetectorTest : SFBaseTest
 			"\"healthCheckInterval\" : 12," +
 			"\"newClientForUpgrade\" : null," +
 			"\"sessionId\" : 1234",
-			mask.maskedText);
-		Assert.IsNull(mask.errStr);
+			mask.MaskedText);
+		Assert.IsNull(mask.ErrStr);
 	}
 }

@@ -14,80 +14,80 @@ namespace Tortuga.Data.Snowflake.Core.FileTransfer;
 class SFFileMetadata
 {
 	/// Original source file path (full path)
-	public string? srcFilePath { set; get; }
+	public string? SrcFilePath { set; get; }
 
 	/// Original path or temp path when compression is enabled (full path)
-	public string? realSrcFilePath { set; get; }
+	public string? RealSrcFilePath { set; get; }
 
 	/// Original source file name
-	public string? srcFileName { set; get; }
+	public string? SrcFileName { set; get; }
 
 	/// Original source file size
-	public long srcFileSize { set; get; }
+	public long SrcFileSize { set; get; }
 
 	/// Temp file if compressed is required, otherwise same as src file
-	public string? srcFileToUpload { set; get; }
+	public string? SrcFileToUpload { set; get; }
 
 	/// Temp file size if compressed is required, otherwise same as src file
-	public long srcFileToUploadSize { set; get; }
+	public long SrcFileToUploadSize { set; get; }
 
 	/// Destination file name (no path)
-	public string? destFileName { set; get; }
+	public string? DestFileName { set; get; }
 
 	/// Destination file size
-	public long destFileSize { set; get; }
+	public long DestFileSize { set; get; }
 
 	/// Absolute path to the destination (including the filename. /tmp/small_test_file.csv.gz)
-	public string? destPath { set; get; }
+	public string? DestPath { set; get; }
 
 	/// Absolute path to the local location of the downloaded file
-	public string? localLocation { set; get; }
+	public string? LocalLocation { set; get; }
 
 	/// Destination file size
-	public long uploadSize { set; get; }
+	public long UploadSize { set; get; }
 
 	/// Stage info of the file
-	public PutGetStageInfo? stageInfo { get; set; }
+	public PutGetStageInfo? StageInfo { get; set; }
 
 	/// True if require gzip compression
-	public bool requireCompress { set; get; }
+	public bool RequireCompress { set; get; }
 
 	/// Upload and overwrite if file exists
-	public bool overwrite { set; get; }
+	public bool Overwrite { set; get; }
 
 	/// Encryption material
-	public PutGetEncryptionMaterial? encryptionMaterial { set; get; }
+	public PutGetEncryptionMaterial? EncryptionMaterial { set; get; }
 
 	/// Encryption metadata
-	public SFEncryptionMetadata? encryptionMetadata { set; get; }
+	public SFEncryptionMetadata? EncryptionMetadata { set; get; }
 
 	/// File message digest (after compression if required)
-	public string? sha256Digest { set; get; }
+	public string? Sha256Digest { set; get; }
 
 	/// Source compression
-	public SFFileCompressionType sourceCompression { set; get; }
+	public SFFileCompressionType SourceCompression { set; get; }
 
 	/// Target compression
-	public SFFileCompressionType targetCompression { set; get; }
+	public SFFileCompressionType TargetCompression { set; get; }
 
 	/// Pre-signed url.
-	public string? presignedUrl { set; get; }
+	public string? PresignedUrl { set; get; }
 
 	/// The number of chunks to download in parallel.
-	public int parallel { get; set; }
+	public int Parallel { get; set; }
 
 	/// The outcome of the transfer.
-	public string? resultStatus { get; set; }
+	public string? ResultStatus { get; set; }
 
 	/// The temporary directory to store files to upload/download.
-	public string? tmpDir { get; set; }
+	public string? TmpDir { get; set; }
 
 	/// Storage client to use for uploading/downloading files.
-	public ISFRemoteStorageClient? client { get; set; }
+	public ISFRemoteStorageClient? Client { get; set; }
 
 	/// Last error returned from client request.
-	public Exception? lastError { get; set; }
+	public Exception? LastError { get; set; }
 
 	/// Last specified max concurrency to use.
-	public int lastMaxConcurrency { get; set; }
+	public int LastMaxConcurrency { get; set; }
 }

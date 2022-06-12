@@ -11,7 +11,7 @@ namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
 class IdpTokenRestRequest : RestRequest
 {
-	static MediaTypeWithQualityHeaderValue jsonHeader = new MediaTypeWithQualityHeaderValue("application/json");
+	static readonly MediaTypeWithQualityHeaderValue s_JsonHeader = new("application/json");
 
 	internal IdpTokenRequest? JsonBody { get; set; }
 
@@ -20,8 +20,8 @@ class IdpTokenRestRequest : RestRequest
 		if (Url == null)
 			throw new InvalidOperationException($"{nameof(Url)} is null");
 
-		HttpRequestMessage message = newMessage(method, Url);
-		message.Headers.Accept.Add(jsonHeader);
+		var message = NewMessage(method, Url);
+		message.Headers.Accept.Add(s_JsonHeader);
 
 		var json = JsonConvert.SerializeObject(JsonBody, JsonUtils.JsonSettings);
 		message.Content = new StringContent(json, Encoding.UTF8, "application/json");

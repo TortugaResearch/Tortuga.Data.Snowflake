@@ -45,10 +45,10 @@ class SFGCSClient : ISFRemoteStorageClient
 	/// <param name="stageInfo">The command stage info.</param>
 	public SFGCSClient(PutGetStageInfo stageInfo)
 	{
-		if (stageInfo.stageCredentials == null)
+		if (stageInfo.StageCredentials == null)
 			throw new ArgumentException("stageInfo.stageCredentials is null", nameof(stageInfo));
 
-		if (stageInfo.stageCredentials.TryGetValue(GCS_ACCESS_TOKEN, out string? accessToken))
+		if (stageInfo.StageCredentials.TryGetValue(GCS_ACCESS_TOKEN, out var accessToken))
 		{
 			var creds = GoogleCredential.FromAccessToken(accessToken, null);
 			m_StorageClient = Google.Cloud.Storage.V1.StorageClient.Create(creds);
@@ -74,7 +74,7 @@ class SFGCSClient : ISFRemoteStorageClient
 		var gcsPath = "";
 
 		// Split stage location as bucket name and path
-		if (stageLocation.Contains("/"))
+		if (stageLocation.Contains('/'))
 		{
 			containerName = stageLocation.Substring(0, stageLocation.IndexOf('/'));
 
@@ -88,8 +88,8 @@ class SFGCSClient : ISFRemoteStorageClient
 
 		return new RemoteLocation()
 		{
-			bucket = containerName,
-			key = gcsPath
+			Bucket = containerName,
+			Key = gcsPath
 		};
 	}
 
@@ -101,23 +101,23 @@ class SFGCSClient : ISFRemoteStorageClient
 	public FileHeader? GetFileHeader(SFFileMetadata fileMetadata)
 	{
 		// If file already exists, return
-		if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
-			fileMetadata.resultStatus == ResultStatus.DOWNLOADED.ToString())
+		if (fileMetadata.ResultStatus == ResultStatus.UPLOADED.ToString() ||
+			fileMetadata.ResultStatus == ResultStatus.DOWNLOADED.ToString())
 		{
 			return new FileHeader
 			{
-				digest = fileMetadata.sha256Digest,
-				contentLength = fileMetadata.srcFileSize,
-				encryptionMetadata = fileMetadata.encryptionMetadata
+				digest = fileMetadata.Sha256Digest,
+				contentLength = fileMetadata.SrcFileSize,
+				encryptionMetadata = fileMetadata.EncryptionMetadata
 			};
 		}
 
-		if (fileMetadata.presignedUrl != null)
+		if (fileMetadata.PresignedUrl != null)
 		{
 			// Issue GET request to GCS file URL
 			try
 			{
-				var response = m_HttpClient.GetStream(fileMetadata.presignedUrl);
+				var response = m_HttpClient.GetStream(fileMetadata.PresignedUrl);
 			}
 			catch (HttpRequestException err)
 			{
@@ -125,7 +125,7 @@ class SFGCSClient : ISFRemoteStorageClient
 					err.Message.Contains("403") ||
 					err.Message.Contains("404"))
 				{
-					fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
+					fileMetadata.ResultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
 					return new FileHeader();
 				}
 			}
@@ -138,12 +138,12 @@ class SFGCSClient : ISFRemoteStorageClient
 			{
 				// Issue a GET response
 				m_HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer ${accessToken}");
-				var response = m_HttpClient.Get(fileMetadata.presignedUrl);
+				var response = m_HttpClient.Get(fileMetadata.PresignedUrl);
 
 				var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
 				var contentLength = response.Headers.GetValues("content-length");
 
-				fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+				fileMetadata.ResultStatus = ResultStatus.UPLOADED.ToString();
 
 				return new FileHeader
 				{
@@ -154,24 +154,24 @@ class SFGCSClient : ISFRemoteStorageClient
 			catch (HttpRequestException err)
 			{
 				// If file doesn't exist, GET request fails
-				fileMetadata.lastError = err;
+				fileMetadata.LastError = err;
 				if (err.Message.Contains("401"))
 				{
-					fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+					fileMetadata.ResultStatus = ResultStatus.RENEW_TOKEN.ToString();
 				}
 				else if (err.Message.Contains("403") ||
 					err.Message.Contains("500") ||
 					err.Message.Contains("503"))
 				{
-					fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+					fileMetadata.ResultStatus = ResultStatus.NEED_RETRY.ToString();
 				}
 				else if (err.Message.Contains("404"))
 				{
-					fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
+					fileMetadata.ResultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
 				}
 				else
 				{
-					fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
+					fileMetadata.ResultStatus = ResultStatus.ERROR.ToString();
 				}
 			}
 		}
@@ -183,11 +183,11 @@ class SFGCSClient : ISFRemoteStorageClient
 	/// </summary>
 	/// <param name="stageLocation">The GCS file metadata.</param>
 	/// <param name="fileName">The GCS file metadata.</param>
-	static string generateFileURL(string stageLocation, string fileName)
+	static string GenerateFileURL(string stageLocation, string fileName)
 	{
 		var gcsLocation = ExtractBucketNameAndPath(stageLocation);
-		var fullFilePath = gcsLocation.key + fileName;
-		var link = "https://storage.googleapis.com/" + gcsLocation.bucket + "/" + fullFilePath;
+		var fullFilePath = gcsLocation.Key + fileName;
+		var link = "https://storage.googleapis.com/" + gcsLocation.Bucket + "/" + fullFilePath;
 		return link;
 	}
 
@@ -222,7 +222,7 @@ class SFGCSClient : ISFRemoteStorageClient
 		});
 
 		// Set the meta header values
-		m_HttpClient.DefaultRequestHeaders.Add("x-goog-meta-sfc-digest", fileMetadata.sha256Digest);
+		m_HttpClient.DefaultRequestHeaders.Add("x-goog-meta-sfc-digest", fileMetadata.Sha256Digest);
 		m_HttpClient.DefaultRequestHeaders.Add("x-goog-meta-matdesc", encryptionMetadata.matDesc);
 		m_HttpClient.DefaultRequestHeaders.Add("x-goog-meta-encryptiondata", encryptionData);
 
@@ -234,30 +234,30 @@ class SFGCSClient : ISFRemoteStorageClient
 		try
 		{
 			// Issue the POST/PUT request
-			var response = m_HttpClient.Put(fileMetadata.presignedUrl, strm);
+			var response = m_HttpClient.Put(fileMetadata.PresignedUrl, strm);
 		}
 		catch (HttpRequestException err)
 		{
-			fileMetadata.lastError = err;
+			fileMetadata.LastError = err;
 			if (err.Message.Contains("400") && GCS_ACCESS_TOKEN != null)
 			{
-				fileMetadata.resultStatus = ResultStatus.RENEW_PRESIGNED_URL.ToString();
+				fileMetadata.ResultStatus = ResultStatus.RENEW_PRESIGNED_URL.ToString();
 			}
 			else if (err.Message.Contains("401"))
 			{
-				fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+				fileMetadata.ResultStatus = ResultStatus.RENEW_TOKEN.ToString();
 			}
 			else if (err.Message.Contains("403") ||
 				err.Message.Contains("500") ||
 				err.Message.Contains("503"))
 			{
-				fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+				fileMetadata.ResultStatus = ResultStatus.NEED_RETRY.ToString();
 			}
 			return;
 		}
 
-		fileMetadata.destFileSize = fileMetadata.uploadSize;
-		fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+		fileMetadata.DestFileSize = fileMetadata.UploadSize;
+		fileMetadata.ResultStatus = ResultStatus.UPLOADED.ToString();
 	}
 
 	/// <summary>
@@ -271,7 +271,7 @@ class SFGCSClient : ISFRemoteStorageClient
 		try
 		{
 			// Issue the POST/PUT request
-			var response = m_HttpClient.Get(fileMetadata.presignedUrl);
+			var response = m_HttpClient.Get(fileMetadata.PresignedUrl);
 
 			// Write to file
 			using (var fileStream = File.Create(fullDstPath))
@@ -307,35 +307,35 @@ class SFGCSClient : ISFRemoteStorageClient
 					key = encryptionData["WrappedContentKey"]["EncryptedKey"],
 					matDesc = matDesc
 				};
-				fileMetadata.encryptionMetadata = encryptionMetadata;
+				fileMetadata.EncryptionMetadata = encryptionMetadata;
 			}
 
 			if (headers.TryGetValues(GCS_METADATA_SFC_DIGEST, out var values3))
 			{
-				fileMetadata.sha256Digest = values3.First();
+				fileMetadata.Sha256Digest = values3.First();
 			}
 
 			if (headers.TryGetValues(GCS_FILE_HEADER_CONTENT_LENGTH, out var values4))
 			{
-				fileMetadata.srcFileSize = (long)Convert.ToDouble(values4.First());
+				fileMetadata.SrcFileSize = (long)Convert.ToDouble(values4.First());
 			}
 		}
 		catch (HttpRequestException err)
 		{
-			fileMetadata.lastError = err;
+			fileMetadata.LastError = err;
 			if (err.Message.Contains("401"))
 			{
-				fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+				fileMetadata.ResultStatus = ResultStatus.RENEW_TOKEN.ToString();
 			}
 			else if (err.Message.Contains("403") ||
 				err.Message.Contains("500") ||
 				err.Message.Contains("503"))
 			{
-				fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+				fileMetadata.ResultStatus = ResultStatus.NEED_RETRY.ToString();
 			}
 			return;
 		}
 
-		fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
+		fileMetadata.ResultStatus = ResultStatus.DOWNLOADED.ToString();
 	}
 }

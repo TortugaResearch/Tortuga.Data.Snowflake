@@ -8,7 +8,7 @@ namespace Tortuga.Data.Snowflake;
 
 public sealed class SnowflakeDbFactory : DbProviderFactory
 {
-	public static readonly SnowflakeDbFactory Instance = new SnowflakeDbFactory();
+	public static readonly SnowflakeDbFactory Instance = new();
 
 	/// <summary>
 	/// Returns a strongly typed <see cref="DbCommand"/> instance.

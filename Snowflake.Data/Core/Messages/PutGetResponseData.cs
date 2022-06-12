@@ -9,57 +9,57 @@ namespace Tortuga.Data.Snowflake.Core.Messages;
 class PutGetResponseData : IQueryExecResponseData
 {
 	[JsonProperty(PropertyName = "command", NullValueHandling = NullValueHandling.Ignore)]
-	internal string? command { get; set; }
+	internal string? Command { get; set; }
 
 	[JsonProperty(PropertyName = "localLocation", NullValueHandling = NullValueHandling.Ignore)]
-	internal string? localLocation { get; set; }
+	internal string? LocalLocation { get; set; }
 
 	[JsonProperty(PropertyName = "src_locations", NullValueHandling = NullValueHandling.Ignore)]
-	internal List<string>? src_locations { get; set; }
+	internal List<string>? SourceLocations { get; set; }
 
 	[JsonProperty(PropertyName = "parallel", NullValueHandling = NullValueHandling.Ignore)]
-	internal int parallel { get; set; }
+	internal int Parallel { get; set; }
 
 	[JsonProperty(PropertyName = "threshold", NullValueHandling = NullValueHandling.Ignore)]
-	internal int threshold { get; set; }
+	internal int Threshold { get; set; }
 
 	[JsonProperty(PropertyName = "autoCompress", NullValueHandling = NullValueHandling.Ignore)]
-	internal bool autoCompress { get; set; }
+	internal bool AutoCompress { get; set; }
 
 	[JsonProperty(PropertyName = "overwrite", NullValueHandling = NullValueHandling.Ignore)]
-	internal bool overwrite { get; set; }
+	internal bool Overwrite { get; set; }
 
 	[JsonProperty(PropertyName = "sourceCompression", NullValueHandling = NullValueHandling.Ignore)]
-	internal string? sourceCompression { get; set; }
+	internal string? SourceCompression { get; set; }
 
 	[JsonProperty(PropertyName = "stageInfo", NullValueHandling = NullValueHandling.Ignore)]
-	internal PutGetStageInfo? stageInfo { get; set; }
+	internal PutGetStageInfo? StageInfo { get; set; }
 
 	[JsonProperty(PropertyName = "encryptionMaterial", NullValueHandling = NullValueHandling.Ignore)]
 	[JsonConverter(typeof(SingleOrArrayConverter<PutGetEncryptionMaterial>))]
-	internal List<PutGetEncryptionMaterial>? encryptionMaterial { get; set; }
+	internal List<PutGetEncryptionMaterial>? EncryptionMaterial { get; set; }
 
 	[JsonProperty(PropertyName = "queryId", NullValueHandling = NullValueHandling.Ignore)]
-	public string? queryId { get; set; }
+	public string? QueryId { get; set; }
 
 	[JsonProperty(PropertyName = "sqlState", NullValueHandling = NullValueHandling.Ignore)]
-	public string? sqlState { get; set; }
+	public string? SqlState { get; set; }
 
 	[JsonProperty(PropertyName = "presignedUrl", NullValueHandling = NullValueHandling.Ignore)]
-	internal string? presignedUrl { get; set; }
+	internal string? PresignedUrl { get; set; }
 
 	[JsonProperty(PropertyName = "presignedUrls", NullValueHandling = NullValueHandling.Ignore)]
-	internal List<string>? presignedUrls { get; set; }
+	internal List<string>? PresignedUrls { get; set; }
 
 	[JsonProperty(PropertyName = "rowtype", NullValueHandling = NullValueHandling.Ignore)]
-	internal List<ExecResponseRowType>? rowType { get; set; }
+	internal List<ExecResponseRowType>? RowType { get; set; }
 
 	[JsonProperty(PropertyName = "rowset", NullValueHandling = NullValueHandling.Ignore)]
-	internal string?[,]? rowSet { get; set; }
+	internal string?[,]? RowSet { get; set; }
 
 	[JsonProperty(PropertyName = "parameters", NullValueHandling = NullValueHandling.Ignore)]
-	internal List<NameValueParameter>? parameters { get; set; }
+	internal List<NameValueParameter>? Parameters { get; set; }
 
 	[JsonProperty(PropertyName = "statementTypeId", NullValueHandling = NullValueHandling.Ignore)]
-	internal long statementTypeId { get; set; }
+	internal long StatementTypeId { get; set; }
 }

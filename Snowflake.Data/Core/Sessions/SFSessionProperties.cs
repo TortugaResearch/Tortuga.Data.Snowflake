@@ -20,7 +20,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 
 		try
 		{
-			SFSessionProperties prop = (SFSessionProperties)obj;
+			var prop = (SFSessionProperties)obj;
 #pragma warning disable CS8605 // Unboxing a possibly null value. Workaround for nullability bug in .NET Core 3.1
 			foreach (SFSessionProperty sessionProperty in Enum.GetValues(typeof(SFSessionProperty)))
 			{
@@ -44,15 +44,15 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 
 	internal static SFSessionProperties parseConnectionString(string connectionString, SecureString? password)
 	{
-		SFSessionProperties properties = new SFSessionProperties();
+		var properties = new SFSessionProperties();
 
-		string[] propertyEntry = connectionString.Split(';');
+		var propertyEntry = connectionString.Split(';');
 
-		foreach (string keyVal in propertyEntry)
+		foreach (var keyVal in propertyEntry)
 		{
 			if (keyVal.Length > 0)
 			{
-				string[] tokens = keyVal.Split(new string[] { "=" }, StringSplitOptions.None);
+				var tokens = keyVal.Split(new string[] { "=" }, StringSplitOptions.None);
 				if (tokens.Length != 2)
 				{
 					// https://docs.microsoft.com/en-us/dotnet/api/system.data.oledb.oledbconnection.connectionstring
@@ -60,8 +60,8 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 					// by another equal sign. For example, in the hypothetical connection
 					// string "key==word=value" :
 					// the keyword is "key=word" and the value is "value".
-					int currentIndex = 0;
-					int singleEqualIndex = -1;
+					var currentIndex = 0;
+					var singleEqualIndex = -1;
 					while (currentIndex <= keyVal.Length)
 					{
 						currentIndex = keyVal.IndexOf("=", currentIndex);
@@ -98,9 +98,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 						// Split the key/value at the right index and deduplicate '=='
 						tokens = new string[2];
 						tokens[0] = keyVal.Substring(0, singleEqualIndex).Replace("==", "=");
-						tokens[1] = keyVal.Substring(
-							singleEqualIndex + 1,
-							keyVal.Length - (singleEqualIndex + 1)).Replace("==", "="); ;
+						tokens[1] = keyVal.Substring(singleEqualIndex + 1, keyVal.Length - (singleEqualIndex + 1)).Replace("==", "="); ;
 					}
 					else
 					{
@@ -113,8 +111,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 
 				try
 				{
-					SFSessionProperty p = (SFSessionProperty)Enum.Parse(
-						typeof(SFSessionProperty), tokens[0].ToUpper());
+					var p = (SFSessionProperty)Enum.Parse(typeof(SFSessionProperty), tokens[0].ToUpper());
 					properties.Add(p, tokens[1]);
 				}
 				catch (ArgumentException)

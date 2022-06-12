@@ -49,33 +49,33 @@ class ExternalBrowserAuthenticator : Authenticator
 	/// <see cref="IAuthenticator"/>
 	async public override Task LoginAsync(CancellationToken cancellationToken)
 	{
-		int localPort = GetRandomUnusedPort();
+		var localPort = GetRandomUnusedPort();
 		using (var httpListener = GetHttpListener(localPort))
 		{
 			httpListener.Start();
 
 			var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
 			var authenticatorRestResponse =
-				await Session.m_RestRequester.PostAsync<AuthenticatorResponse>(
+				await Session.RestRequester.PostAsync<AuthenticatorResponse>(
 					authenticatorRestRequest,
 					cancellationToken
 				).ConfigureAwait(false);
 			authenticatorRestResponse.FilterFailedResponse();
 
-			var idpUrl = authenticatorRestResponse.data!.ssoUrl!;
-			_proofKey = authenticatorRestResponse.data.proofKey;
+			var idpUrl = authenticatorRestResponse.Data!.ssoUrl!;
+			_proofKey = authenticatorRestResponse.Data.proofKey;
 
 			StartBrowser(idpUrl);
 
 			var context = await httpListener.GetContextAsync().ConfigureAwait(false);
 			var request = context.Request;
 			_samlResponseToken = ValidateAndExtractToken(request);
-			HttpListenerResponse response = context.Response;
+			var response = context.Response;
 			try
 			{
 				using (var output = response.OutputStream)
 				{
-					await output.WriteAsync(s_successResponse, 0, s_successResponse.Length).ConfigureAwait(false);
+					await output.WriteAsync(s_successResponse, 0, s_successResponse.Length, cancellationToken).ConfigureAwait(false);
 				}
 			}
 			catch
@@ -92,25 +92,25 @@ class ExternalBrowserAuthenticator : Authenticator
 	/// <see cref="IAuthenticator"/>
 	public override void Login()
 	{
-		int localPort = GetRandomUnusedPort();
+		var localPort = GetRandomUnusedPort();
 		using (var httpListener = GetHttpListener(localPort))
 		{
 			httpListener.Prefixes.Add("http://localhost:" + localPort + "/");
 			httpListener.Start();
 
 			var authenticatorRestRequest = BuildAuthenticatorRestRequest(localPort);
-			var authenticatorRestResponse = Session.m_RestRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
+			var authenticatorRestResponse = Session.RestRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
 			authenticatorRestResponse.FilterFailedResponse();
 
-			var idpUrl = authenticatorRestResponse.data!.ssoUrl!;
-			_proofKey = authenticatorRestResponse.data.proofKey;
+			var idpUrl = authenticatorRestResponse.Data!.ssoUrl!;
+			_proofKey = authenticatorRestResponse.Data.proofKey;
 
 			StartBrowser(idpUrl);
 
 			var context = httpListener.GetContext();
 			var request = context.Request;
 			_samlResponseToken = ValidateAndExtractToken(request);
-			HttpListenerResponse response = context.Response;
+			var response = context.Response;
 			try
 			{
 				using (var output = response.OutputStream)
@@ -198,8 +198,6 @@ class ExternalBrowserAuthenticator : Authenticator
 			Authenticator = AUTH_NAME,
 			BrowserModeRedirectPort = port.ToString(),
 		};
-
-		int connectionTimeoutSec = int.Parse(Session.m_Properties[SFSessionProperty.CONNECTION_TIMEOUT]);
 
 		return Session.BuildTimeoutRestRequest(fedUrl, new AuthenticatorRequest() { Data = data });
 	}

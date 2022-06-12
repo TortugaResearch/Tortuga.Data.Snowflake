@@ -8,14 +8,14 @@ class SFEnvironment
 	{
 		ClientEnv = new LoginRequestClientEnv()
 		{
-			application = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
-			osVersion = Environment.OSVersion.VersionString,
+			Application = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
+			OSVersion = Environment.OSVersion.VersionString,
 #if NETFRAMEWORK
-			netRuntime = "NETFramework",
-			netVersion = "4.7.2",
+			NetRuntime = "NETFramework",
+			NetVersion = "4.7.2",
 #else
-                netRuntime = "NETCore",
-                netVersion ="2.0",
+                NetRuntime = "NETCore",
+                NetVersion ="2.0",
 #endif
 		};
 

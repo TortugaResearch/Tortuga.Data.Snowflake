@@ -9,5 +9,5 @@ namespace Tortuga.Data.Snowflake.Core.Messages;
 class RenewSessionResponse : BaseRestResponse
 {
 	[JsonProperty(PropertyName = "data")]
-	internal RenewSessionResponseData? data { get; set; }
+	internal RenewSessionResponseData? Data { get; set; }
 }

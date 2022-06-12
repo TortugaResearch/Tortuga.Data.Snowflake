@@ -1,13 +1,18 @@
-﻿namespace Tortuga.Data.Snowflake.Core.FileTransfer;
+﻿using Newtonsoft.Json;
+
+namespace Tortuga.Data.Snowflake.Core.FileTransfer;
 
 /// <summary>
 /// The encryption materials.
 /// </summary>
 class MaterialDescriptor
 {
-	public string? smkId { get; set; }
+	[JsonProperty(PropertyName = "smkId")]
+	public string? SmkId { get; set; }
 
-	public string? queryId { get; set; }
+	[JsonProperty(PropertyName = "queryId")]
+	public string? QueryId { get; set; }
 
-	public string? keySize { get; set; }
+	[JsonProperty(PropertyName = "keySize")]
+	public string? KeySize { get; set; }
 }

@@ -9,8 +9,8 @@ namespace Tortuga.Data.Snowflake.Core.Messages;
 class NameValueParameter
 {
 	[JsonProperty(PropertyName = "name")]
-	internal string? name { get; set; }
+	internal string? Name { get; set; }
 
 	[JsonProperty(PropertyName = "value")]
-	internal string? value { get; set; }
+	internal string? Value { get; set; }
 }

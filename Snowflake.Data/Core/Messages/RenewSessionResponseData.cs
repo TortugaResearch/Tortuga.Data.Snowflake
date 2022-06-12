@@ -9,17 +9,17 @@ namespace Tortuga.Data.Snowflake.Core.Messages;
 class RenewSessionResponseData
 {
 	[JsonProperty(PropertyName = "sessionToken", NullValueHandling = NullValueHandling.Ignore)]
-	internal string? sessionToken { get; set; }
+	internal string? SessionToken { get; set; }
 
 	[JsonProperty(PropertyName = "validityInSecondsST", NullValueHandling = NullValueHandling.Ignore)]
-	internal short sessionTokenValidityInSeconds { get; set; }
+	internal short SessionTokenValidityInSeconds { get; set; }
 
 	[JsonProperty(PropertyName = "masterToken", NullValueHandling = NullValueHandling.Ignore)]
-	internal string? masterToken { get; set; }
+	internal string? MasterToken { get; set; }
 
 	[JsonProperty(PropertyName = "validityInSecondsMT", NullValueHandling = NullValueHandling.Ignore)]
-	internal short masterTokenValidityInSeconds { get; set; }
+	internal short MasterTokenValidityInSeconds { get; set; }
 
 	[JsonProperty(PropertyName = "sessionId", NullValueHandling = NullValueHandling.Ignore)]
-	internal long sessionId { get; set; }
+	internal long SessionId { get; set; }
 }

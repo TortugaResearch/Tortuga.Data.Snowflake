@@ -39,18 +39,18 @@ class MockCloseSessionGone : IMockRestRequester
     public Task<T> PostAsync<T>(RestRequest postRequest, CancellationToken cancellationToken)
     {
         SFRestRequest sfRequest = (SFRestRequest)postRequest;
-        if (sfRequest.jsonBody is LoginRequest)
+        if (sfRequest.JsonBody is LoginRequest)
         {
             LoginResponse authnResponse = new LoginResponse
             {
-                data = new LoginResponseData()
+                Data = new LoginResponseData()
                 {
-                    token = "session_token",
-                    masterToken = "master_token",
-                    authResponseSessionInfo = new SessionInfo(),
-                    nameValueParameter = new List<NameValueParameter>()
+                    Token = "session_token",
+                    MasterToken = "master_token",
+                    AuthResponseSessionInfo = new SessionInfo(),
+                    NameValueParameter = new List<NameValueParameter>()
                 },
-                success = true
+                Success = true
             };
 
             // login request return success
@@ -58,10 +58,10 @@ class MockCloseSessionGone : IMockRestRequester
         }
         CloseResponse closeResponse = new CloseResponse
         {
-            message = "Session no longer exists.  New login required to access the service.",
-            data = null,
-            code = SESSION_GONE,
-            success = false
+            Message = "Session no longer exists.  New login required to access the service.",
+            Data = null,
+            Code = SESSION_GONE,
+            Success = false
         };
         return Task.FromResult<T>((T)(object)closeResponse);
     }

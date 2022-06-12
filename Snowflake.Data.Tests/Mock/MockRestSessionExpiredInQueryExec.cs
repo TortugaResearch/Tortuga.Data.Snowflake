@@ -22,40 +22,40 @@ class MockRestSessionExpiredInQueryExec : IMockRestRequester
     public Task<T> PostAsync<T>(RestRequest request, CancellationToken cancellationToken)
     {
         SFRestRequest sfRequest = (SFRestRequest)request;
-        if (sfRequest.jsonBody is LoginRequest)
+        if (sfRequest.JsonBody is LoginRequest)
         {
             LoginResponse authnResponse = new LoginResponse
             {
-                data = new LoginResponseData()
+                Data = new LoginResponseData()
                 {
-                    token = "session_token",
-                    masterToken = "master_token",
-                    authResponseSessionInfo = new SessionInfo(),
-                    nameValueParameter = new List<NameValueParameter>()
+                    Token = "session_token",
+                    MasterToken = "master_token",
+                    AuthResponseSessionInfo = new SessionInfo(),
+                    NameValueParameter = new List<NameValueParameter>()
                 },
-                success = true
+                Success = true
             };
 
             // login request return success
             return Task.FromResult<T>((T)(object)authnResponse);
         }
-        else if (sfRequest.jsonBody is QueryRequest)
+        else if (sfRequest.JsonBody is QueryRequest)
         {
             QueryExecResponse queryExecResponse = new QueryExecResponse
             {
-                success = false,
-                code = QUERY_IN_EXEC_CODE
+                Success = false,
+                Code = QUERY_IN_EXEC_CODE
             };
             return Task.FromResult<T>((T)(object)queryExecResponse);
         }
-        else if (sfRequest.jsonBody is RenewSessionRequest)
+        else if (sfRequest.JsonBody is RenewSessionRequest)
         {
             return Task.FromResult<T>((T)(object)new RenewSessionResponse
             {
-                success = true,
-                data = new RenewSessionResponseData()
+                Success = true,
+                Data = new RenewSessionResponseData()
                 {
-                    sessionToken = "new_session_token"
+                    SessionToken = "new_session_token"
                 }
             });
         }
@@ -83,8 +83,8 @@ class MockRestSessionExpiredInQueryExec : IMockRestRequester
             getResultCallCount++;
             QueryExecResponse queryExecResponse = new QueryExecResponse
             {
-                success = false,
-                code = QUERY_IN_EXEC_CODE
+                Success = false,
+                Code = QUERY_IN_EXEC_CODE
             };
             return Task.FromResult<T>((T)(object)queryExecResponse);
         }
@@ -93,30 +93,30 @@ class MockRestSessionExpiredInQueryExec : IMockRestRequester
             getResultCallCount++;
             QueryExecResponse queryExecResponse = new QueryExecResponse
             {
-                success = false,
-                code = SESSION_EXPIRED_CODE
+                Success = false,
+                Code = SESSION_EXPIRED_CODE
             };
             return Task.FromResult<T>((T)(object)queryExecResponse);
         }
         else if (getResultCallCount == 2 &&
-            sfRequest.authorizationToken.Equals("Snowflake Token=\"new_session_token\""))
+            sfRequest.AuthorizationToken.Equals("Snowflake Token=\"new_session_token\""))
         {
             getResultCallCount++;
             QueryExecResponse queryExecResponse = new QueryExecResponse
             {
-                success = true,
-                data = new QueryExecResponseData
+                Success = true,
+                Data = new QueryExecResponseData
                 {
-                    rowSet = new string[,] { { "1" } },
-                    rowType = new List<ExecResponseRowType>()
+                    RowSet = new string[,] { { "1" } },
+                    RowType = new List<ExecResponseRowType>()
                             {
                                 new ExecResponseRowType
                                 {
-                                    name = "colone",
-                                    type = "FIXED"
+                                    Name = "colone",
+                                    Type = "FIXED"
                                 }
                             },
-                    parameters = new List<NameValueParameter>()
+                    Parameters = new List<NameValueParameter>()
                 }
             };
             return Task.FromResult<T>((T)(object)queryExecResponse);
@@ -125,8 +125,8 @@ class MockRestSessionExpiredInQueryExec : IMockRestRequester
         {
             QueryExecResponse queryExecResponse = new QueryExecResponse
             {
-                success = false,
-                code = 1
+                Success = false,
+                Code = 1
             };
             return Task.FromResult<T>((T)(object)queryExecResponse);
         }

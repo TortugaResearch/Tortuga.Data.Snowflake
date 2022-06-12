@@ -6,6 +6,6 @@ static class UTF8BufferExtension
 	// Calling ToString() on a null object causes an exception
 	public static string? SafeToString(this UTF8Buffer? v)
 	{
-		return v == null ? null : v.ToString();
+		return v?.ToString();
 	}
 }

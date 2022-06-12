@@ -37,8 +37,8 @@ class SFRemoteStorageUtil
 	/// <returns>A new instance of the storage client.</returns>
 	internal static ISFRemoteStorageClient? GetRemoteStorageType(PutGetResponseData response)
 	{
-		var stageInfo = response.stageInfo;
-		var stageLocationType = stageInfo!.locationType;
+		var stageInfo = response.StageInfo;
+		var stageLocationType = stageInfo!.LocationType;
 
 		// Create the storage type based on location type
 		if (stageLocationType == LOCAL_FS)
@@ -47,7 +47,7 @@ class SFRemoteStorageUtil
 		}
 		else if (stageLocationType == S3_FS)
 		{
-			return new SFS3Client(stageInfo, DEFAULT_MAX_RETRY, response.parallel);
+			return new SFS3Client(stageInfo, DEFAULT_MAX_RETRY, response.Parallel);
 		}
 		else if (stageLocationType == AZURE_FS)
 		{
@@ -70,20 +70,20 @@ class SFRemoteStorageUtil
 	/// <param name="fileMetadata">The file metadata of the file to upload</param>
 	internal static void UploadOneFile(SFFileMetadata fileMetadata)
 	{
-		if (fileMetadata.realSrcFilePath == null)
+		if (fileMetadata.RealSrcFilePath == null)
 			throw new ArgumentException("fileMetadata.realSrcFilePath is null", nameof(fileMetadata));
-		if (fileMetadata.client == null)
+		if (fileMetadata.Client == null)
 			throw new ArgumentException("fileMetadata.client is null", nameof(fileMetadata));
 
 		var encryptionMetadata = new SFEncryptionMetadata();
-		var fileBytes = File.ReadAllBytes(fileMetadata.realSrcFilePath);
+		var fileBytes = File.ReadAllBytes(fileMetadata.RealSrcFilePath);
 
 		// If encryption enabled, encrypt the file to be uploaded
-		if (fileMetadata.encryptionMaterial != null)
+		if (fileMetadata.EncryptionMaterial != null)
 		{
 			fileBytes = EncryptionProvider.EncryptFile(
-				fileMetadata.realSrcFilePath,
-				fileMetadata.encryptionMaterial,
+				fileMetadata.RealSrcFilePath,
+				fileMetadata.EncryptionMaterial,
 				encryptionMetadata);
 		}
 
@@ -93,49 +93,49 @@ class SFRemoteStorageUtil
 		// Attempt to upload and retry if fails
 		for (var retry = 0; retry < maxRetry; retry++)
 		{
-			var client = fileMetadata.client;
+			var client = fileMetadata.Client;
 
-			if (!fileMetadata.overwrite)
+			if (!fileMetadata.Overwrite)
 			{
 				// Get the file metadata
 				var fileHeader = client.GetFileHeader(fileMetadata);
 				if (fileHeader != null &&
-					fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString())
+					fileMetadata.ResultStatus == ResultStatus.UPLOADED.ToString())
 				{
 					// File already exists
-					fileMetadata.destFileSize = 0;
-					fileMetadata.resultStatus = ResultStatus.SKIPPED.ToString();
+					fileMetadata.DestFileSize = 0;
+					fileMetadata.ResultStatus = ResultStatus.SKIPPED.ToString();
 					return;
 				}
 			}
 
-			if (fileMetadata.overwrite || fileMetadata.resultStatus == ResultStatus.NOT_FOUND_FILE.ToString())
+			if (fileMetadata.Overwrite || fileMetadata.ResultStatus == ResultStatus.NOT_FOUND_FILE.ToString())
 			{
 				// Upload the file
 				client.UploadFile(fileMetadata, fileBytes, encryptionMetadata);
 			}
 
-			if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
-				fileMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString() ||
-				fileMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+			if (fileMetadata.ResultStatus == ResultStatus.UPLOADED.ToString() ||
+				fileMetadata.ResultStatus == ResultStatus.RENEW_TOKEN.ToString() ||
+				fileMetadata.ResultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
 			{
 				return;
 			}
-			else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY_WITH_LOWER_CONCURRENCY.ToString())
+			else if (fileMetadata.ResultStatus == ResultStatus.NEED_RETRY_WITH_LOWER_CONCURRENCY.ToString())
 			{
-				lastErr = fileMetadata.lastError;
+				lastErr = fileMetadata.LastError;
 
-				var maxConcurrency = fileMetadata.parallel - Convert.ToInt32(retry * fileMetadata.parallel / maxRetry);
+				var maxConcurrency = fileMetadata.Parallel - Convert.ToInt32(retry * fileMetadata.Parallel / maxRetry);
 				maxConcurrency = Math.Max(DEFAULT_CONCURRENCY, maxConcurrency);
-				fileMetadata.lastMaxConcurrency = maxConcurrency;
+				fileMetadata.LastMaxConcurrency = maxConcurrency;
 
 				// Failed to upload file, retrying
 				var sleepingTime = Math.Min(Math.Pow(2, retry), 16);
 				Thread.Sleep((int)sleepingTime);
 			}
-			else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY.ToString())
+			else if (fileMetadata.ResultStatus == ResultStatus.NEED_RETRY.ToString())
 			{
-				lastErr = fileMetadata.lastError;
+				lastErr = fileMetadata.LastError;
 
 				// Failed to upload file, retrying
 				var sleepingTime = Math.Min(Math.Pow(2, retry), 16);
@@ -148,7 +148,7 @@ class SFRemoteStorageUtil
 		}
 		else
 		{
-			var msg = "Unknown Error in uploading a file: " + fileMetadata.destFileName;
+			var msg = "Unknown Error in uploading a file: " + fileMetadata.DestFileName;
 			throw new Exception(msg);
 		}
 	}
@@ -159,7 +159,7 @@ class SFRemoteStorageUtil
 	/// <param name="fileMetadata">The file metadata of the file to upload</param>
 	internal static void UploadOneFileWithRetry(SFFileMetadata fileMetadata)
 	{
-		if (fileMetadata.client == null)
+		if (fileMetadata.Client == null)
 			throw new ArgumentException("fileMetadata.client is null", nameof(fileMetadata));
 
 		var breakFlag = false;
@@ -168,14 +168,14 @@ class SFRemoteStorageUtil
 		{
 			// Upload the file
 			UploadOneFile(fileMetadata);
-			if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString())
+			if (fileMetadata.ResultStatus == ResultStatus.UPLOADED.ToString())
 			{
 				for (var count2 = 0; count2 < 10; count2++)
 				{
 					// Get the file metadata
-					fileMetadata.client.GetFileHeader(fileMetadata);
+					fileMetadata.Client.GetFileHeader(fileMetadata);
 					// Check result status if file already exists
-					if (fileMetadata.resultStatus == ResultStatus.NOT_FOUND_FILE.ToString())
+					if (fileMetadata.ResultStatus == ResultStatus.NOT_FOUND_FILE.ToString())
 					{
 						// Wait 1 second
 						Thread.Sleep(1000);
@@ -185,8 +185,8 @@ class SFRemoteStorageUtil
 				}
 			}
 			// Break out of loop if file is successfully uploaded or already exists
-			if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
-				fileMetadata.resultStatus == ResultStatus.SKIPPED.ToString())
+			if (fileMetadata.ResultStatus == ResultStatus.UPLOADED.ToString() ||
+				fileMetadata.ResultStatus == ResultStatus.SKIPPED.ToString())
 			{
 				breakFlag = true;
 				break;
@@ -195,7 +195,7 @@ class SFRemoteStorageUtil
 		if (!breakFlag)
 		{
 			// Could not upload a file even after retry
-			fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
+			fileMetadata.ResultStatus = ResultStatus.ERROR.ToString();
 		}
 		return;
 	}
@@ -207,27 +207,27 @@ class SFRemoteStorageUtil
 	/// <param name="fileMetadata">The file metadata of the file to download</param>
 	internal static void DownloadOneFile(SFFileMetadata fileMetadata)
 	{
-		if (fileMetadata.localLocation == null)
+		if (fileMetadata.LocalLocation == null)
 			throw new ArgumentException("fileMetadata.localLocation is null", nameof(fileMetadata));
-		if (fileMetadata.destFileName == null)
+		if (fileMetadata.DestFileName == null)
 			throw new ArgumentException("fileMetadata.destFileName is null", nameof(fileMetadata));
-		if (fileMetadata.client == null)
+		if (fileMetadata.Client == null)
 			throw new ArgumentException("fileMetadata.client is null", nameof(fileMetadata));
 
-		var fullDstPath = Path.Combine(fileMetadata.localLocation, fileMetadata.destFileName);
+		var fullDstPath = Path.Combine(fileMetadata.LocalLocation, fileMetadata.DestFileName);
 
 		// Check local location exists
-		Directory.CreateDirectory(fileMetadata.localLocation);
+		Directory.CreateDirectory(fileMetadata.LocalLocation);
 
-		var client = fileMetadata.client;
+		var client = fileMetadata.Client;
 		var fileHeader = client.GetFileHeader(fileMetadata);
 
 		if (fileHeader != null)
 		{
-			fileMetadata.srcFileSize = fileHeader.contentLength;
+			fileMetadata.SrcFileSize = fileHeader.contentLength;
 		}
 
-		var maxConcurrency = fileMetadata.parallel;
+		var maxConcurrency = fileMetadata.Parallel;
 		Exception? lastErr = null;
 		var maxRetry = DEFAULT_MAX_RETRY;
 
@@ -236,9 +236,9 @@ class SFRemoteStorageUtil
 			// Download the file
 			client.DownloadFile(fileMetadata, fullDstPath, maxConcurrency);
 
-			if (fileMetadata.resultStatus == ResultStatus.DOWNLOADED.ToString())
+			if (fileMetadata.ResultStatus == ResultStatus.DOWNLOADED.ToString())
 			{
-				if (fileMetadata.encryptionMaterial != null)
+				if (fileMetadata.EncryptionMaterial != null)
 				{
 					/**
 					  * For storage utils that do not have the privilege of
@@ -247,17 +247,17 @@ class SFRemoteStorageUtil
 					  * be updated with all the metadata that we need and
 					  * then we can call getFileHeader to get just that and also
 					  * preserve the idea of getting metadata in the first place.
-					  * One example of this is the utils that use presigned url
+					  * One example of this is the utils that use pre-signed url
 					  * for upload / download and not the storage client library.
 					  **/
-					if (fileMetadata.presignedUrl != null)
+					if (fileMetadata.PresignedUrl != null)
 					{
 						fileHeader = client.GetFileHeader(fileMetadata);
 					}
 
 					var tmpDstName = EncryptionProvider.DecryptFile(
 					  fullDstPath,
-					  fileMetadata.encryptionMaterial,
+					  fileMetadata.EncryptionMaterial,
 					  fileHeader!.encryptionMetadata!  //If encryptionMaterial is not null, then we must have seen a file header.
 					  );
 
@@ -271,28 +271,28 @@ class SFRemoteStorageUtil
 				}
 
 				var fileInfo = new FileInfo(fullDstPath);
-				fileMetadata.destFileSize = fileInfo.Length;
+				fileMetadata.DestFileSize = fileInfo.Length;
 				return;
 			}
-			else if (fileMetadata.resultStatus == ResultStatus.RENEW_TOKEN.ToString() ||
-				fileMetadata.resultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
+			else if (fileMetadata.ResultStatus == ResultStatus.RENEW_TOKEN.ToString() ||
+				fileMetadata.ResultStatus == ResultStatus.RENEW_PRESIGNED_URL.ToString())
 			{
 				return;
 			}
-			else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY_WITH_LOWER_CONCURRENCY.ToString())
+			else if (fileMetadata.ResultStatus == ResultStatus.NEED_RETRY_WITH_LOWER_CONCURRENCY.ToString())
 			{
-				lastErr = fileMetadata.lastError;
+				lastErr = fileMetadata.LastError;
 				// Failed to download file, retrying with max concurrency
-				maxConcurrency = fileMetadata.parallel - (retry * fileMetadata.parallel / maxRetry);
+				maxConcurrency = fileMetadata.Parallel - (retry * fileMetadata.Parallel / maxRetry);
 				maxConcurrency = Math.Max(DEFAULT_CONCURRENCY, maxConcurrency);
-				fileMetadata.lastMaxConcurrency = maxConcurrency;
+				fileMetadata.LastMaxConcurrency = maxConcurrency;
 
 				var sleepingTime = Convert.ToInt32(Math.Min(Math.Pow(2, retry), 16));
 				Thread.Sleep(sleepingTime);
 			}
-			else if (fileMetadata.resultStatus == ResultStatus.NEED_RETRY.ToString())
+			else if (fileMetadata.ResultStatus == ResultStatus.NEED_RETRY.ToString())
 			{
-				lastErr = fileMetadata.lastError;
+				lastErr = fileMetadata.LastError;
 
 				var sleepingTime = Convert.ToInt32(Math.Min(Math.Pow(2, retry), 16));
 				Thread.Sleep(sleepingTime);
@@ -304,7 +304,7 @@ class SFRemoteStorageUtil
 		}
 		else
 		{
-			var msg = "Unknown Error in downloading a file: " + fileMetadata.destFileName;
+			var msg = "Unknown Error in downloading a file: " + fileMetadata.DestFileName;
 			throw new Exception(msg);
 		}
 	}

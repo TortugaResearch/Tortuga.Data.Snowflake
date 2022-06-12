@@ -9,29 +9,29 @@ namespace Tortuga.Data.Snowflake.Core;
 class PutGetStageInfo
 {
 	[JsonProperty(PropertyName = "locationType", NullValueHandling = NullValueHandling.Ignore)]
-	internal string? locationType { get; set; }
+	internal string? LocationType { get; set; }
 
 	[JsonProperty(PropertyName = "location", NullValueHandling = NullValueHandling.Ignore)]
-	internal string? location { get; set; }
+	internal string? Location { get; set; }
 
 	[JsonProperty(PropertyName = "path", NullValueHandling = NullValueHandling.Ignore)]
-	internal string? path { get; set; }
+	internal string? Path { get; set; }
 
 	[JsonProperty(PropertyName = "region", NullValueHandling = NullValueHandling.Ignore)]
-	internal string? region { get; set; }
+	internal string? Region { get; set; }
 
 	[JsonProperty(PropertyName = "storageAccount", NullValueHandling = NullValueHandling.Ignore)]
-	internal string? storageAccount { get; set; }
+	internal string? StorageAccount { get; set; }
 
 	[JsonProperty(PropertyName = "isClientSideEncrypted", NullValueHandling = NullValueHandling.Ignore)]
-	internal bool isClientSideEncrypted { get; set; }
+	internal bool IsClientSideEncrypted { get; set; }
 
 	[JsonProperty(PropertyName = "creds", NullValueHandling = NullValueHandling.Ignore)]
-	internal Dictionary<string, string>? stageCredentials { get; set; }
+	internal Dictionary<string, string>? StageCredentials { get; set; }
 
 	[JsonProperty(PropertyName = "presignedUrl", NullValueHandling = NullValueHandling.Ignore)]
-	internal string? presignedUrl { get; set; }
+	internal string? PresignedUrl { get; set; }
 
 	[JsonProperty(PropertyName = "endPoint", NullValueHandling = NullValueHandling.Ignore)]
-	internal string? endPoint { get; set; }
+	internal string? EndPoint { get; set; }
 }

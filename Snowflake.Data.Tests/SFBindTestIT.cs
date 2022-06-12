@@ -12,14 +12,14 @@ namespace Tortuga.Data.Snowflake.Tests;
 class SFBindTestIT : SFBaseTest
 {
 	[Test]
-	public void testArrayBind()
+	public void TestArrayBind()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			using (IDbCommand cmd = conn.CreateCommand())
+			using (var cmd = conn.CreateCommand())
 			{
 				cmd.CommandText = "create or replace table testArrayBind(cola integer, colb string)";
 				int count = cmd.ExecuteNonQuery();
@@ -52,9 +52,9 @@ class SFBindTestIT : SFBaseTest
 	}
 
 	[Test]
-	public void testBindNullValue()
+	public void TestBindNullValue()
 	{
-		using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
+		using (var dbConnection = new SnowflakeDbConnection())
 		{
 			dbConnection.ConnectionString = ConnectionString;
 			dbConnection.Open();
@@ -371,7 +371,7 @@ class SFBindTestIT : SFBaseTest
 	}
 
 	[Test]
-	public void testBindValueWithSFDataType()
+	public void TestBindValueWithSFDataType()
 	{
 		using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
 		{
@@ -388,7 +388,7 @@ class SFBindTestIT : SFBaseTest
 						{
 							if (!type.Equals(SFDataType.FIXED))
 							{
-								command.CommandText = $"create or replace table TEST_TBL (data {type.ToString()}, unsupportedType VARCHAR)";
+								command.CommandText = $"create or replace table TEST_TBL (data {type}, unsupportedType VARCHAR)";
 							}
 							else
 							{
@@ -506,7 +506,7 @@ class SFBindTestIT : SFBaseTest
 	}
 
 	[Test]
-	public void testParameterCollection()
+	public void TestParameterCollection()
 	{
 		using (IDbConnection conn = new SnowflakeDbConnection())
 		{

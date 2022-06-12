@@ -43,7 +43,7 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
 	public override void AddRange(Array values)
 	{
 		foreach (SnowflakeDbParameter? value in values)
-			m_ParameterList.Add(value ?? throw new ArgumentNullException(nameof(values), "The values array contains a null."));
+			m_ParameterList.Add(value ?? throw new ArgumentException("The values array contains a null.", nameof(values)));
 	}
 
 	public override void Clear() => m_ParameterList.Clear();
@@ -52,8 +52,7 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
 
 	public override bool Contains(object value)
 	{
-		var parameter = value as SnowflakeDbParameter;
-		return parameter != null && m_ParameterList.Contains(parameter);
+		return value is SnowflakeDbParameter parameter && m_ParameterList.Contains(parameter);
 	}
 
 	public override void CopyTo(Array array, int index)
@@ -75,8 +74,7 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
 
 	public override int IndexOf(object value)
 	{
-		var parameter = value as SnowflakeDbParameter;
-		return parameter == null ? -1 : m_ParameterList.IndexOf(parameter);
+		return value is not SnowflakeDbParameter parameter ? -1 : m_ParameterList.IndexOf(parameter);
 	}
 
 	public override void Insert(int index, object value) => m_ParameterList.Insert(index, (SnowflakeDbParameter)value);

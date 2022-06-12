@@ -25,14 +25,14 @@ public sealed class MockSynchronizationContext : SynchronizationContext
 
 	public static void SetupContext()
 	{
-		SynchronizationContext.SetSynchronizationContext(new MockSynchronizationContext());
+		SetSynchronizationContext(new MockSynchronizationContext());
 	}
 
 	public static void Verify()
 	{
-		MockSynchronizationContext ctx = (MockSynchronizationContext)SynchronizationContext.Current;
+		var ctx = (MockSynchronizationContext)Current;
 		Assert.Zero(ctx.callCount, "MockSynchronizationContext was called - this can cause deadlock. Make sure ConfigureAwait(false) is used in every await point in the library");
-		SynchronizationContext.SetSynchronizationContext(null);
+		SetSynchronizationContext(null);
 	}
 }
 
@@ -63,7 +63,9 @@ public sealed class DedicatedThreadSynchronisationContext : SynchronizationConte
 	/// <param name="state">The object passed to the delegate.</param>
 	public override void Post(SendOrPostCallback d, object state)
 	{
-		if (d == null) throw new ArgumentNullException("d");
+		if (d == null)
+			throw new ArgumentNullException(nameof(d));
+
 		m_queue.Add(new KeyValuePair<SendOrPostCallback, object>(d, state));
 	}
 
@@ -105,8 +107,7 @@ public sealed class DedicatedThreadSynchronisationContext : SynchronizationConte
 	}
 
 	/// <summary>The queue of work items.</summary>
-	private readonly BlockingCollection<KeyValuePair<SendOrPostCallback, object>> m_queue =
-		new BlockingCollection<KeyValuePair<SendOrPostCallback, object>>();
+	private readonly BlockingCollection<KeyValuePair<SendOrPostCallback, object>> m_queue = new();
 
 	private readonly Thread m_thread = null;
 

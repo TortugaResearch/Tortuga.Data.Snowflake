@@ -10,5 +10,5 @@ class BaseQueryExecResponse<T> : BaseRestResponse
 where T : IQueryExecResponseData
 {
 	[JsonProperty(PropertyName = "data")]
-	internal T? data { get; set; }
+	internal T? Data { get; set; }
 }

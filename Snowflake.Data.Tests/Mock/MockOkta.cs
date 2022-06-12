@@ -26,8 +26,7 @@ class MockOktaRestRequester : IMockRestRequester
 
 	public Task<HttpResponseMessage> GetAsync(RestRequest request, CancellationToken cancellationToken)
 	{
-		var response = new HttpResponseMessage(System.Net.HttpStatusCode.OK);
-		response.Content = ResponseContent;
+		var response = new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = ResponseContent };
 		return Task.FromResult(response);
 	}
 
@@ -43,8 +42,8 @@ class MockOktaRestRequester : IMockRestRequester
 			// authenticator
 			var authnResponse = new AuthenticatorResponse
 			{
-				success = true,
-				data = new AuthenticatorResponseData
+				Success = true,
+				Data = new AuthenticatorResponseData
 				{
 					tokenUrl = TokenUrl,
 					ssoUrl = SSOUrl,

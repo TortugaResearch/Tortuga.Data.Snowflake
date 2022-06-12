@@ -13,24 +13,22 @@ namespace Tortuga.Data.Snowflake.Tests;
 [TestFixture]
 class SFDbDataReaderIT : SFBaseTest
 {
-	static private readonly Random rand = new Random();
-
 	[Test]
-	public void testRecordsAffected()
+	public void TestRecordsAffected()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			IDbCommand cmd = conn.CreateCommand();
+			var cmd = conn.CreateCommand();
 			cmd.CommandText = "create or replace table testRecordsAffected(cola number)";
-			int count = cmd.ExecuteNonQuery();
+			var count = cmd.ExecuteNonQuery();
 			Assert.AreEqual(0, count);
 
-			string insertCommand = "insert into testRecordsAffected values (1),(1),(1)";
+			var insertCommand = "insert into testRecordsAffected values (1),(1),(1)";
 			cmd.CommandText = insertCommand;
-			IDataReader reader = cmd.ExecuteReader();
+			var reader = cmd.ExecuteReader();
 			Assert.AreEqual(3, reader.RecordsAffected);
 
 			// Reader's RecordsAffected should be available even if the reader is closed
@@ -48,23 +46,23 @@ class SFDbDataReaderIT : SFBaseTest
 	}
 
 	[Test]
-	public void testGetNumber()
+	public void TestGetNumber()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			IDbCommand cmd = conn.CreateCommand();
+			var cmd = conn.CreateCommand();
 			cmd.CommandText = "create or replace table testGetNumber(cola number)";
-			int count = cmd.ExecuteNonQuery();
+			var count = cmd.ExecuteNonQuery();
 			Assert.AreEqual(0, count);
 
-			int numInt = 10000;
-			long numLong = 1000000L;
-			short numShort = 10;
+			var numInt = 10000;
+			var numLong = 1000000L;
+			var numShort = 10;
 
-			string insertCommand = "insert into testgetnumber values (?),(?),(?)";
+			var insertCommand = "insert into testgetnumber values (?),(?),(?)";
 			cmd.CommandText = insertCommand;
 
 			var p1 = cmd.CreateParameter();
@@ -89,7 +87,7 @@ class SFDbDataReaderIT : SFBaseTest
 			Assert.AreEqual(3, count);
 
 			cmd.CommandText = "select * from testgetnumber";
-			IDataReader reader = cmd.ExecuteReader();
+			var reader = cmd.ExecuteReader();
 
 			Assert.IsTrue(reader.Read());
 			Assert.AreEqual(numInt, reader.GetInt32(0));
@@ -112,22 +110,22 @@ class SFDbDataReaderIT : SFBaseTest
 	}
 
 	[Test]
-	public void testGetFloat()
+	public void TestGetFloat()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			IDbCommand cmd = conn.CreateCommand();
+			var cmd = conn.CreateCommand();
 			cmd.CommandText = "create or replace table testGetDouble(cola double)";
-			int count = cmd.ExecuteNonQuery();
+			var count = cmd.ExecuteNonQuery();
 			Assert.AreEqual(0, count);
 
-			float numFloat = (float)1.23;
-			double numDouble = (double)1.2345678;
+			var numFloat = (float)1.23;
+			var numDouble = (double)1.2345678;
 
-			string insertCommand = "insert into testgetdouble values (?),(?)";
+			var insertCommand = "insert into testgetdouble values (?),(?)";
 			cmd.CommandText = insertCommand;
 
 			var p1 = cmd.CreateParameter();
@@ -146,7 +144,7 @@ class SFDbDataReaderIT : SFBaseTest
 			Assert.AreEqual(2, count);
 
 			cmd.CommandText = "select * from testgetdouble";
-			IDataReader reader = cmd.ExecuteReader();
+			var reader = cmd.ExecuteReader();
 
 			Assert.IsTrue(reader.Read());
 			Assert.AreEqual(numFloat, reader.GetFloat(0));
@@ -175,7 +173,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[TestCase("1900-09-03 00:00:00.0000000")]
 	public void TestGetDate(string inputTimeStr)
 	{
-		testGetDateAndOrTime(inputTimeStr, null, SFDataType.DATE);
+		TestGetDateAndOrTime(inputTimeStr, null, SFDataType.DATE);
 	}
 
 	[Test]
@@ -189,9 +187,9 @@ class SFDbDataReaderIT : SFBaseTest
 	[TestCase("1969-07-21 02:56:15.1234567", 1)]
 	[TestCase("1900-09-03 12:12:12.1212121", null)]
 	[TestCase("1900-09-03 12:12:12.1212121", 1)]
-	public void testGetTime(string inputTimeStr, int? precision)
+	public void TestGetTime(string inputTimeStr, int? precision)
 	{
-		testGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIME);
+		TestGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIME);
 	}
 
 	[Test]
@@ -209,37 +207,37 @@ class SFDbDataReaderIT : SFBaseTest
 	[TestCase("23:59:59.1234567")]
 	[TestCase("23:59:59.12345678")]
 	[TestCase("23:59:59.123456789")]
-	public void testGetTimeSpan(string inputTimeStr)
+	public void TestGetTimeSpan(string inputTimeStr)
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
 			// Insert data
-			int fractionalPartIndex = inputTimeStr.IndexOf('.');
+			var fractionalPartIndex = inputTimeStr.IndexOf('.');
 			var precision = fractionalPartIndex > 0 ? inputTimeStr.Length - (inputTimeStr.IndexOf('.') + 1) : 0;
-			IDbCommand cmd = conn.CreateCommand();
-			cmd.CommandText = $"create or replace table testGetTimeSpan(cola TIME{ (precision > 0 ? string.Empty : $"({precision})")});";
-			int count = cmd.ExecuteNonQuery();
+			var cmd = conn.CreateCommand();
+			cmd.CommandText = $"create or replace table testGetTimeSpan(cola TIME{(precision > 0 ? string.Empty : $"({precision})")});";
+			cmd.ExecuteNonQuery();
 
-			string insertCommand = $"insert into testGetTimeSpan values ('{inputTimeStr}')";
+			var insertCommand = $"insert into testGetTimeSpan values ('{inputTimeStr}')";
 			cmd.CommandText = insertCommand;
-			count = cmd.ExecuteNonQuery();
+			var count = cmd.ExecuteNonQuery();
 			Assert.AreEqual(1, count);
 
 			cmd.CommandText = "SELECT cola FROM testGetTimeSpan";
-			IDataReader reader = cmd.ExecuteReader();
+			var reader = cmd.ExecuteReader();
 
 			Assert.IsTrue(reader.Read());
 
 			// For time, we getDateTime on the column and ignore date part
-			DateTime dateTimeTime = reader.GetDateTime(0);
-			TimeSpan timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(0);
+			var dateTimeTime = reader.GetDateTime(0);
+			var timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(0);
 			reader.Close();
 
 			// The expected result. Timespan precision only goes up to 7 digits
-			TimeSpan expected = TimeSpan.ParseExact(inputTimeStr.Length < 16 ? inputTimeStr : inputTimeStr.Substring(0, 16), "c", CultureInfo.InvariantCulture);
+			var expected = TimeSpan.ParseExact(inputTimeStr.Length < 16 ? inputTimeStr : inputTimeStr.Substring(0, 16), "c", CultureInfo.InvariantCulture);
 			// Verify the result
 			Assert.AreEqual(expected, timeSpanTime);
 			Assert.AreEqual(dateTimeTime.Hour, timeSpanTime.Hours);
@@ -248,17 +246,17 @@ class SFDbDataReaderIT : SFBaseTest
 			Assert.AreEqual(dateTimeTime.Millisecond, timeSpanTime.Milliseconds);
 
 			cmd.CommandText = "drop table if exists testGetTimeSpan";
-			count = cmd.ExecuteNonQuery();
+			cmd.ExecuteNonQuery();
 
 			conn.Close();
 		}
 	}
 
 	[Test]
-	public void testGetTimeSpanError()
+	public void TestGetTimeSpanError()
 	{
 		// Only Time data can be retrieved using GetTimeSpan, other type will fail
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -269,9 +267,9 @@ class SFDbDataReaderIT : SFBaseTest
 				" C6 DATE, C7 TIMESTAMP_NTZ(9), C8 TIMESTAMP_LTZ(9), C9 TIMESTAMP_TZ(9), " +
 				"C10 VARIANT, C11 OBJECT, C12 ARRAY, C13 VARCHAR(1), C14 TIME); ";
 			//Console.WriteLine(cmd.CommandText);
-			int count = cmd.ExecuteNonQuery();
+			var count = cmd.ExecuteNonQuery();
 
-			string insertCommand = "insert into testGetTimeSpanAllDatTypes(C1, C10, C11, C12) select 1, " +
+			var insertCommand = "insert into testGetTimeSpanAllDatTypes(C1, C10, C11, C12) select 1, " +
 			"PARSE_JSON('{ \"key1\": \"value1\", \"key2\": \"value2\" }')" +
 			 ", PARSE_JSON(' { \"outer_key1\": { \"inner_key1A\": \"1a\", \"inner_key1B\": NULL }, '||' \"outer_key2\": { \"inner_key2\": 2 } '||' } ')," +
 			 " ARRAY_CONSTRUCT(1, 2, 3, NULL)";
@@ -288,12 +286,12 @@ class SFDbDataReaderIT : SFBaseTest
 			Assert.AreEqual(1, count);
 
 			cmd.CommandText = "SELECT * FROM testGetTimeSpanAllDatTypes";
-			IDataReader reader = cmd.ExecuteReader();
+			var reader = cmd.ExecuteReader();
 
 			Assert.IsTrue(reader.Read());
 
 			// All types except TIME fail conversion when calling GetTimeSpan
-			for (int i = 0; i < 12; i++)
+			for (var i = 0; i < 12; i++)
 			{
 				try
 				{
@@ -320,18 +318,18 @@ class SFDbDataReaderIT : SFBaseTest
 			}
 
 			// Valid time column
-			TimeSpan timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(13);
+			var timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(13);
 
 			reader.Close();
 
 			cmd.CommandText = "drop table if exists testGetTimeSpanAllDatTypes";
-			count = cmd.ExecuteNonQuery();
+			cmd.ExecuteNonQuery();
 
 			conn.Close();
 		}
 	}
 
-	private void testGetDateAndOrTime(string inputTimeStr, int? precision, SFDataType dataType)
+	private void TestGetDateAndOrTime(string inputTimeStr, int? precision, SFDataType dataType)
 	{
 		// Can't use DateTime object as test case, must parse.
 		DateTime inputTime;
@@ -344,17 +342,17 @@ class SFDbDataReaderIT : SFBaseTest
 			inputTime = DateTime.ParseExact(inputTimeStr, "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
 		}
 
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			IDbCommand cmd = conn.CreateCommand();
-			cmd.CommandText = $"create or replace table testGetDateAndOrTime(cola {dataType}{ (precision == null ? string.Empty : $"({precision})")});";
-			int count = cmd.ExecuteNonQuery();
+			var cmd = conn.CreateCommand();
+			cmd.CommandText = $"create or replace table testGetDateAndOrTime(cola {dataType}{(precision == null ? string.Empty : $"({precision})")});";
+			var count = cmd.ExecuteNonQuery();
 			Assert.AreEqual(0, count);
 
-			string insertCommand = "insert into testGetDateAndOrTime values (?)";
+			var insertCommand = "insert into testGetDateAndOrTime values (?)";
 			cmd.CommandText = insertCommand;
 
 			var p1 = cmd.CreateParameter();
@@ -383,12 +381,12 @@ class SFDbDataReaderIT : SFBaseTest
 			Assert.AreEqual(1, count);
 
 			cmd.CommandText = "select * from testGetDateAndOrTime";
-			IDataReader reader = cmd.ExecuteReader();
+			var reader = cmd.ExecuteReader();
 
 			Assert.IsTrue(reader.Read());
 
 			// For time, we getDateTime on the column and ignore date part
-			DateTime actualTime = reader.GetDateTime(0);
+			var actualTime = reader.GetDateTime(0);
 
 			if (dataType == SFDataType.DATE)
 			{
@@ -439,27 +437,27 @@ class SFDbDataReaderIT : SFBaseTest
 	[TestCase("1969-07-21 02:56:15.0000000", 1)] //dates w/o second fractions before the unix epoch are fine
 												 //[TestCase("1900-09-03 12:12:12.1212121", null)] // fails
 	[TestCase("1900-09-03 12:12:12.0000000", 1)]
-	public void testGetTimestampNTZ(string inputTimeStr, int? precision)
+	public void TestGetTimestampNTZ(string inputTimeStr, int? precision)
 	{
-		testGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIMESTAMP_NTZ);
+		TestGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIMESTAMP_NTZ);
 	}
 
 	[Test]
-	public void testGetTimestampTZ()
+	public void TestGetTimestampTZ()
 	{
 		using (IDbConnection conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			IDbCommand cmd = conn.CreateCommand();
+			var cmd = conn.CreateCommand();
 			cmd.CommandText = "create or replace table testGetTimestampTZ(cola timestamp_tz)";
-			int count = cmd.ExecuteNonQuery();
+			var count = cmd.ExecuteNonQuery();
 			Assert.AreEqual(0, count);
 
-			DateTimeOffset now = DateTimeOffset.Now;
+			var now = DateTimeOffset.Now;
 
-			string insertCommand = "insert into testgettimestamptz values (?)";
+			var insertCommand = "insert into testgettimestamptz values (?)";
 			cmd.CommandText = insertCommand;
 
 			var p1 = cmd.CreateParameter();
@@ -472,10 +470,10 @@ class SFDbDataReaderIT : SFBaseTest
 			Assert.AreEqual(1, count);
 
 			cmd.CommandText = "select * from testgettimestamptz";
-			IDataReader reader = cmd.ExecuteReader();
+			var reader = cmd.ExecuteReader();
 
 			Assert.IsTrue(reader.Read());
-			DateTimeOffset dtOffset = (DateTimeOffset)reader.GetValue(0);
+			var dtOffset = (DateTimeOffset)reader.GetValue(0);
 			reader.Close();
 
 			Assert.AreEqual(0, DateTimeOffset.Compare(now, dtOffset));
@@ -489,21 +487,21 @@ class SFDbDataReaderIT : SFBaseTest
 	}
 
 	[Test]
-	public void testGetTimestampLTZ()
+	public void TestGetTimestampLTZ()
 	{
 		using (IDbConnection conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			IDbCommand cmd = conn.CreateCommand();
+			var cmd = conn.CreateCommand();
 			cmd.CommandText = "create or replace table testGetTimestampLTZ(cola timestamp_ltz)";
-			int count = cmd.ExecuteNonQuery();
+			var count = cmd.ExecuteNonQuery();
 			Assert.AreEqual(0, count);
 
-			DateTimeOffset now = DateTimeOffset.Now;
+			var now = DateTimeOffset.Now;
 
-			string insertCommand = "insert into testgettimestampltz values (?)";
+			var insertCommand = "insert into testgettimestampltz values (?)";
 			cmd.CommandText = insertCommand;
 
 			var p1 = (SnowflakeDbParameter)cmd.CreateParameter();
@@ -517,10 +515,10 @@ class SFDbDataReaderIT : SFBaseTest
 			Assert.AreEqual(1, count);
 
 			cmd.CommandText = "select * from testgettimestampltz";
-			IDataReader reader = cmd.ExecuteReader();
+			var reader = cmd.ExecuteReader();
 
 			Assert.IsTrue(reader.Read());
-			DateTimeOffset dtOffset = (DateTimeOffset)reader.GetValue(0);
+			var dtOffset = (DateTimeOffset)reader.GetValue(0);
 			reader.Close();
 
 			Assert.AreEqual(0, DateTimeOffset.Compare(now, dtOffset));
@@ -534,19 +532,19 @@ class SFDbDataReaderIT : SFBaseTest
 	}
 
 	[Test]
-	public void testGetBoolean()
+	public void TestGetBoolean()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			IDbCommand cmd = conn.CreateCommand();
+			var cmd = conn.CreateCommand();
 			cmd.CommandText = "create or replace table testGetBoolean(cola boolean)";
-			int count = cmd.ExecuteNonQuery();
+			var count = cmd.ExecuteNonQuery();
 			Assert.AreEqual(0, count);
 
-			string insertCommand = "insert into testgetboolean values (?)";
+			var insertCommand = "insert into testgetboolean values (?)";
 			cmd.CommandText = insertCommand;
 
 			var p1 = cmd.CreateParameter();
@@ -559,7 +557,7 @@ class SFDbDataReaderIT : SFBaseTest
 			Assert.AreEqual(1, count);
 
 			cmd.CommandText = "select * from testgetboolean";
-			IDataReader reader = cmd.ExecuteReader();
+			var reader = cmd.ExecuteReader();
 
 			Assert.IsTrue(reader.Read());
 			Assert.IsTrue(reader.GetBoolean(0));
@@ -574,22 +572,22 @@ class SFDbDataReaderIT : SFBaseTest
 	}
 
 	[Test]
-	public void testGetBinary()
+	public void TestGetBinary()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			IDbCommand cmd = conn.CreateCommand();
+			var cmd = conn.CreateCommand();
 			cmd.CommandText = "create or replace table testGetBinary(col1 binary, col2  VARCHAR(50), col3 double)";
-			int count = cmd.ExecuteNonQuery();
+			var count = cmd.ExecuteNonQuery();
 			Assert.AreEqual(0, count);
 
-			byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARAY");
-			string testChars = "TEST_GET_CHARS";
-			double testDouble = 1.2345678;
-			string insertCommand = $"insert into testgetbinary values (?, '{testChars}',{testDouble.ToString()})";
+			var testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARAY");
+			var testChars = "TEST_GET_CHARS";
+			var testDouble = 1.2345678;
+			var insertCommand = $"insert into testgetbinary values (?, '{testChars}',{testDouble})";
 			cmd.CommandText = insertCommand;
 
 			var p1 = cmd.CreateParameter();
@@ -602,7 +600,7 @@ class SFDbDataReaderIT : SFBaseTest
 			Assert.AreEqual(1, count);
 
 			cmd.CommandText = "select * from testgetbinary";
-			IDataReader reader = cmd.ExecuteReader();
+			var reader = cmd.ExecuteReader();
 
 			Assert.IsTrue(reader.Read());
 			// Auto type conversion
@@ -611,15 +609,15 @@ class SFDbDataReaderIT : SFBaseTest
 			Assert.IsTrue(testDouble.Equals(reader.GetValue(2)));
 
 			// Read all 'TEST_GET_BINARAY' data
-			int toReadLength = testBytes.Length;
-			byte[] sub = new byte[toReadLength];
-			long read = reader.GetBytes(0, 0, sub, 0, toReadLength);
+			var toReadLength = testBytes.Length;
+			var sub = new byte[toReadLength];
+			var read = reader.GetBytes(0, 0, sub, 0, toReadLength);
 			Assert.AreEqual(read, toReadLength);
 			Assert.IsTrue(testBytes.SequenceEqual(sub));
 
 			// Read subset 'GET_BINARAY' from actual 'TEST_GET_BINARAY' data
 			toReadLength = 11;
-			byte[] testSubBytes = Encoding.UTF8.GetBytes("GET_BINARAY");
+			var testSubBytes = Encoding.UTF8.GetBytes("GET_BINARAY");
 			sub = new byte[toReadLength];
 			read = reader.GetBytes(0, 5, sub, 0, toReadLength);
 			Assert.AreEqual(read, toReadLength);
@@ -644,14 +642,14 @@ class SFDbDataReaderIT : SFBaseTest
 			// Read subset 'GET_BINARAY'  from actual 'TEST_GET_BINARAY' data
 			// and copy inside existing buffer replacing Xs
 			toReadLength = 11;
-			byte[] testSubBytesWithTargetOffset = Encoding.UTF8.GetBytes("OFFSET GET_BINARAY EXTRA");
+			var testSubBytesWithTargetOffset = Encoding.UTF8.GetBytes("OFFSET GET_BINARAY EXTRA");
 			sub = Encoding.UTF8.GetBytes("OFFSET XXXXXXXXXXX EXTRA");
 			read = reader.GetBytes(0, 5, sub, 7, toReadLength);
 			Assert.AreEqual(read, toReadLength);
 			Assert.IsTrue(testSubBytesWithTargetOffset.SequenceEqual(sub));
 
 			// Less data than 'ask' for
-			int dataOffset = 10;
+			var dataOffset = 10;
 			read = reader.GetBytes(0, dataOffset, sub, 0, toReadLength);
 			Assert.AreEqual(read, testBytes.Length - dataOffset);
 
@@ -718,23 +716,23 @@ class SFDbDataReaderIT : SFBaseTest
 	}
 
 	[Test]
-	public void testGetChars()
+	public void TestGetChars()
 	{
 		using (IDbConnection conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			IDbCommand cmd = conn.CreateCommand();
+			var cmd = conn.CreateCommand();
 			cmd.CommandText = "create or replace table testGetChars(col1 VARCHAR(50), col2 binary, col3 double)";
 
-			int count = cmd.ExecuteNonQuery();
+			var count = cmd.ExecuteNonQuery();
 			Assert.AreEqual(0, count);
 
-			string testChars = "TEST_GET_CHARS";
-			byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARY");
-			double testDouble = 1.2345678;
-			cmd.CommandText = $"insert into testGetChars values ('{testChars}', ?, {testDouble.ToString()})";
+			var testChars = "TEST_GET_CHARS";
+			var testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARY");
+			var testDouble = 1.2345678;
+			cmd.CommandText = $"insert into testGetChars values ('{testChars}', ?, {testDouble})";
 
 			var p1 = cmd.CreateParameter();
 			p1.ParameterName = "1";
@@ -746,7 +744,7 @@ class SFDbDataReaderIT : SFBaseTest
 			Assert.AreEqual(1, count);
 
 			cmd.CommandText = "select * from testGetChars";
-			IDataReader reader = cmd.ExecuteReader();
+			var reader = cmd.ExecuteReader();
 
 			Assert.IsTrue(reader.Read());
 			// Auto type conversion
@@ -755,10 +753,10 @@ class SFDbDataReaderIT : SFBaseTest
 			Assert.IsTrue(testDouble.Equals(reader.GetValue(2)));
 
 			// Read all 'TEST_GET_CHARS' data
-			int toReadLength = 14;
-			char[] testSubChars = testChars.ToArray<char>();
-			char[] sub = new char[toReadLength];
-			long read = reader.GetChars(0, 0, sub, 0, toReadLength);
+			var toReadLength = 14;
+			var testSubChars = testChars.ToArray<char>();
+			var sub = new char[toReadLength];
+			var read = reader.GetChars(0, 0, sub, 0, toReadLength);
 			Assert.AreEqual(read, toReadLength);
 			Assert.IsTrue(testSubChars.SequenceEqual(sub));
 
@@ -788,7 +786,7 @@ class SFDbDataReaderIT : SFBaseTest
 
 			// Read subset 'GET_CHARS'  from actual 'TEST_GET_CHARS' data
 			// and copy inside existing buffer replacing Xs
-			char[] testSubCharsWithTargetOffset = "OFFSET GET_CHARS EXTRA".ToArray<char>();
+			var testSubCharsWithTargetOffset = "OFFSET GET_CHARS EXTRA".ToArray<char>();
 			toReadLength = 9;
 			sub = "OFFSET XXXXXXXXX EXTRA".ToArray<char>();
 			read = reader.GetChars(0, 5, sub, 7, toReadLength);
@@ -796,7 +794,7 @@ class SFDbDataReaderIT : SFBaseTest
 			Assert.IsTrue(testSubCharsWithTargetOffset.SequenceEqual(sub));
 
 			// Less data than 'ask' for
-			int dataOffset = 10;
+			var dataOffset = 10;
 			read = reader.GetChars(0, dataOffset, sub, 0, toReadLength);
 			Assert.AreEqual(read, testChars.Length - dataOffset);
 
@@ -863,23 +861,23 @@ class SFDbDataReaderIT : SFBaseTest
 	}
 
 	[Test]
-	public void testGetStream()
+	public void TestGetStream()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			IDbCommand cmd = conn.CreateCommand();
+			var cmd = conn.CreateCommand();
 			cmd.CommandText = "create or replace table testGetChars(col1 VARCHAR(50), col2 binary, col3 double)";
 
-			int count = cmd.ExecuteNonQuery();
+			var count = cmd.ExecuteNonQuery();
 			Assert.AreEqual(0, count);
 
-			string testChars = "TEST_GET_CHARS";
-			byte[] testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARY");
-			double testDouble = 1.2345678;
-			cmd.CommandText = $"insert into testGetChars values ('{testChars}', ?, {testDouble.ToString()})";
+			var testChars = "TEST_GET_CHARS";
+			var testBytes = Encoding.UTF8.GetBytes("TEST_GET_BINARY");
+			var testDouble = 1.2345678;
+			cmd.CommandText = $"insert into testGetChars values ('{testChars}', ?, {testDouble})";
 
 			var p1 = cmd.CreateParameter();
 			p1.ParameterName = "1";
@@ -891,7 +889,7 @@ class SFDbDataReaderIT : SFBaseTest
 			Assert.AreEqual(1, count);
 
 			cmd.CommandText = "select * from testGetChars";
-			DbDataReader reader = (DbDataReader)cmd.ExecuteReader();
+			var reader = cmd.ExecuteReader();
 
 			Assert.IsTrue(reader.Read());
 
@@ -902,8 +900,8 @@ class SFDbDataReaderIT : SFBaseTest
 
 			using (var stream = reader.GetStream(0))
 			{
-				byte[] col1ToBytes = Encoding.UTF8.GetBytes(testChars);
-				byte[] buf = new byte[col1ToBytes.Length];
+				var col1ToBytes = Encoding.UTF8.GetBytes(testChars);
+				var buf = new byte[col1ToBytes.Length];
 				stream.Read(buf, 0, col1ToBytes.Length);
 				Assert.IsTrue(-1 == stream.ReadByte()); // No more data
 				Assert.IsTrue(col1ToBytes.SequenceEqual(buf));
@@ -911,7 +909,7 @@ class SFDbDataReaderIT : SFBaseTest
 
 			using (var stream = reader.GetStream(1))
 			{
-				byte[] buf = new byte[testBytes.Length];
+				var buf = new byte[testBytes.Length];
 				stream.Read(buf, 0, testBytes.Length);
 				Assert.IsTrue(-1 == stream.ReadByte()); // No more data
 				Assert.IsTrue(testBytes.SequenceEqual(buf));
@@ -919,8 +917,8 @@ class SFDbDataReaderIT : SFBaseTest
 
 			using (var stream = reader.GetStream(2))
 			{
-				byte[] col3ToBytes = Encoding.UTF8.GetBytes(testDouble.ToString());
-				byte[] buf = new byte[col3ToBytes.Length];
+				var col3ToBytes = Encoding.UTF8.GetBytes(testDouble.ToString());
+				var buf = new byte[col3ToBytes.Length];
 				stream.Read(buf, 0, col3ToBytes.Length);
 				Assert.IsTrue(-1 == stream.ReadByte()); // No more data
 				Assert.IsTrue(col3ToBytes.SequenceEqual(buf));
@@ -937,16 +935,16 @@ class SFDbDataReaderIT : SFBaseTest
 	}
 
 	[Test]
-	public void testGetValueIndexOutOfBound()
+	public void TestGetValueIndexOutOfBound()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			IDbCommand cmd = conn.CreateCommand();
+			var cmd = conn.CreateCommand();
 			cmd.CommandText = "select 1";
-			IDataReader reader = cmd.ExecuteReader();
+			var reader = cmd.ExecuteReader();
 
 			Assert.IsTrue(reader.Read());
 
@@ -976,17 +974,17 @@ class SFDbDataReaderIT : SFBaseTest
 	}
 
 	[Test]
-	public void testBasicDataReader()
+	public void TestBasicDataReader()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			using (IDbCommand cmd = conn.CreateCommand())
+			using (var cmd = conn.CreateCommand())
 			{
 				cmd.CommandText = "select 1 as colone, 2 as coltwo";
-				using (IDataReader reader = cmd.ExecuteReader())
+				using (var reader = cmd.ExecuteReader())
 				{
 					Assert.AreEqual(2, reader.FieldCount);
 					Assert.AreEqual(0, reader.Depth);
@@ -1038,14 +1036,14 @@ class SFDbDataReaderIT : SFBaseTest
 	}
 
 	[Test]
-	public void testReadOutNullVal()
+	public void TestReadOutNullVal()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			using (IDbCommand cmd = conn.CreateCommand())
+			using (var cmd = conn.CreateCommand())
 			{
 				cmd.CommandText = "create or replace table testnull(a integer, b string)";
 				cmd.ExecuteNonQuery();
@@ -1054,10 +1052,10 @@ class SFDbDataReaderIT : SFBaseTest
 				cmd.ExecuteNonQuery();
 
 				cmd.CommandText = "select * from testnull";
-				using (IDataReader reader = cmd.ExecuteReader())
+				using (var reader = cmd.ExecuteReader())
 				{
 					reader.Read();
-					object nullVal = reader.GetValue(0);
+					var nullVal = reader.GetValue(0);
 					Assert.AreEqual(DBNull.Value, nullVal);
 					Assert.IsTrue(reader.IsDBNull(0));
 					Assert.IsTrue(reader.IsDBNull(1));
@@ -1074,22 +1072,22 @@ class SFDbDataReaderIT : SFBaseTest
 	}
 
 	[Test]
-	public void testGetGuid()
+	public void TestGetGuid()
 	{
 		using (IDbConnection conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			IDbCommand cmd = conn.CreateCommand();
+			var cmd = conn.CreateCommand();
 			cmd.CommandText = "create or replace table testGetGuid(cola string)";
-			int count = cmd.ExecuteNonQuery();
+			var count = cmd.ExecuteNonQuery();
 			Assert.AreEqual(0, count);
 
-			string insertCommand = "insert into testgetguid values (?)";
+			var insertCommand = "insert into testgetguid values (?)";
 			cmd.CommandText = insertCommand;
 
-			Guid val = Guid.NewGuid();
+			var val = Guid.NewGuid();
 
 			var p1 = cmd.CreateParameter();
 			p1.ParameterName = "1";
@@ -1101,7 +1099,7 @@ class SFDbDataReaderIT : SFBaseTest
 			Assert.AreEqual(1, count);
 
 			cmd.CommandText = "select * from testgetguid";
-			IDataReader reader = cmd.ExecuteReader();
+			var reader = cmd.ExecuteReader();
 
 			Assert.IsTrue(reader.Read());
 			Assert.AreEqual(val, reader.GetGuid(0));
@@ -1110,7 +1108,7 @@ class SFDbDataReaderIT : SFBaseTest
 			Assert.AreEqual(val.ToString(), reader[0]);
 			Assert.AreEqual(val.ToString(), reader["COLA"]);
 
-			object[] values = new object[1];
+			var values = new object[1];
 			Assert.AreEqual(1, reader.GetValues(values));
 			Assert.AreEqual(val.ToString(), values[0]);
 
@@ -1127,12 +1125,12 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestCopyCmdUpdateCount()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			IDbCommand cmd = conn.CreateCommand();
+			var cmd = conn.CreateCommand();
 			cmd.CommandText = "create or replace stage emptyStage";
 			cmd.ExecuteNonQuery();
 
@@ -1140,7 +1138,7 @@ class SFDbDataReaderIT : SFBaseTest
 			cmd.ExecuteNonQuery();
 
 			cmd.CommandText = "copy into testCopy from @emptyStage";
-			int updateCount = cmd.ExecuteNonQuery();
+			var updateCount = cmd.ExecuteNonQuery();
 			Assert.AreEqual(0, updateCount);
 
 			// test rows_loaded exists
@@ -1165,12 +1163,12 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestCopyCmdResultSet()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			IDbCommand cmd = conn.CreateCommand();
+			var cmd = conn.CreateCommand();
 			cmd.CommandText = "create or replace stage emptyStage";
 			cmd.ExecuteNonQuery();
 
@@ -1213,18 +1211,18 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestRetrieveSemiStructuredData()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			IDbCommand cmd = conn.CreateCommand();
+			var cmd = conn.CreateCommand();
 			cmd.CommandText = "create or replace table testsemi(cola variant, colb array, colc object) " +
 				"as select '[\"1\", \"2\"]', '[\"1\", \"2\"]', '{\"key\": \"value\"}'";
 			cmd.ExecuteNonQuery();
 
 			cmd.CommandText = "select * from testsemi";
-			using (IDataReader reader = cmd.ExecuteReader())
+			using (var reader = cmd.ExecuteReader())
 			{
 				Assert.AreEqual(true, reader.Read());
 				Assert.AreEqual("[\n  \"1\",\n  \"2\"\n]", reader.GetString(0));
@@ -1239,24 +1237,24 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestResultSetMetadata()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			IDbCommand cmd = conn.CreateCommand();
+			var cmd = conn.CreateCommand();
 			cmd.CommandText = "create or replace table meta(c1 number(20, 4), c2 string(100), " +
 				"c3 double, c4 timestamp_ntz, c5 variant not null, c6 boolean) ";
 			cmd.ExecuteNonQuery();
 
 			cmd.CommandText = "select * from meta";
-			using (IDataReader reader = cmd.ExecuteReader())
+			using (var reader = cmd.ExecuteReader())
 			{
 				var dataTable = reader.GetSchemaTable();
 				dataTable.DefaultView.Sort = SchemaTableColumn.ColumnName;
 				dataTable = dataTable.DefaultView.ToTable();
 
-				DataRow row = dataTable.Rows[0];
+				var row = dataTable.Rows[0];
 				Assert.AreEqual("C1", row[SchemaTableColumn.ColumnName]);
 				Assert.AreEqual(0, row[SchemaTableColumn.ColumnOrdinal]);
 				Assert.AreEqual(20, row[SchemaTableColumn.NumericPrecision]);

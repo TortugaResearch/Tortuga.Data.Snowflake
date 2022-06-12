@@ -7,19 +7,19 @@ class FastParser
 	public static long FastParseInt64(byte[] s, int offset, int len)
 	{
 		long result = 0;
-		int i = offset;
-		bool isMinus = false;
+		var i = offset;
+		var isMinus = false;
 		if (len > 0 && s[i] == '-')
 		{
 			isMinus = true;
 			i++;
 		}
-		int end = len + offset;
+		var end = len + offset;
 		for (; i < end; i++)
 		{
 			if ((ulong)result > (0x7fffffffffffffff / 10))
 				throw new OverflowException();
-			int c = s[i] - '0';
+			var c = s[i] - '0';
 			if (c < 0 || c > 9)
 				throw new FormatException();
 			result = result * 10 + c;
@@ -40,20 +40,20 @@ class FastParser
 
 	public static int FastParseInt32(byte[] s, int offset, int len)
 	{
-		int result = 0;
-		int i = offset;
-		bool isMinus = false;
+		var result = 0;
+		var i = offset;
+		var isMinus = false;
 		if (len > 0 && s[i] == '-')
 		{
 			isMinus = true;
 			i++;
 		}
-		int end = len + offset;
+		var end = len + offset;
 		for (; i < end; i++)
 		{
 			if ((uint)result > (0x7fffffff / 10))
 				throw new OverflowException();
-			int c = s[i] - '0';
+			var c = s[i] - '0';
 			if (c < 0 || c > 9)
 				throw new FormatException();
 			result = result * 10 + c;
@@ -77,7 +77,7 @@ class FastParser
 		// Find any decimal point
 		// Parse integer part and decimal part as 64-bit numbers
 		// Calculate decimal number to return
-		int decimalPos = Array.IndexOf<byte>(s, (byte)'.', offset, len);
+		var decimalPos = Array.IndexOf<byte>(s, (byte)'.', offset, len);
 
 		// No decimal point found, just parse as integer
 		if (decimalPos < 0)
@@ -91,7 +91,7 @@ class FastParser
 
 			try
 			{
-				long i1 = FastParseInt64(s, offset, len);
+				var i1 = FastParseInt64(s, offset, len);
 				return (decimal)i1;
 			}
 			catch (OverflowException)
@@ -103,9 +103,9 @@ class FastParser
 		else
 		{
 			decimalPos -= offset;
-			int decimalLen = len - decimalPos - 1;
-			long intPart = 0;
-			long decimalPart = 0;
+			var decimalLen = len - decimalPos - 1;
+			long intPart;
+			long decimalPart;
 			try
 			{
 				intPart = FastParseInt64(s, offset, decimalPos);
@@ -117,7 +117,7 @@ class FastParser
 				return decimal.Parse(UTF8Buffer.UTF8.GetString(s, offset, len));
 			}
 
-			bool isMinus = false;
+			var isMinus = false;
 			if (decimalPart < 0)
 				throw new FormatException();
 			if (intPart < 0)
@@ -133,9 +133,9 @@ class FastParser
 				if (s[offset] == '-')
 					isMinus = true;
 			}
-			decimal d1 = new decimal(intPart);
-			decimal d2 = new decimal((int)(decimalPart & 0xffffffff), (int)((decimalPart >> 32) & 0xffffffff), 0, false, (byte)decimalLen);
-			decimal result = d1 + d2;
+			var d1 = new decimal(intPart);
+			var d2 = new decimal((int)(decimalPart & 0xffffffff), (int)((decimalPart >> 32) & 0xffffffff), 0, false, (byte)decimalLen);
+			var result = d1 + d2;
 			if (isMinus)
 				result = -result;
 			return result;

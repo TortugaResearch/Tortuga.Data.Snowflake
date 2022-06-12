@@ -13,12 +13,12 @@ namespace Tortuga.Data.Snowflake.Core.Sessions;
 /// </summary>
 class UriUpdater
 {
-	UriBuilder uriBuilder;
-	List<IRule> rules;
+	UriBuilder m_UriBuilder;
+	readonly List<IRule> rules;
 
 	internal UriUpdater(Uri uri)
 	{
-		uriBuilder = new UriBuilder(uri);
+		m_UriBuilder = new UriBuilder(uri);
 		rules = new List<IRule>();
 
 		if (uri.AbsolutePath.StartsWith(RestPath.SF_QUERY_PATH))
@@ -32,9 +32,9 @@ class UriUpdater
 	{
 		// Optimization to bypass parsing if there is no rules at all.
 		if (rules.Count == 0)
-			return uriBuilder.Uri;
+			return m_UriBuilder.Uri;
 
-		var queryParams = QueryHelpers.ParseQuery(uriBuilder.Query);
+		var queryParams = QueryHelpers.ParseQuery(m_UriBuilder.Query);
 
 		foreach (IRule rule in rules)
 		{
@@ -42,15 +42,15 @@ class UriUpdater
 		}
 
 		//Clear the query and apply the new query parameters
-		uriBuilder.Query = "";
+		m_UriBuilder.Query = "";
 
-		var uri = uriBuilder.Uri.ToString();
+		var uri = m_UriBuilder.Uri.ToString();
 		foreach (var keyPair in queryParams)
 			foreach (var value in keyPair.Value)
 				uri = QueryHelpers.AddQueryString(uri, keyPair.Key, value);
 
-		uriBuilder = new UriBuilder(uri);
+		m_UriBuilder = new UriBuilder(uri);
 
-		return uriBuilder.Uri;
+		return m_UriBuilder.Uri;
 	}
 }

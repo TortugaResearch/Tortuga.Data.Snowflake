@@ -14,7 +14,7 @@ namespace Tortuga.Data.Snowflake.Core.Sessions;
 
 class SFSession
 {
-	static readonly Regex APPLICATION_REGEX = new Regex(@"^[A-Za-z]([A-Za-z0-9.\-_]){1,50}$");
+	static readonly Regex APPLICATION_REGEX = new(@"^[A-Za-z]([A-Za-z0-9.\-_]){1,50}$");
 
 	const string SF_AUTHORIZATION_BASIC = "Basic";
 
@@ -24,7 +24,7 @@ class SFSession
 
 	internal string? m_MasterToken;
 
-	internal IRestRequester m_RestRequester { get; set; }
+	internal IRestRequester RestRequester { get; set; }
 
 	Authenticator? m_Authenticator;
 
@@ -40,23 +40,23 @@ class SFSession
 
 	internal bool m_InsecureMode;
 
-	HttpClient m_HttpClient;
+	readonly HttpClient m_HttpClient;
 
 	internal void ProcessLoginResponse(LoginResponse authnResponse)
 	{
-		if (authnResponse.success)
+		if (authnResponse.Success)
 		{
-			m_SessionToken = authnResponse.data!.token!;
-			m_MasterToken = authnResponse.data!.masterToken!;
-			m_Database = authnResponse.data!.authResponseSessionInfo!.databaseName!;
-			m_Schema = authnResponse.data!.authResponseSessionInfo!.schemaName!;
-			m_ServerVersion = authnResponse.data!.serverVersion!;
+			m_SessionToken = authnResponse.Data!.Token!;
+			m_MasterToken = authnResponse.Data!.MasterToken!;
+			m_Database = authnResponse.Data!.AuthResponseSessionInfo!.DatabaseName!;
+			m_Schema = authnResponse.Data!.AuthResponseSessionInfo!.SchemaName!;
+			m_ServerVersion = authnResponse.Data!.ServerVersion!;
 
-			UpdateSessionParameterMap(authnResponse.data!.nameValueParameter!);
+			UpdateSessionParameterMap(authnResponse.Data!.NameValueParameter!);
 		}
 		else
 		{
-			throw new SnowflakeDbException(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, authnResponse.code, authnResponse.message, "");
+			throw new SnowflakeDbException(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, authnResponse.Code, authnResponse.Message, "");
 		}
 	}
 
@@ -64,14 +64,15 @@ class SFSession
 
 	internal Uri BuildLoginUrl()
 	{
-		var queryParams = new Dictionary<string, string?>();
-
-		queryParams[RestParams.SF_QUERY_WAREHOUSE] = m_Properties.TryGetValue(SFSessionProperty.WAREHOUSE, out var warehouseValue) ? warehouseValue : "";
-		queryParams[RestParams.SF_QUERY_DB] = m_Properties.TryGetValue(SFSessionProperty.DB, out var dbValue) ? dbValue : "";
-		queryParams[RestParams.SF_QUERY_SCHEMA] = m_Properties.TryGetValue(SFSessionProperty.SCHEMA, out var schemaValue) ? schemaValue : "";
-		queryParams[RestParams.SF_QUERY_ROLE] = m_Properties.TryGetValue(SFSessionProperty.ROLE, out var roleName) ? roleName : "";
-		queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
-		queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
+		var queryParams = new Dictionary<string, string?>
+		{
+			[RestParams.SF_QUERY_WAREHOUSE] = m_Properties.TryGetValue(SFSessionProperty.WAREHOUSE, out var warehouseValue) ? warehouseValue : "",
+			[RestParams.SF_QUERY_DB] = m_Properties.TryGetValue(SFSessionProperty.DB, out var dbValue) ? dbValue : "",
+			[RestParams.SF_QUERY_SCHEMA] = m_Properties.TryGetValue(SFSessionProperty.SCHEMA, out var schemaValue) ? schemaValue : "",
+			[RestParams.SF_QUERY_ROLE] = m_Properties.TryGetValue(SFSessionProperty.ROLE, out var roleName) ? roleName : "",
+			[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString(),
+			[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString()
+		};
 
 		var loginUrl = BuildUri(RestPath.SF_LOGIN_PATH, queryParams);
 		return loginUrl;
@@ -128,7 +129,7 @@ class SFSession
 
 			// Get the http client for the config
 			m_HttpClient = HttpUtil.GetHttpClient(httpClientConfig);
-			m_RestRequester = new RestRequester(m_HttpClient);
+			RestRequester = new RestRequester(m_HttpClient);
 		}
 		catch (Exception e)
 		{
@@ -143,16 +144,18 @@ class SFSession
 		// Inject the HttpClient to use with the Mock requester
 		restRequester.setHttpClient(m_HttpClient);
 		// Override the Rest requester with the mock for testing
-		m_RestRequester = restRequester;
+		RestRequester = restRequester;
 	}
 
 	internal Uri BuildUri(string path, Dictionary<string, string?>? queryParams = null)
 	{
-		var uriBuilder = new UriBuilder();
-		uriBuilder.Scheme = m_Properties[SFSessionProperty.SCHEME];
-		uriBuilder.Host = m_Properties[SFSessionProperty.HOST];
-		uriBuilder.Port = int.Parse(m_Properties[SFSessionProperty.PORT]);
-		uriBuilder.Path = path;
+		var uriBuilder = new UriBuilder()
+		{
+			Scheme = m_Properties[SFSessionProperty.SCHEME],
+			Host = m_Properties[SFSessionProperty.HOST],
+			Port = int.Parse(m_Properties[SFSessionProperty.PORT]),
+			Path = path
+		};
 
 		if (queryParams != null && queryParams.Any())
 		{
@@ -189,25 +192,27 @@ class SFSession
 		await m_Authenticator.LoginAsync(cancellationToken).ConfigureAwait(false);
 	}
 
-	internal void close()
+	internal void Close()
 	{
 		// Nothing to do if the session is not open
 		if (null == m_SessionToken)
 			return;
 
 		// Send a close session request
-		var queryParams = new Dictionary<string, string?>();
-		queryParams[RestParams.SF_QUERY_SESSION_DELETE] = "true";
-		queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
-		queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
+		var queryParams = new Dictionary<string, string?>
+		{
+			[RestParams.SF_QUERY_SESSION_DELETE] = "true",
+			[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString(),
+			[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString()
+		};
 
 		var closeSessionRequest = new SFRestRequest
 		{
 			Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
-			authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, m_SessionToken)
+			AuthorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, m_SessionToken)
 		};
 
-		m_RestRequester.Post<CloseResponse>(closeSessionRequest);
+		RestRequester.Post<CloseResponse>(closeSessionRequest);
 	}
 
 	internal async Task CloseAsync(CancellationToken cancellationToken)
@@ -217,18 +222,20 @@ class SFSession
 			return;
 
 		// Send a close session request
-		var queryParams = new Dictionary<string, string?>();
-		queryParams[RestParams.SF_QUERY_SESSION_DELETE] = "true";
-		queryParams[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString();
-		queryParams[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString();
+		var queryParams = new Dictionary<string, string?>
+		{
+			[RestParams.SF_QUERY_SESSION_DELETE] = "true",
+			[RestParams.SF_QUERY_REQUEST_ID] = Guid.NewGuid().ToString(),
+			[RestParams.SF_QUERY_REQUEST_GUID] = Guid.NewGuid().ToString()
+		};
 
 		var closeSessionRequest = new SFRestRequest()
 		{
 			Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
-			authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, m_SessionToken)
+			AuthorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, m_SessionToken)
 		};
 
-		await m_RestRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
+		await RestRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
 	}
 
 	internal void renewSession()
@@ -247,21 +254,21 @@ class SFSession
 
 		var renewSessionRequest = new SFRestRequest
 		{
-			jsonBody = postBody,
+			JsonBody = postBody,
 			Url = BuildUri(RestPath.SF_TOKEN_REQUEST_PATH, parameters),
-			authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, m_MasterToken),
+			AuthorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, m_MasterToken),
 			RestTimeout = Timeout.InfiniteTimeSpan
 		};
 
-		var response = m_RestRequester.Post<RenewSessionResponse>(renewSessionRequest);
-		if (!response.success)
+		var response = RestRequester.Post<RenewSessionResponse>(renewSessionRequest);
+		if (!response.Success)
 		{
-			throw new SnowflakeDbException("", response.code, response.message, "");
+			throw new SnowflakeDbException("", response.Code, response.Message, "");
 		}
 		else
 		{
-			m_SessionToken = response.data!.sessionToken!;
-			m_MasterToken = response.data!.masterToken!;
+			m_SessionToken = response.Data!.SessionToken!;
+			m_MasterToken = response.Data!.MasterToken!;
 		}
 	}
 
@@ -269,9 +276,9 @@ class SFSession
 	{
 		return new SFRestRequest()
 		{
-			jsonBody = body,
+			JsonBody = body,
 			Url = uri,
-			authorizationToken = SF_AUTHORIZATION_BASIC,
+			AuthorizationToken = SF_AUTHORIZATION_BASIC,
 			RestTimeout = m_ConnectionTimeout,
 		};
 	}
@@ -280,8 +287,8 @@ class SFSession
 	{
 		foreach (var parameter in parameterList)
 		{
-			if (Enum.TryParse(parameter.name, out SFSessionParameter parameterName))
-				ParameterMap[parameterName] = parameter.value;
+			if (Enum.TryParse(parameter.Name, out SFSessionParameter parameterName))
+				ParameterMap[parameterName] = parameter.Value;
 		}
 	}
 

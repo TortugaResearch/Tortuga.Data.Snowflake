@@ -17,30 +17,30 @@ class ChunkDownloaderFactory
 		switch (ChunkDownloaderVersion)
 		{
 			case 1:
-				return new SFBlockingChunkDownloader(responseData.rowType!.Count,
-					responseData.chunks!,
-					responseData.qrmk!,
-					responseData.chunkHeaders!,
+				return new SFBlockingChunkDownloader(responseData.RowType!.Count,
+					responseData.Chunks!,
+					responseData.Qrmk!,
+					responseData.ChunkHeaders!,
 					cancellationToken,
 					resultSet);
 
 			case 2:
 
 				if (resultSet.SFStatement == null)
-					throw new ArgumentNullException($"resultSet.SFStatement is null", nameof(resultSet));
+					throw new ArgumentNullException(nameof(resultSet), $"resultSet.SFStatement is null");
 
-				return new SFChunkDownloaderV2(responseData.rowType!.Count,
-					responseData.chunks!,
-					responseData.qrmk!,
-					responseData.chunkHeaders!,
+				return new SFChunkDownloaderV2(responseData.RowType!.Count,
+					responseData.Chunks!,
+					responseData.Qrmk!,
+					responseData.ChunkHeaders!,
 					cancellationToken,
-					resultSet.SFStatement.SFSession.m_RestRequester, resultSet.Configuration);
+					resultSet.SFStatement.SFSession.RestRequester, resultSet.Configuration);
 
 			default:
-				return new SFBlockingChunkDownloaderV3(responseData.rowType!.Count,
-					responseData.chunks!,
-					responseData.qrmk!,
-					responseData.chunkHeaders!,
+				return new SFBlockingChunkDownloaderV3(responseData.RowType!.Count,
+					responseData.Chunks!,
+					responseData.Qrmk!,
+					responseData.ChunkHeaders!,
 					cancellationToken,
 					resultSet);
 		}

@@ -5,7 +5,6 @@
 using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
 using Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
-using Tortuga.Data.Snowflake.Core.Sessions;
 
 namespace Tortuga.Data.Snowflake.Core.ResponseProcessing;
 
@@ -21,36 +20,36 @@ class SFResultSet : SFBaseResultSet
 
 	public SFResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base(sfStatement.SFSession.Configuration)
 	{
-		if (responseData.rowType == null)
+		if (responseData.RowType == null)
 			throw new ArgumentException($"responseData.rowType is null", nameof(responseData));
-		if (responseData.rowSet == null)
+		if (responseData.RowSet == null)
 			throw new ArgumentException($"responseData.rowSet is null", nameof(responseData));
 
-		m_ColumnCount = responseData.rowType.Count;
+		m_ColumnCount = responseData.RowType.Count;
 		m_CurrentChunkRowIdx = -1;
-		m_CurrentChunkRowCount = responseData.rowSet.GetLength(0);
+		m_CurrentChunkRowCount = responseData.RowSet.GetLength(0);
 
 		SFStatement = sfStatement;
 		updateSessionStatus(responseData);
 
-		if (responseData.chunks != null)
+		if (responseData.Chunks != null)
 		{
 			// counting the first chunk
 			//_totalChunkCount = responseData.chunks.Count;
 			m_ChunkDownloader = ChunkDownloaderFactory.GetDownloader(responseData, this, cancellationToken);
 		}
 
-		m_CurrentChunk = new SFResultChunk(responseData.rowSet);
-		responseData.rowSet = null;
+		m_CurrentChunk = new SFResultChunk(responseData.RowSet);
+		responseData.RowSet = null;
 
 		SFResultSetMetaData = new SFResultSetMetaData(responseData);
 
 		m_IsClosed = false;
 
-		m_QueryId = responseData.queryId;
+		m_QueryId = responseData.QueryId;
 	}
 
-	string[] PutGetResponseRowTypeInfo = {
+	readonly string[] PutGetResponseRowTypeInfo = {
 			"SourceFileName",
 			"DestinationFileName",
 			"SourceFileSize",
@@ -63,46 +62,45 @@ class SFResultSet : SFBaseResultSet
 
 	public void initializePutGetRowType(List<ExecResponseRowType> rowType)
 	{
-		foreach (string name in PutGetResponseRowTypeInfo)
+		foreach (var name in PutGetResponseRowTypeInfo)
 		{
 			rowType.Add(new ExecResponseRowType()
 			{
-				name = name,
-				type = "text"
+				Name = name,
+				Type = "text"
 			});
 		}
 	}
 
 	public SFResultSet(PutGetResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base(sfStatement.SFSession.Configuration)
 	{
-		if (responseData.rowSet == null)
+		if (responseData.RowSet == null)
 			throw new ArgumentException($"responseData.rowSet is null", nameof(responseData));
 
-		responseData.rowType = new List<ExecResponseRowType>();
-		initializePutGetRowType(responseData.rowType);
+		responseData.RowType = new List<ExecResponseRowType>();
+		initializePutGetRowType(responseData.RowType);
 
-		m_ColumnCount = responseData.rowType.Count;
+		m_ColumnCount = responseData.RowType.Count;
 		m_CurrentChunkRowIdx = -1;
-		m_CurrentChunkRowCount = responseData.rowSet.GetLength(0);
+		m_CurrentChunkRowCount = responseData.RowSet.GetLength(0);
 
 		this.SFStatement = sfStatement;
 
-		m_CurrentChunk = new SFResultChunk(responseData.rowSet);
-		responseData.rowSet = null;
+		m_CurrentChunk = new SFResultChunk(responseData.RowSet);
+		responseData.RowSet = null;
 
 		SFResultSetMetaData = new SFResultSetMetaData(responseData);
 
 		m_IsClosed = false;
 
-		m_QueryId = responseData.queryId;
+		m_QueryId = responseData.QueryId;
 	}
 
 	internal void resetChunkInfo(IResultChunk nextChunk)
 	{
-		if (m_CurrentChunk is SFResultChunk)
-		{
-			((SFResultChunk)m_CurrentChunk).RowSet = null;
-		}
+		if (m_CurrentChunk is SFResultChunk chunk)
+			chunk.RowSet = null;
+
 		m_CurrentChunk = nextChunk;
 		m_CurrentChunkRowIdx = 0;
 		m_CurrentChunkRowCount = m_CurrentChunk.GetRowCount();
@@ -208,11 +206,11 @@ class SFResultSet : SFBaseResultSet
 		if (SFStatement == null)
 			throw new InvalidOperationException($"{nameof(SFStatement)} is null");
 
-		SFSession session = SFStatement.SFSession;
-		session.m_Database = responseData.finalDatabaseName;
-		session.m_Schema = responseData.finalSchemaName;
+		var session = SFStatement.SFSession;
+		session.m_Database = responseData.FinalDatabaseName;
+		session.m_Schema = responseData.FinalSchemaName;
 
-		if (responseData.parameters != null)
-			session.UpdateSessionParameterMap(responseData.parameters);
+		if (responseData.Parameters != null)
+			session.UpdateSessionParameterMap(responseData.Parameters);
 	}
 }

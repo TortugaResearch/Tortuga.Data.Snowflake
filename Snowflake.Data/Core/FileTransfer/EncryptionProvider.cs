@@ -37,14 +37,14 @@ class EncryptionProvider
 		var encryptedBytes = CreateEncryptedBytes(inFile, keyData, ivData);
 
 		// Encrypt file key
-		var encryptedFileKey = encryptFileKey(decodedMasterKey, keyData);
+		var encryptedFileKey = EncryptFileKey(decodedMasterKey, keyData);
 
 		// Store encryption metadata information
-		MaterialDescriptor matDesc = new MaterialDescriptor
+		var matDesc = new MaterialDescriptor
 		{
-			smkId = encryptionMaterial.smkId.ToString(),
-			queryId = encryptionMaterial.queryId,
-			keySize = (masterKeySize * 8).ToString()
+			SmkId = encryptionMaterial.smkId.ToString(),
+			QueryId = encryptionMaterial.queryId,
+			KeySize = (masterKeySize * 8).ToString()
 		};
 
 		encryptionMetadata.iv = Convert.ToBase64String(ivData);
@@ -60,7 +60,7 @@ class EncryptionProvider
 	/// <param name="masterKey">The key to use for encryption.</param>
 	/// <param name="unencryptedFileKey">The file key to encrypt.</param>
 	/// <returns>The encrypted key.</returns>
-	static byte[] encryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
+	static byte[] EncryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
 	{
 		var aes = Aes.Create();
 		aes.Key = masterKey;
@@ -127,7 +127,7 @@ class EncryptionProvider
 		var tempFileName = Path.Combine(Path.GetTempPath(), Path.GetFileName(inFile));
 
 		// Create decipher with file key, iv bytes, and AES CBC
-		var decryptedFileKey = decryptFileKey(decodedMasterKey, keyBytes);
+		var decryptedFileKey = DecryptFileKey(decodedMasterKey, keyBytes);
 
 		// Create key decipher with decoded key and AES ECB
 		var decryptedBytes = CreateDecryptedBytes(inFile, decryptedFileKey, ivBytes);
@@ -143,7 +143,7 @@ class EncryptionProvider
 	/// <param name="masterKey">The key to use for encryption.</param>
 	/// <param name="unencryptedFileKey">The file key to encrypt.</param>
 	/// <returns>The encrypted key.</returns>
-	static byte[] decryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
+	static byte[] DecryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
 	{
 		var aes = Aes.Create();
 		aes.Key = masterKey;

@@ -36,6 +36,6 @@ class OAuthAuthenticator : Authenticator
 		// Add the token to the Data attribute
 		data.Token = Session.m_Properties[TOKEN];
 		// Remove the login name for an OAuth session
-		data.loginName = "";
+		data.LoginName = "";
 	}
 }

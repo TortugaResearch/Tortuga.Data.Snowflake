@@ -19,8 +19,7 @@ public class SnowflakeDbDataAdapter : DbDataAdapter
 
 	public SnowflakeDbDataAdapter(string selectCommandText, SnowflakeDbConnection selectConnection) : this()
 	{
-		SelectCommand = new SnowflakeDbCommand(selectConnection);
-		SelectCommand.CommandText = selectCommandText;
+		SelectCommand = new SnowflakeDbCommand(selectConnection) { CommandText = selectCommandText };
 	}
 
 	new public SnowflakeDbCommand? DeleteCommand

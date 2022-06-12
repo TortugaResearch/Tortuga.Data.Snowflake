@@ -76,7 +76,6 @@ class SFFileCompressionTypes
 			FileExtension = fileExtension;
 			IsSupported = isSupported;
 			_magicNumbers = magicNumbers;
-			_magicBytes = magicBytes;
 			Name = name;
 		}
 
@@ -85,7 +84,6 @@ class SFFileCompressionTypes
 			FileExtension = fileExtension;
 			IsSupported = isSupported;
 			_magicNumbers = null;
-			_magicBytes = 0;
 			Name = name;
 		}
 
@@ -94,7 +92,7 @@ class SFFileCompressionTypes
 		/// </summary>
 		/// <param name="header"></param>
 		/// <returns></returns>
-		public bool matchMagicNumber(byte[] header)
+		public bool MatchMagicNumber(byte[] header)
 		{
 			var isEquals = true;
 			if ((null != _magicNumbers) && (null != header))
@@ -126,7 +124,6 @@ class SFFileCompressionTypes
 		internal string FileExtension { get; }
 		internal string Name { get; }
 		readonly byte[][]? _magicNumbers;
-		readonly short _magicBytes;
 		internal bool IsSupported { get; }
 	}
 
@@ -186,7 +183,7 @@ class SFFileCompressionTypes
 
 		foreach (var compType in compressionTypes)
 		{
-			if (compType.matchMagicNumber(header))
+			if (compType.MatchMagicNumber(header))
 			{
 				// Found the compression type for this file
 				var extension = Path.GetExtension(filePath);

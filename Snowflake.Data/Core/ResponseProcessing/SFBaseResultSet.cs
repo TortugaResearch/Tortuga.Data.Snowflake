@@ -50,7 +50,7 @@ abstract class SFBaseResultSet
 		if (SFResultSetMetaData == null)
 			throw new InvalidOperationException($"{nameof(SFResultSetMetaData)} is null");
 
-		var type = SFResultSetMetaData.getColumnTypeByIndex(columnIndex);
+		var type = SFResultSetMetaData.GetColumnTypeByIndex(columnIndex);
 		switch (type)
 		{
 			case SFDataType.DATE:
@@ -58,10 +58,10 @@ abstract class SFBaseResultSet
 				if (val == DBNull.Value)
 					return null;
 
-				if (SFResultSetMetaData.dateOutputFormat == null)
+				if (SFResultSetMetaData.m_DateOutputFormat == null)
 					throw new InvalidOperationException("SFResultSetMetaData.dateOutputFormat is null");
 
-				return SFDataConverter.toDateString((DateTime)val, SFResultSetMetaData.dateOutputFormat);
+				return SFDataConverter.toDateString((DateTime)val, SFResultSetMetaData.m_DateOutputFormat);
 			//TODO: Implement SqlFormat for timestamp type, aka parsing format specified by user and format the value
 			default:
 				return getObjectInternal(columnIndex).SafeToString();
@@ -80,7 +80,7 @@ abstract class SFBaseResultSet
 
 	internal bool IsDBNull(int ordinal) => getObjectInternal(ordinal) == null;
 
-	internal void close() => m_IsClosed = true;
+	internal void Close() => m_IsClosed = true;
 
 	internal SnowflakeDbConfiguration Configuration { get; }
 }

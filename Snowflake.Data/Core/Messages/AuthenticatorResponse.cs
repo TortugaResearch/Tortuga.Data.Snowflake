@@ -9,5 +9,5 @@ namespace Tortuga.Data.Snowflake.Core.Messages;
 class AuthenticatorResponse : BaseRestResponse
 {
 	[JsonProperty(PropertyName = "data")]
-	internal AuthenticatorResponseData? data { get; set; }
+	internal AuthenticatorResponseData? Data { get; set; }
 }

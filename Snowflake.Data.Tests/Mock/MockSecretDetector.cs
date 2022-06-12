@@ -20,9 +20,9 @@ class MockSecretDetector
 			//We'll assume that the exception was raised during masking
 			//to be safe consider that the log has sensitive information
 			//and do not raise an exception.
-			result.isMasked = true;
-			result.maskedText = ex.Message;
-			result.errStr = ex.Message;
+			result.IsMasked = true;
+			result.MaskedText = ex.Message;
+			result.ErrStr = ex.Message;
 		}
 		return result;
 	}

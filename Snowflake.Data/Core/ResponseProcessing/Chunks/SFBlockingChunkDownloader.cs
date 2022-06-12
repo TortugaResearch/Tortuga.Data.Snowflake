@@ -40,7 +40,7 @@ class SFBlockingChunkDownloader : IChunkDownloader
 		m_Chunks = new List<SFResultChunk>();
 		m_NextChunkToDownloadIndex = 0;
 		m_ResultSet = resultSet;
-		m_RestRequester = resultSet.SFStatement.SFSession.m_RestRequester;
+		m_RestRequester = resultSet.SFStatement.SFSession.RestRequester;
 		m_PrefetchThreads = GetPrefetchThreads(resultSet);
 		m_ExternalCancellationToken = cancellationToken;
 
@@ -51,7 +51,7 @@ class SFBlockingChunkDownloader : IChunkDownloader
 		FillDownloads();
 	}
 
-	int GetPrefetchThreads(SFBaseResultSet resultSet)
+	static int GetPrefetchThreads(SFBaseResultSet resultSet)
 	{
 		if (resultSet.SFStatement == null)
 			throw new ArgumentException($"resultSet.SFStatement is null", nameof(resultSet));
@@ -73,11 +73,11 @@ class SFBlockingChunkDownloader : IChunkDownloader
 			{
 				m_DownloadTasks.Add(DownloadChunkAsync(new DownloadContext()
 				{
-					chunk = c,
-					chunkIndex = m_NextChunkToDownloadIndex,
-					qrmk = m_Qrmk,
-					chunkHeaders = m_ChunkHeaders,
-					cancellationToken = m_ExternalCancellationToken
+					Chunk = c,
+					ChunkIndex = m_NextChunkToDownloadIndex,
+					Qrmk = m_Qrmk,
+					ChunkHeaders = m_ChunkHeaders,
+					CancellationToken = m_ExternalCancellationToken
 				}));
 			}
 
@@ -98,24 +98,24 @@ class SFBlockingChunkDownloader : IChunkDownloader
 
 	async Task<IResultChunk> DownloadChunkAsync(DownloadContext downloadContext)
 	{
-		if (downloadContext.chunk == null)
+		if (downloadContext.Chunk == null)
 			throw new ArgumentException("downloadContext.chunk is null", nameof(downloadContext));
 
-		var chunk = downloadContext.chunk;
+		var chunk = downloadContext.Chunk;
 
 		chunk.DownloadState = DownloadState.IN_PROGRESS;
 
-		S3DownloadRequest downloadRequest = new S3DownloadRequest()
+		var downloadRequest = new S3DownloadRequest()
 		{
 			Url = new UriBuilder(chunk.Url!).Uri,
-			Qrmk = downloadContext.qrmk,
+			Qrmk = downloadContext.Qrmk,
 			// s3 download request timeout to one hour
 			RestTimeout = TimeSpan.FromHours(1),
 			HttpTimeout = TimeSpan.FromSeconds(32),
-			ChunkHeaders = downloadContext.chunkHeaders
+			ChunkHeaders = downloadContext.ChunkHeaders
 		};
 
-		var httpResponse = await m_RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false);
+		var httpResponse = await m_RestRequester.GetAsync(downloadRequest, downloadContext.CancellationToken).ConfigureAwait(false);
 		var stream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false);
 
 		//TODO this shouldn't be required.

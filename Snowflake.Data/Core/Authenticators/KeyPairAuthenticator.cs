@@ -190,7 +190,7 @@ class KeyPairAuthenticator : Authenticator
 	class PasswordFinder : IPasswordFinder
 	{
 		// The password.
-		string m_Password;
+		readonly string m_Password;
 
 		/// <summary>
 		/// Constructor.

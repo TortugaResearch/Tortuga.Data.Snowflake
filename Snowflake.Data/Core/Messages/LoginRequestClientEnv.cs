@@ -9,19 +9,19 @@ namespace Tortuga.Data.Snowflake.Core.Messages;
 class LoginRequestClientEnv
 {
 	[JsonProperty(PropertyName = "APPLICATION")]
-	internal string? application { get; set; }
+	internal string? Application { get; set; }
 
 	[JsonProperty(PropertyName = "OS_VERSION")]
-	internal string? osVersion { get; set; }
+	internal string? OSVersion { get; set; }
 
 	[JsonProperty(PropertyName = "NET_RUNTIME")]
-	internal string? netRuntime { get; set; }
+	internal string? NetRuntime { get; set; }
 
 	[JsonProperty(PropertyName = "NET_VERSION")]
-	internal string? netVersion { get; set; }
+	internal string? NetVersion { get; set; }
 
 	[JsonProperty(PropertyName = "INSECURE_MODE")]
-	internal string? insecureMode { get; set; }
+	internal string? InsecureMode { get; set; }
 
-	public override string ToString() => $"{{ APPLICATION: {application}, OS_VERSION: {osVersion}, NET_RUNTIME: {netRuntime}, NET_VERSION: {netVersion}, INSECURE_MODE: {insecureMode} }}";
+	public override string ToString() => $"{{ APPLICATION: {Application}, OS_VERSION: {OSVersion}, NET_RUNTIME: {NetRuntime}, NET_VERSION: {NetVersion}, INSECURE_MODE: {InsecureMode} }}";
 }

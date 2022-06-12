@@ -11,7 +11,7 @@ namespace Tortuga.Data.Snowflake.Core;
 
 static class SFDataConverter
 {
-	static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+	static readonly DateTime UnixEpoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
 
 	// Method with the same signature as before the performance work
 	// Used by unit tests only
@@ -171,7 +171,7 @@ static class SFDataConverter
 		}
 	}
 
-	static int[] powersOf10 =  {
+	static readonly int[] powersOf10 =  {
 			1,
 			10,
 			100,
@@ -217,7 +217,7 @@ static class SFDataConverter
 		return intPart * 10000000L + decimalPart / 100L;
 	}
 
-	internal static Tuple<string, string?> csharpTypeValToSfTypeVal(DbType srcType, object? srcVal)
+	internal static Tuple<string, string?> CSharpTypeValToSfTypeVal(DbType srcType, object? srcVal)
 	{
 		SFDataType destType;
 		string? destVal;

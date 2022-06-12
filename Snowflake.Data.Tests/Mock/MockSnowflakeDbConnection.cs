@@ -10,7 +10,7 @@ namespace Tortuga.Data.Snowflake.Tests.Mock;
 
 class MockSnowflakeDbConnection : SnowflakeDbConnection
 {
-	private IMockRestRequester _restRequester;
+	readonly private IMockRestRequester _restRequester;
 
 	public MockSnowflakeDbConnection(IMockRestRequester requester)
 	{

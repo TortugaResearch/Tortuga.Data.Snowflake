@@ -44,7 +44,7 @@ public class SFBaseTestAsync
 	{
 		get
 		{
-			return $"scheme={testConfig.protocol};host={testConfig.host};port={testConfig.port};account={testConfig.account};db={testConfig.database};schema={testConfig.schema}";
+			return $"scheme={TestConfig.Protocol};host={TestConfig.Host};port={TestConfig.Port};account={TestConfig.Account};db={TestConfig.Database};schema={TestConfig.Schema}";
 		}
 	}
 
@@ -52,38 +52,37 @@ public class SFBaseTestAsync
 	{
 		get
 		{
-			return ConnectionStringWithoutAuth + $";user={testConfig.user};password={testConfig.password};";
+			return ConnectionStringWithoutAuth + $";user={TestConfig.User};password={TestConfig.Password};";
 		}
 	}
 
-	protected TestConfig testConfig { get; set; }
+	protected TestConfig TestConfig { get; set; }
 
 	[OneTimeSetUp]
 	public void SFTestSetup()
 	{
-		String cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
+		var cloud = Environment.GetEnvironmentVariable("snowflake_cloud_env");
 		Assert.IsTrue(cloud == null || cloud == "AWS" || cloud == "AZURE" || cloud == "GCP", "{0} is not supported. Specify AWS, AZURE or GCP as cloud environment", cloud);
 
 		var path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "parameters.json");
-		StreamReader reader = new StreamReader(path);
+		var reader = new StreamReader(path);
 
 		var testConfigString = reader.ReadToEnd();
 
 		// Local JSON settings to avoid using system wide settings which could be different
 		// than the default ones
-		JsonSerializerSettings JsonSettings = new JsonSerializerSettings()
+		var JsonSettings = new JsonSerializerSettings()
 		{
 			ContractResolver = new DefaultContractResolver()
 			{
 				NamingStrategy = new DefaultNamingStrategy()
 			}
 		};
-		Dictionary<string, TestConfig> testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString, JsonSettings);
+		var testConfigs = JsonConvert.DeserializeObject<Dictionary<string, TestConfig>>(testConfigString, JsonSettings);
 
-		TestConfig testConnectionConfig;
-		if (testConfigs.TryGetValue("testconnection", out testConnectionConfig))
+		if (testConfigs.TryGetValue("testconnection", out var testConnectionConfig))
 		{
-			testConfig = testConnectionConfig;
+			TestConfig = testConnectionConfig;
 		}
 		else
 		{
@@ -95,34 +94,34 @@ public class SFBaseTestAsync
 public class TestConfig
 {
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_USER", NullValueHandling = NullValueHandling.Ignore)]
-	internal string user { get; set; }
+	internal string User { get; set; }
 
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_PASSWORD", NullValueHandling = NullValueHandling.Ignore)]
-	internal string password { get; set; }
+	internal string Password { get; set; }
 
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_ACCOUNT", NullValueHandling = NullValueHandling.Ignore)]
-	internal string account { get; set; }
+	internal string Account { get; set; }
 
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_HOST", NullValueHandling = NullValueHandling.Ignore)]
-	internal string host { get; set; }
+	internal string Host { get; set; }
 
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_PORT", NullValueHandling = NullValueHandling.Ignore)]
-	internal string port { get; set; }
+	internal string Port { get; set; }
 
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_WAREHOUSE", NullValueHandling = NullValueHandling.Ignore)]
-	internal string warehouse { get; set; }
+	internal string Warehouse { get; set; }
 
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_DATABASE", NullValueHandling = NullValueHandling.Ignore)]
-	internal string database { get; set; }
+	internal string Database { get; set; }
 
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_SCHEMA", NullValueHandling = NullValueHandling.Ignore)]
-	internal string schema { get; set; }
+	internal string Schema { get; set; }
 
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_ROLE", NullValueHandling = NullValueHandling.Ignore)]
-	internal string role { get; set; }
+	internal string Role { get; set; }
 
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_PROTOCOL", NullValueHandling = NullValueHandling.Ignore)]
-	internal string protocol { get; set; }
+	internal string Protocol { get; set; }
 
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_OKTA_USER", NullValueHandling = NullValueHandling.Ignore)]
 	internal string OktaUser { get; set; }
@@ -134,67 +133,68 @@ public class TestConfig
 	internal string OktaURL { get; set; }
 
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_JWT_USER", NullValueHandling = NullValueHandling.Ignore)]
-	internal string jwtAuthUser { get; set; }
+	internal string JwtAuthUser { get; set; }
 
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_PEM_FILE", NullValueHandling = NullValueHandling.Ignore)]
-	internal string pemFilePath { get; set; }
+	internal string PemFilePath { get; set; }
 
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_P8_FILE", NullValueHandling = NullValueHandling.Ignore)]
-	internal string p8FilePath { get; set; }
+	internal string P8FilePath { get; set; }
 
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_PWD_PROTECTED_PK_FILE", NullValueHandling = NullValueHandling.Ignore)]
-	internal string pwdProtectedPrivateKeyFilePath { get; set; }
+	internal string PwdProtectedPrivateKeyFilePath { get; set; }
 
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_PK_CONTENT", NullValueHandling = NullValueHandling.Ignore)]
-	internal string privateKey { get; set; }
+	internal string PrivateKey { get; set; }
 
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_PROTECTED_PK_CONTENT", NullValueHandling = NullValueHandling.Ignore)]
-	internal string pwdProtectedPrivateKey { get; set; }
+	internal string PwdProtectedPrivateKey { get; set; }
 
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_PK_PWD", NullValueHandling = NullValueHandling.Ignore)]
-	internal string privateKeyFilePwd { get; set; }
+	internal string PrivateKeyFilePwd { get; set; }
 
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_OAUTH_TOKEN", NullValueHandling = NullValueHandling.Ignore)]
-	internal string oauthToken { get; set; }
+	internal string OAuthToken { get; set; }
 
 	[JsonProperty(PropertyName = "SNOWFLAKE_TEST_EXP_OAUTH_TOKEN", NullValueHandling = NullValueHandling.Ignore)]
-	internal string expOauthToken { get; set; }
+	internal string ExpOauthToken { get; set; }
 
 	[JsonProperty(PropertyName = "PROXY_HOST", NullValueHandling = NullValueHandling.Ignore)]
-	internal string proxyHost { get; set; }
+	internal string ProxyHost { get; set; }
 
 	[JsonProperty(PropertyName = "PROXY_PORT", NullValueHandling = NullValueHandling.Ignore)]
-	internal string proxyPort { get; set; }
+	internal string ProxyPort { get; set; }
 
 	[JsonProperty(PropertyName = "AUTH_PROXY_HOST", NullValueHandling = NullValueHandling.Ignore)]
-	internal string authProxyHost { get; set; }
+	internal string AuthProxyHost { get; set; }
 
 	[JsonProperty(PropertyName = "AUTH_PROXY_PORT", NullValueHandling = NullValueHandling.Ignore)]
-	internal string authProxyPort { get; set; }
+	internal string AuthProxyPort { get; set; }
 
 	[JsonProperty(PropertyName = "AUTH_PROXY_USER", NullValueHandling = NullValueHandling.Ignore)]
-	internal string authProxyUser { get; set; }
+	internal string AuthProxyUser { get; set; }
 
 	[JsonProperty(PropertyName = "AUTH_PROXY_PWD", NullValueHandling = NullValueHandling.Ignore)]
-	internal string authProxyPwd { get; set; }
+	internal string AuthProxyPwd { get; set; }
 
 	[JsonProperty(PropertyName = "NON_PROXY_HOSTS", NullValueHandling = NullValueHandling.Ignore)]
-	internal string nonProxyHosts { get; set; }
+	internal string NonProxyHosts { get; set; }
 
 	public TestConfig()
 	{
-		this.protocol = "https";
-		this.port = "443";
+		Protocol = "https";
+		Port = "443";
 	}
 }
 
+[AttributeUsage(AttributeTargets.Method)]
 public class IgnoreOnEnvIsAttribute : Attribute, ITestAction
 {
-	String key;
+	readonly string key;
 
-	string[] values;
+	readonly string[] values;
 
-	public IgnoreOnEnvIsAttribute(String key, string[] values)
+	public IgnoreOnEnvIsAttribute(string key, string[] values)
 	{
 		this.key = key;
 		this.values = values;

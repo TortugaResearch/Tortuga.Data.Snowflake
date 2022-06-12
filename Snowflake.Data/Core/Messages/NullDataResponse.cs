@@ -9,5 +9,5 @@ namespace Tortuga.Data.Snowflake.Core.Messages;
 class NullDataResponse : BaseRestResponse
 {
 	[JsonProperty(PropertyName = "data")]
-	internal object? data { get; set; }
+	internal object? Data { get; set; }
 }

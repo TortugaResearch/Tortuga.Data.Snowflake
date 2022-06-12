@@ -42,7 +42,7 @@ class SFStatement
 	internal SFStatement(SFSession session)
 	{
 		SFSession = session;
-		m_RestRequester = session.m_RestRequester;
+		m_RestRequester = session.RestRequester;
 	}
 
 	private void AssignQueryRequestId()
@@ -79,21 +79,21 @@ class SFStatement
 
 		var postBody = new QueryRequest()
 		{
-			sqlText = sql,
-			parameterBindings = bindings,
-			describeOnly = describeOnly,
+			SqlText = sql,
+			ParameterBindings = bindings,
+			DescribeOnly = describeOnly,
 		};
 
 		return new SFRestRequest
 		{
 			Url = queryUri,
-			authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken),
-			serviceName = SFSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
+			AuthorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken),
+			ServiceName = SFSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
 							? (string?)SFSession.ParameterMap[SFSessionParameter.SERVICE_NAME] : null,
-			jsonBody = postBody,
+			JsonBody = postBody,
 			HttpTimeout = Timeout.InfiniteTimeSpan,
 			RestTimeout = Timeout.InfiniteTimeSpan,
-			isPutGet = m_IsPutGetQuery
+			IsPutGet = m_IsPutGetQuery
 		};
 	}
 
@@ -103,7 +103,7 @@ class SFStatement
 		return new SFRestRequest()
 		{
 			Url = uri,
-			authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken),
+			AuthorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken),
 			HttpTimeout = Timeout.InfiniteTimeSpan,
 			RestTimeout = Timeout.InfiniteTimeSpan
 		};
@@ -127,10 +127,10 @@ class SFStatement
 
 	private SFBaseResultSet BuildResultSet(QueryExecResponse response, CancellationToken cancellationToken)
 	{
-		if (response.success)
-			return new SFResultSet(response.data!, this, cancellationToken);
+		if (response.Success)
+			return new SFResultSet(response.Data!, this, cancellationToken);
 
-		throw new SnowflakeDbException(response.data!.sqlState!, response.code, response.message, response.data!.queryId!);
+		throw new SnowflakeDbException(response.Data!.sqlState!, response.Code, response.Message, response.Data!.QueryId!);
 	}
 
 	/// <summary>
@@ -139,7 +139,7 @@ class SFStatement
 	/// </summary>
 	/// <param name="timeout">query timeout. 0 means no timeout</param>
 	/// <param name="externalCancellationToken">cancellation token from upper layer</param>
-	private void registerQueryCancellationCallback(int timeout, CancellationToken externalCancellationToken)
+	private void RegisterQueryCancellationCallback(int timeout, CancellationToken externalCancellationToken)
 	{
 		m_TimeoutTokenSource = timeout > 0 ? new CancellationTokenSource(timeout * 1000) : new CancellationTokenSource(Timeout.InfiniteTimeSpan);
 
@@ -161,25 +161,25 @@ class SFStatement
 		}
 	}
 
-	private bool RequestInProgress(BaseRestResponse? r) => r?.code == SF_QUERY_IN_PROGRESS || r?.code == SF_QUERY_IN_PROGRESS_ASYNC;
+	static bool RequestInProgress(BaseRestResponse? r) => r?.Code == SF_QUERY_IN_PROGRESS || r?.Code == SF_QUERY_IN_PROGRESS_ASYNC;
 
-	private bool SessionExpired(BaseRestResponse? r) => r?.code == SF_SESSION_EXPIRED_CODE;
+	static bool SessionExpired(BaseRestResponse? r) => r?.Code == SF_SESSION_EXPIRED_CODE;
 
 	internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly, CancellationToken cancellationToken)
 	{
-		registerQueryCancellationCallback(timeout, cancellationToken);
+		RegisterQueryCancellationCallback(timeout, cancellationToken);
 		var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
 		try
 		{
 			QueryExecResponse? response = null;
-			bool receivedFirstQueryResponse = false;
+			var receivedFirstQueryResponse = false;
 			while (!receivedFirstQueryResponse)
 			{
 				response = await m_RestRequester.PostAsync<QueryExecResponse>(queryRequest, cancellationToken).ConfigureAwait(false);
 				if (SessionExpired(response))
 				{
 					SFSession.renewSession();
-					queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken);
+					queryRequest.AuthorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken);
 				}
 				else
 				{
@@ -187,7 +187,7 @@ class SFStatement
 				}
 			}
 
-			var lastResultUrl = response!.data!.getResultUrl;
+			var lastResultUrl = response!.Data!.GetResultUrl;
 
 			while (RequestInProgress(response) || SessionExpired(response))
 			{
@@ -197,7 +197,7 @@ class SFStatement
 				if (SessionExpired(response))
 					SFSession.renewSession();
 				else
-					lastResultUrl = response.data?.getResultUrl;
+					lastResultUrl = response.Data?.GetResultUrl;
 			}
 
 			return BuildResultSet(response, cancellationToken);
@@ -212,7 +212,7 @@ class SFStatement
 	internal SFBaseResultSet Execute(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
 	{
 		// Trim the sql query and check if this is a PUT/GET command
-		string trimmedSql = TrimSql(sql);
+		var trimmedSql = TrimSql(sql);
 
 		try
 		{
@@ -221,28 +221,28 @@ class SFStatement
 				m_IsPutGetQuery = true;
 				var response = ExecuteHelper<PutGetExecResponse, PutGetResponseData>(timeout, sql, bindings, describeOnly);
 
-				var fileTransferAgent = new SFFileTransferAgent(trimmedSql, SFSession, response.data!, CancellationToken.None);
+				var fileTransferAgent = new SFFileTransferAgent(trimmedSql, SFSession, response.Data!, CancellationToken.None);
 
 				// Start the file transfer
-				fileTransferAgent.execute();
+				fileTransferAgent.Execute();
 
 				// Get the results of the upload/download
-				return fileTransferAgent.result();
+				return fileTransferAgent.Result();
 			}
 			else
 			{
-				registerQueryCancellationCallback(timeout, CancellationToken.None);
+				RegisterQueryCancellationCallback(timeout, CancellationToken.None);
 				var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
 				QueryExecResponse? response = null;
 
-				bool receivedFirstQueryResponse = false;
+				var receivedFirstQueryResponse = false;
 				while (!receivedFirstQueryResponse)
 				{
 					response = m_RestRequester.Post<QueryExecResponse>(queryRequest);
 					if (SessionExpired(response))
 					{
 						SFSession.renewSession();
-						queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken);
+						queryRequest.AuthorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken);
 					}
 					else
 					{
@@ -250,7 +250,7 @@ class SFStatement
 					}
 				}
 
-				var lastResultUrl = response?.data?.getResultUrl;
+				var lastResultUrl = response?.Data?.GetResultUrl;
 				while (RequestInProgress(response) || SessionExpired(response))
 				{
 					var req = BuildResultRequest(lastResultUrl!);
@@ -262,7 +262,7 @@ class SFStatement
 					}
 					else
 					{
-						lastResultUrl = response.data?.getResultUrl;
+						lastResultUrl = response.Data?.GetResultUrl;
 					}
 				}
 				return BuildResultSet(response!, CancellationToken.None);
@@ -297,8 +297,8 @@ class SFStatement
 			return new SFRestRequest()
 			{
 				Url = uri,
-				authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken),
-				jsonBody = postBody
+				AuthorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken),
+				JsonBody = postBody
 			};
 		}
 	}
@@ -330,7 +330,7 @@ class SFStatement
 		where T : BaseQueryExecResponse<U>
 		where U : IQueryExecResponseData
 	{
-		registerQueryCancellationCallback(timeout, CancellationToken.None);
+		RegisterQueryCancellationCallback(timeout, CancellationToken.None);
 		var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
 		try
 		{
@@ -342,7 +342,7 @@ class SFStatement
 				if (SessionExpired(response))
 				{
 					SFSession.renewSession();
-					queryRequest.authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken);
+					queryRequest.AuthorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken);
 				}
 				else
 				{
@@ -353,7 +353,7 @@ class SFStatement
 			if (typeof(T) == typeof(QueryExecResponse))
 			{
 				var queryResponse = (QueryExecResponse)(object)response!;
-				var lastResultUrl = queryResponse.data!.getResultUrl;
+				var lastResultUrl = queryResponse.Data!.GetResultUrl;
 				while (RequestInProgress(queryResponse) || SessionExpired(queryResponse))
 				{
 					var req = BuildResultRequest(lastResultUrl!);
@@ -362,12 +362,12 @@ class SFStatement
 					if (SessionExpired(response))
 						SFSession.renewSession();
 					else
-						lastResultUrl = queryResponse.data?.getResultUrl;
+						lastResultUrl = queryResponse.Data?.GetResultUrl;
 				}
 			}
 
-			if (!response!.success)
-				throw new SnowflakeDbException(response.data!.sqlState!, response.code, response.message, response.data!.queryId!);
+			if (!response!.Success)
+				throw new SnowflakeDbException(response.Data!.SqlState!, response.Code, response.Message, response.Data!.QueryId!);
 
 			return response;
 		}

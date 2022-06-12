@@ -12,19 +12,19 @@ class SecretDetector
 	{
 		public Mask(bool isMasked = false, string maskedText = null, string errStr = null)
 		{
-			this.isMasked = isMasked;
-			this.maskedText = maskedText;
-			this.errStr = errStr;
+			this.IsMasked = isMasked;
+			this.MaskedText = maskedText;
+			this.ErrStr = errStr;
 		}
 
-		public bool isMasked { get; set; }
-		public string maskedText { get; set; }
-		public string errStr { get; set; }
+		public bool IsMasked { get; set; }
+		public string MaskedText { get; set; }
+		public string ErrStr { get; set; }
 	}
 
-	private static List<string> CUSTOM_PATTERNS_REGEX = new List<string>();
-	private static List<string> CUSTOM_PATTERNS_MASK = new List<string>();
-	private static int CUSTOM_PATTERNS_LENGTH;
+	static readonly List<string> CUSTOM_PATTERNS_REGEX = new();
+	static readonly List<string> CUSTOM_PATTERNS_MASK = new();
+	static int CUSTOM_PATTERNS_LENGTH;
 
 	public static void SetCustomPatterns(string[] customRegex, string[] customMask)
 	{
@@ -148,7 +148,7 @@ class SecretDetector
 
 		try
 		{
-			result.maskedText =
+			result.MaskedText =
 				MaskConnectionTokens(
 					MaskPassword(
 						MaskPrivateKeyData(
@@ -159,11 +159,11 @@ class SecretDetector
 											MaskAWSServerSide(text))))))));
 			if (CUSTOM_PATTERNS_LENGTH > 0)
 			{
-				result.maskedText = MaskCustomPatterns(result.maskedText);
+				result.MaskedText = MaskCustomPatterns(result.MaskedText);
 			}
-			if (result.maskedText != text)
+			if (result.MaskedText != text)
 			{
-				result.isMasked = true;
+				result.IsMasked = true;
 			}
 		}
 		catch (Exception ex)
@@ -171,9 +171,9 @@ class SecretDetector
 			//We'll assume that the exception was raised during masking
 			//to be safe consider that the log has sensitive information
 			//and do not raise an exception.
-			result.isMasked = true;
-			result.maskedText = ex.Message;
-			result.errStr = ex.Message;
+			result.IsMasked = true;
+			result.MaskedText = ex.Message;
+			result.ErrStr = ex.Message;
 		}
 		return result;
 	}

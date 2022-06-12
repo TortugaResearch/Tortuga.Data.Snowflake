@@ -19,7 +19,7 @@ class SFResultChunk : IResultChunk
 	public DownloadState DownloadState { get; set; }
 	public int ChunkIndex { get; }
 
-	public readonly object syncPrimitive = new object();
+	public readonly object syncPrimitive = new();
 
 	public SFResultChunk(string?[,]? rowSet)
 	{
@@ -50,7 +50,7 @@ class SFResultChunk : IResultChunk
 		return new UTF8Buffer(b);
 	}
 
-	public void addValue(string val, int rowCount, int colCount)
+	public void AddValue(string val, int rowCount, int colCount)
 	{
 		if (RowSet == null)
 			throw new InvalidOperationException($"{nameof(RowSet)} is null");

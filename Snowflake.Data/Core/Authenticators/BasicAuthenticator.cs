@@ -21,6 +21,6 @@ class BasicAuthenticator : Authenticator
 	protected override void SetSpecializedAuthenticatorData(LoginRequestData data)
 	{
 		// Only need to add the password to Data for basic authentication
-		data.password = Session.m_Properties[SFSessionProperty.PASSWORD];
+		data.Password = Session.m_Properties[SFSessionProperty.PASSWORD];
 	}
 }

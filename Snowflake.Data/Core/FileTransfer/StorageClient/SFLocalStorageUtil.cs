@@ -15,27 +15,27 @@ class SFLocalStorageUtil
 	/// </summary>
 	internal static void UploadOneFileWithRetry(SFFileMetadata fileMetadata)
 	{
-		if (fileMetadata.stageInfo == null)
+		if (fileMetadata.StageInfo == null)
 			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
-		if (fileMetadata.realSrcFilePath == null)
+		if (fileMetadata.RealSrcFilePath == null)
 			throw new ArgumentException("fileMetadata.realSrcFilePath is null", nameof(fileMetadata));
-		if (fileMetadata.destFileName == null)
+		if (fileMetadata.DestFileName == null)
 			throw new ArgumentException("fileMetadata.destFileName is null", nameof(fileMetadata));
-		if (fileMetadata.stageInfo.location == null)
+		if (fileMetadata.StageInfo.Location == null)
 			throw new ArgumentException("fileMetadata.stageInfo.location is null", nameof(fileMetadata));
 
 		// Create directory if doesn't exist
-		Directory.CreateDirectory(fileMetadata.stageInfo.location);
+		Directory.CreateDirectory(fileMetadata.StageInfo.Location);
 
 		// Create reader stream
-		using (var stream = new MemoryStream(File.ReadAllBytes(fileMetadata.realSrcFilePath)))
-		using (var fileStream = File.Create(Path.Combine(fileMetadata.stageInfo.location, fileMetadata.destFileName)))
+		using (var stream = new MemoryStream(File.ReadAllBytes(fileMetadata.RealSrcFilePath)))
+		using (var fileStream = File.Create(Path.Combine(fileMetadata.StageInfo.Location, fileMetadata.DestFileName)))
 		{
 			stream.CopyTo(fileStream);
 		}
 
-		fileMetadata.destFileSize = fileMetadata.uploadSize;
-		fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+		fileMetadata.DestFileSize = fileMetadata.UploadSize;
+		fileMetadata.ResultStatus = ResultStatus.UPLOADED.ToString();
 	}
 
 	/// <summary>
@@ -44,23 +44,23 @@ class SFLocalStorageUtil
 	/// </summary>
 	internal static void DownloadOneFile(SFFileMetadata fileMetadata)
 	{
-		if (fileMetadata.stageInfo == null)
+		if (fileMetadata.StageInfo == null)
 			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
-		if (fileMetadata.srcFileName == null)
+		if (fileMetadata.SrcFileName == null)
 			throw new ArgumentException("fileMetadata.srcFileName is null", nameof(fileMetadata));
-		if (fileMetadata.destFileName == null)
+		if (fileMetadata.DestFileName == null)
 			throw new ArgumentException("fileMetadata.destFileName is null", nameof(fileMetadata));
-		if (fileMetadata.localLocation == null)
+		if (fileMetadata.LocalLocation == null)
 			throw new ArgumentException("fileMetadata.localLocation is null", nameof(fileMetadata));
-		if (fileMetadata.stageInfo.location == null)
+		if (fileMetadata.StageInfo.Location == null)
 			throw new ArgumentException("fileMetadata.stageInfo.location is null", nameof(fileMetadata));
 
-		var srcFilePath = fileMetadata.stageInfo.location;
-		var realSrcFilePath = Path.Combine(srcFilePath, fileMetadata.srcFileName);
-		var output = Path.Combine(fileMetadata.localLocation, fileMetadata.destFileName);
+		var srcFilePath = fileMetadata.StageInfo.Location;
+		var realSrcFilePath = Path.Combine(srcFilePath, fileMetadata.SrcFileName);
+		var output = Path.Combine(fileMetadata.LocalLocation, fileMetadata.DestFileName);
 
 		// Create directory if doesn't exist
-		Directory.CreateDirectory(fileMetadata.localLocation);
+		Directory.CreateDirectory(fileMetadata.LocalLocation);
 
 		// Create stream object for reader and writer
 		using (var stream = new MemoryStream(File.ReadAllBytes(realSrcFilePath)))
@@ -68,9 +68,9 @@ class SFLocalStorageUtil
 		{
 			// Write file
 			stream.CopyTo(fileStream);
-			fileMetadata.destFileSize = fileStream.Length;
+			fileMetadata.DestFileSize = fileStream.Length;
 		}
 
-		fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
+		fileMetadata.ResultStatus = ResultStatus.DOWNLOADED.ToString();
 	}
 }

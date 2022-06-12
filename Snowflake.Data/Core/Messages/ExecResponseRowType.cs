@@ -9,23 +9,23 @@ namespace Tortuga.Data.Snowflake.Core.Messages;
 class ExecResponseRowType
 {
 	[JsonProperty(PropertyName = "name")]
-	internal string? name { get; set; }
+	internal string? Name { get; set; }
 
 	[JsonProperty(PropertyName = "byteLength", NullValueHandling = NullValueHandling.Ignore)]
-	internal long byteLength { get; set; }
+	internal long ByteLength { get; set; }
 
 	[JsonProperty(PropertyName = "length", NullValueHandling = NullValueHandling.Ignore)]
-	internal long length { get; set; }
+	internal long Length { get; set; }
 
 	[JsonProperty(PropertyName = "type")]
-	internal string? type { get; set; }
+	internal string? Type { get; set; }
 
 	[JsonProperty(PropertyName = "scale", NullValueHandling = NullValueHandling.Ignore)]
-	internal long scale { get; set; }
+	internal long Scale { get; set; }
 
 	[JsonProperty(PropertyName = "precision", NullValueHandling = NullValueHandling.Ignore)]
-	internal long precision { get; set; }
+	internal long Precision { get; set; }
 
 	[JsonProperty(PropertyName = "nullable")]
-	internal bool nullable { get; set; }
+	internal bool Nullable { get; set; }
 }

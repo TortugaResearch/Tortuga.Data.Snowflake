@@ -14,55 +14,55 @@ class MockServiceName : IMockRestRequester
     public Task<T> PostAsync<T>(RestRequest request, CancellationToken cancellationToken)
     {
         var message = request.ToRequestMessage(HttpMethod.Post);
-        var param = new NameValueParameter { name = "SERVICE_NAME" };
+        var param = new NameValueParameter { Name = "SERVICE_NAME" };
         if (!message.Headers.Contains("X-Snowflake-Service"))
         {
-            param.value = INIT_SERVICE_NAME;
+            param.Value = INIT_SERVICE_NAME;
         }
         else
         {
             IEnumerable<string> headerValues = message.Headers.GetValues("X-Snowflake-Service");
             foreach (string value in headerValues)
             {
-                param.value = value + 'a';
+                param.Value = value + 'a';
             }
         }
 
         SFRestRequest sfRequest = (SFRestRequest)request;
-        if (sfRequest.jsonBody is LoginRequest)
+        if (sfRequest.JsonBody is LoginRequest)
         {
             LoginResponse authnResponse = new LoginResponse
             {
-                data = new LoginResponseData()
+                Data = new LoginResponseData()
                 {
-                    token = "session_token",
-                    masterToken = "master_token",
-                    authResponseSessionInfo = new SessionInfo(),
-                    nameValueParameter = new List<NameValueParameter>() { param }
+                    Token = "session_token",
+                    MasterToken = "master_token",
+                    AuthResponseSessionInfo = new SessionInfo(),
+                    NameValueParameter = new List<NameValueParameter>() { param }
                 },
-                success = true
+                Success = true
             };
 
             // login request return success
             return Task.FromResult<T>((T)(object)authnResponse);
         }
-        else if (sfRequest.jsonBody is QueryRequest)
+        else if (sfRequest.JsonBody is QueryRequest)
         {
             QueryExecResponse queryExecResponse = new QueryExecResponse
             {
-                success = true,
-                data = new QueryExecResponseData
+                Success = true,
+                Data = new QueryExecResponseData
                 {
-                    rowSet = new string[,] { { "1" } },
-                    rowType = new List<ExecResponseRowType>()
+                    RowSet = new string[,] { { "1" } },
+                    RowType = new List<ExecResponseRowType>()
                             {
                                 new ExecResponseRowType
                                 {
-                                    name = "colone",
-                                    type = "FIXED"
+                                    Name = "colone",
+                                    Type = "FIXED"
                                 }
                             },
-                    parameters = new List<NameValueParameter> { param }
+                    Parameters = new List<NameValueParameter> { param }
                 }
             };
             return Task.FromResult<T>((T)(object)queryExecResponse);

@@ -23,7 +23,7 @@ class S3DownloadRequest : RestRequest
 		if (Url == null)
 			throw new InvalidOperationException($"{nameof(Url)} is null");
 
-		HttpRequestMessage message = newMessage(method, Url);
+		HttpRequestMessage message = NewMessage(method, Url);
 		if (ChunkHeaders != null)
 		{
 			foreach (var item in ChunkHeaders)

@@ -68,11 +68,11 @@ class SFChunkDownloaderV2 : IChunkDownloader
 		{
 			var t = new Lazy<Task<IResultChunk>>(() => DownloadChunkAsync(new DownloadContextV2()
 			{
-				chunk = c,
+				Chunk = c,
 				chunkIndex = c.ChunkIndex,
-				qrmk = m_Qrmk,
-				chunkHeaders = m_ChunkHeaders,
-				cancellationToken = m_ExternalCancellationToken,
+				Qrmk = m_Qrmk,
+				ChunkHeaders = m_ChunkHeaders,
+				CancellationToken = m_ExternalCancellationToken,
 			}));
 
 			m_DownloadTasks.Add(t);
@@ -99,25 +99,25 @@ class SFChunkDownloaderV2 : IChunkDownloader
 
 	async Task<IResultChunk> DownloadChunkAsync(DownloadContextV2 downloadContext)
 	{
-		if (downloadContext.chunk == null)
+		if (downloadContext.Chunk == null)
 			throw new ArgumentException("downloadContext.chunk is null", nameof(downloadContext));
 
-		var chunk = downloadContext.chunk;
+		var chunk = downloadContext.Chunk;
 
 		chunk.DownloadState = DownloadState.IN_PROGRESS;
 
 		var downloadRequest = new S3DownloadRequest()
 		{
 			Url = new UriBuilder(chunk.Url!).Uri,
-			Qrmk = downloadContext.qrmk,
+			Qrmk = downloadContext.Qrmk,
 			// s3 download request timeout to one hour
 			RestTimeout = TimeSpan.FromHours(1),
 			HttpTimeout = TimeSpan.FromSeconds(16),
-			ChunkHeaders = downloadContext.chunkHeaders
+			ChunkHeaders = downloadContext.ChunkHeaders
 		};
 
 		Stream stream;
-		using (var httpResponse = await m_RestRequester.GetAsync(downloadRequest, downloadContext.cancellationToken).ConfigureAwait(false))
+		using (var httpResponse = await m_RestRequester.GetAsync(downloadRequest, downloadContext.CancellationToken).ConfigureAwait(false))
 		using (stream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false))
 		{
 			if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out var encoding))

@@ -195,8 +195,7 @@ class SFDbCommandIT : SFBaseTest
 	[Test]
 	// Skip SimpleLargeResultSet test on GCP as it will fail
 	// on row 8192 consistently on Appveyor.
-	[IgnoreOnEnvIs("snowflake_cloud_env",
-				   new string[] { "GCP" })]
+	[IgnoreOnEnvIs("snowflake_cloud_env", new string[] { "GCP" })]
 	public void TestSimpleLargeResultSet()
 	{
 		using (IDbConnection conn = new SnowflakeDbConnection())

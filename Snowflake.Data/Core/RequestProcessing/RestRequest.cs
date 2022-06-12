@@ -30,7 +30,7 @@ abstract class RestRequest
 
 	internal abstract HttpRequestMessage ToRequestMessage(HttpMethod method);
 
-	protected HttpRequestMessage newMessage(HttpMethod method, Uri url)
+	protected HttpRequestMessage NewMessage(HttpMethod method, Uri url)
 	{
 		var message = new HttpRequestMessage(method, url);
 		message.SetOption(HTTP_REQUEST_TIMEOUT_KEY, HttpTimeout);

@@ -17,7 +17,7 @@ public class SnowflakeDbConnection : DbConnection
 	internal ConnectionState m_ConnectionState;
 	internal int m_ConnectionTimeout;
 
-	static object s_markerObject = new();
+	static readonly object s_markerObject = new();
 
 	string m_ConnectionString = "";
 
@@ -80,7 +80,7 @@ public class SnowflakeDbConnection : DbConnection
 
 	public override void ChangeDatabase(string databaseName)
 	{
-		string alterDbCommand = $"use database {databaseName}";
+		var alterDbCommand = $"use database {databaseName}";
 
 		using (var cmd = CreateCommand())
 		{
@@ -103,7 +103,7 @@ public class SnowflakeDbConnection : DbConnection
 	public override void Close()
 	{
 		if (m_ConnectionState != ConnectionState.Closed && SfSession != null)
-			SfSession.close();
+			SfSession.Close();
 
 		m_ConnectionState = ConnectionState.Closed;
 	}

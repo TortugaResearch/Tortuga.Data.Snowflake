@@ -12,7 +12,7 @@ public class SnowflakeDbParameter : DbParameter
 {
 	string m_ParameterName = "";
 	string m_SourceColumn = "";
-	SFDataType m_OriginType;
+	readonly SFDataType m_OriginType;
 
 	public SnowflakeDbParameter()
 	{

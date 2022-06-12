@@ -16,9 +16,8 @@ class SAMLRestRequest : RestRequest
 		if (Url == null)
 			throw new InvalidOperationException($"{nameof(Url)} is null");
 
-		var builder = new UriBuilder(Url);
-		builder.Query = "RelayState=%2Fsome%2Fdeep%2Flink&onetimetoken=" + OnetimeToken;
-		var message = newMessage(method, builder.Uri);
+		var builder = new UriBuilder(Url) { Query = "RelayState=%2Fsome%2Fdeep%2Flink&onetimetoken=" + OnetimeToken };
+		var message = NewMessage(method, builder.Uri);
 
 		message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
 

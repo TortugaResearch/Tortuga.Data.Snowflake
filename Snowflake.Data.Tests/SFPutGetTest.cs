@@ -4,7 +4,6 @@
 
 using NUnit.Framework;
 using System.Data;
-using System.Data.Common;
 using System.Runtime.InteropServices;
 
 namespace Tortuga.Data.Snowflake.Tests;
@@ -21,8 +20,8 @@ class SFPutGetTest : SFBaseTest
 	[TestCase("zstd")]
 	public void TestPutGetCommand(string compressionType)
 	{
-		string DATABASE_NAME = testConfig.database;
-		string SCHEMA_NAME = testConfig.schema;
+		var DATABASE_NAME = TestConfig.Database;
+		var SCHEMA_NAME = TestConfig.Schema;
 		const string TEST_TEMP_TABLE_NAME = "TEST_TEMP_TABLE_NAME";
 		const string TEST_TEMP_STAGE_NAME = "TEST_TEMP_STAGE_NAME";
 
@@ -48,42 +47,42 @@ class SFPutGetTest : SFBaseTest
 		  COL1_DATA + "," + COL2_DATA + "," + COL3_DATA + "\n" +
 		  COL1_DATA + "," + COL2_DATA + "," + COL3_DATA + "\n";
 
-		string createTable = $"create or replace table {TEST_TEMP_TABLE_NAME} ({COL1} STRING," +
+		var createTable = $"create or replace table {TEST_TEMP_TABLE_NAME} ({COL1} STRING," +
 		$"{COL2} STRING," +
 		$"{COL3} STRING)";
-		string createStage = $"create or replace stage {TEST_TEMP_STAGE_NAME}";
+		var createStage = $"create or replace stage {TEST_TEMP_STAGE_NAME}";
 
-		string copyIntoTable = $"COPY INTO {TEST_TEMP_TABLE_NAME}";
-		string copyIntoStage = $"COPY INTO {TEST_TEMP_TABLE_NAME} FROM @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
+		var copyIntoTable = $"COPY INTO {TEST_TEMP_TABLE_NAME}";
+		var copyIntoStage = $"COPY INTO {TEST_TEMP_TABLE_NAME} FROM @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
 
-		string removeFile = $"REMOVE @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
-		string removeFileUser = $"REMOVE @~/";
+		var removeFile = $"REMOVE @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME}";
+		var removeFileUser = $"REMOVE @~/";
 
-		string dropStage = $"DROP STAGE IF EXISTS {TEST_TEMP_STAGE_NAME}";
-		string dropTable = $"DROP TABLE IF EXISTS {TEST_TEMP_TABLE_NAME}";
+		var dropStage = $"DROP STAGE IF EXISTS {TEST_TEMP_STAGE_NAME}";
+		var dropTable = $"DROP TABLE IF EXISTS {TEST_TEMP_TABLE_NAME}";
 
-		string[] stageTypes = { USER_STAGE, TABLE_STAGE, NAMED_STAGE };
-		string[] autoCompressTypes = { FALSE_COMPRESS, TRUE_COMPRESS };
+		var stageTypes = new[] { USER_STAGE, TABLE_STAGE, NAMED_STAGE };
+		var autoCompressTypes = new[] { FALSE_COMPRESS, TRUE_COMPRESS };
 
-		foreach (string stageType in stageTypes)
+		foreach (var stageType in stageTypes)
 		{
-			foreach (string autoCompressType in autoCompressTypes)
+			foreach (var autoCompressType in autoCompressTypes)
 			{
-				using (DbConnection conn = new SnowflakeDbConnection())
+				using (var conn = new SnowflakeDbConnection())
 				{
 					conn.ConnectionString = ConnectionString;
 					conn.Open();
 
 					// Create a temp file with specified file extension
-					string filePath = Path.GetTempPath() + Guid.NewGuid().ToString() + ".csv" +
+					var filePath = Path.GetTempPath() + Guid.NewGuid().ToString() + ".csv" +
 						(autoCompressType == FALSE_COMPRESS ? "" : "." + compressionType);
 					// Write row data to temp file
 					File.WriteAllText(filePath, ROW_DATA);
 
-					string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+					var tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 					Directory.CreateDirectory(tempDirectory);
 
-					string putQuery = "";
+					var putQuery = "";
 					if (stageType == USER_STAGE)
 					{
 						putQuery = $"PUT file://{filePath} @~/";
@@ -97,10 +96,10 @@ class SFPutGetTest : SFBaseTest
 						putQuery = $"PUT file://{filePath} @{DATABASE_NAME}.{SCHEMA_NAME}.{TEST_TEMP_STAGE_NAME}";
 					}
 
-					string getQuery = $"GET @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME} file://{tempDirectory}";
+					var getQuery = $"GET @{DATABASE_NAME}.{SCHEMA_NAME}.%{TEST_TEMP_TABLE_NAME} file://{tempDirectory}";
 
-					string fileName = "";
-					string copyIntoUser = $"COPY INTO {TEST_TEMP_TABLE_NAME} FROM @~/";
+					var fileName = "";
+					var copyIntoUser = $"COPY INTO {TEST_TEMP_TABLE_NAME} FROM @~/";
 					if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 					{
 						fileName = filePath.Substring(filePath.LastIndexOf('\\') + 1);
@@ -134,7 +133,7 @@ class SFPutGetTest : SFBaseTest
 					// Add PUT compress option
 					putQuery += $" AUTO_COMPRESS={autoCompressType}";
 
-					using (DbCommand command = conn.CreateCommand())
+					using (var command = conn.CreateCommand())
 					{
 						// Create temp table
 						command.CommandText = createTable;
@@ -146,7 +145,7 @@ class SFPutGetTest : SFBaseTest
 
 						// Upload file
 						command.CommandText = putQuery;
-						DbDataReader reader = command.ExecuteReader();
+						var reader = command.ExecuteReader();
 						while (reader.Read())
 						{
 							// Check file status

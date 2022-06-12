@@ -9,5 +9,5 @@ namespace Tortuga.Data.Snowflake.Core.Messages;
 class QueryExecResponse : BaseRestResponse
 {
 	[JsonProperty(PropertyName = "data")]
-	internal QueryExecResponseData? data { get; set; }
+	internal QueryExecResponseData? Data { get; set; }
 }

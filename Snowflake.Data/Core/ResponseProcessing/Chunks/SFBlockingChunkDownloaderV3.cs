@@ -9,7 +9,7 @@ namespace Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
 
 class SFBlockingChunkDownloaderV3 : IChunkDownloader
 {
-	readonly List<SFReusableChunk> m_ChunkDatas = new List<SFReusableChunk>();
+	readonly List<SFReusableChunk> m_ChunkDatas = new();
 
 	readonly string m_Qrmk;
 
@@ -26,8 +26,6 @@ class SFBlockingChunkDownloaderV3 : IChunkDownloader
 
 	readonly Dictionary<string, string> m_ChunkHeaders;
 
-	readonly SFBaseResultSet m_ResultSet;
-
 	readonly List<ExecResponseChunk> m_ChunkInfos;
 
 	readonly List<Task<IResultChunk>> m_TaskQueues;
@@ -40,17 +38,16 @@ class SFBlockingChunkDownloaderV3 : IChunkDownloader
 		m_Qrmk = qrmk;
 		m_ChunkHeaders = chunkHeaders;
 		m_NextChunkToDownloadIndex = 0;
-		m_ResultSet = resultSet;
-		m_RestRequester = resultSet.SFStatement.SFSession.m_RestRequester;
+		m_RestRequester = resultSet.SFStatement.SFSession.RestRequester;
 		m_PrefetchSlot = Math.Min(chunkInfos.Count, GetPrefetchThreads(resultSet));
 		m_ChunkInfos = chunkInfos;
 		m_NextChunkToConsumeIndex = 0;
 		m_TaskQueues = new List<Task<IResultChunk>>();
 		m_ExternalCancellationToken = cancellationToken;
 
-		for (int i = 0; i < m_PrefetchSlot; i++)
+		for (var i = 0; i < m_PrefetchSlot; i++)
 		{
-			SFReusableChunk reusableChunk = new SFReusableChunk(colCount);
+			var reusableChunk = new SFReusableChunk(colCount);
 			reusableChunk.Reset(chunkInfos[m_NextChunkToDownloadIndex], m_NextChunkToDownloadIndex);
 			m_ChunkDatas.Add(reusableChunk);
 
@@ -66,7 +63,7 @@ class SFBlockingChunkDownloaderV3 : IChunkDownloader
 		}
 	}
 
-	int GetPrefetchThreads(SFBaseResultSet resultSet)
+	static int GetPrefetchThreads(SFBaseResultSet resultSet)
 	{
 		if (resultSet.SFStatement == null)
 			throw new ArgumentException($"resultSet.SFStatement is null", nameof(resultSet));
@@ -85,11 +82,11 @@ class SFBlockingChunkDownloaderV3 : IChunkDownloader
 	{
 		if (m_NextChunkToConsumeIndex < m_ChunkInfos.Count)
 		{
-			Task<IResultChunk> chunk = m_TaskQueues[m_NextChunkToConsumeIndex % m_PrefetchSlot];
+			var chunk = m_TaskQueues[m_NextChunkToConsumeIndex % m_PrefetchSlot];
 
 			if (m_NextChunkToDownloadIndex < m_ChunkInfos.Count && m_NextChunkToConsumeIndex > 0)
 			{
-				SFReusableChunk reusableChunk = m_ChunkDatas[m_NextChunkToDownloadIndex % m_PrefetchSlot];
+				var reusableChunk = m_ChunkDatas[m_NextChunkToDownloadIndex % m_PrefetchSlot];
 				reusableChunk.Reset(m_ChunkInfos[m_NextChunkToDownloadIndex], m_NextChunkToDownloadIndex);
 
 				m_TaskQueues[m_NextChunkToDownloadIndex % m_PrefetchSlot] = DownloadChunkAsync(new DownloadContextV3()
@@ -145,7 +142,7 @@ class SFBlockingChunkDownloaderV3 : IChunkDownloader
 	/// </summary>
 	/// <param name="content"></param>
 	/// <param name="resultChunk"></param>
-	async Task ParseStreamIntoChunk(Stream content, IResultChunk resultChunk)
+	static async Task ParseStreamIntoChunk(Stream content, IResultChunk resultChunk)
 	{
 		await new ReusableChunkParser(content).ParseChunkAsync(resultChunk).ConfigureAwait(false);
 	}

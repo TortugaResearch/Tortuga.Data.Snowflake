@@ -53,14 +53,14 @@ class SFStatementTest
 	public void TestServiceName()
 	{
 		var restRequester = new Mock.MockServiceName();
-		SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester, SnowflakeDbConfiguration.Default);
+		var sfSession = new SFSession("account=test;user=test;password=test", null, restRequester, SnowflakeDbConfiguration.Default);
 		sfSession.Open();
-		string expectServiceName = Mock.MockServiceName.INIT_SERVICE_NAME;
+		var expectServiceName = Mock.MockServiceName.INIT_SERVICE_NAME;
 		Assert.AreEqual(expectServiceName, sfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]);
 		for (int i = 0; i < 5; i++)
 		{
-			SFStatement statement = new SFStatement(sfSession);
-			SFBaseResultSet resultSet = statement.Execute(0, "SELECT 1", null, false);
+			var statement = new SFStatement(sfSession);
+			statement.Execute(0, "SELECT 1", null, false);
 			expectServiceName += "a";
 			Assert.AreEqual(expectServiceName, sfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]);
 		}

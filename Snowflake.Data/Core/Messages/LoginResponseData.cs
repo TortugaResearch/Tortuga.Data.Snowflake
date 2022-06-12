@@ -9,17 +9,17 @@ namespace Tortuga.Data.Snowflake.Core.Messages;
 class LoginResponseData
 {
 	[JsonProperty(PropertyName = "token", NullValueHandling = NullValueHandling.Ignore)]
-	internal string? token { get; set; }
+	internal string? Token { get; set; }
 
 	[JsonProperty(PropertyName = "masterToken", NullValueHandling = NullValueHandling.Ignore)]
-	internal string? masterToken { get; set; }
+	internal string? MasterToken { get; set; }
 
 	[JsonProperty(PropertyName = "serverVersion", NullValueHandling = NullValueHandling.Ignore)]
-	internal string? serverVersion { get; set; }
+	internal string? ServerVersion { get; set; }
 
 	[JsonProperty(PropertyName = "parameters", NullValueHandling = NullValueHandling.Ignore)]
-	internal List<NameValueParameter>? nameValueParameter { get; set; }
+	internal List<NameValueParameter>? NameValueParameter { get; set; }
 
 	[JsonProperty(PropertyName = "sessionInfo", NullValueHandling = NullValueHandling.Ignore)]
-	internal SessionInfo? authResponseSessionInfo { get; set; }
+	internal SessionInfo? AuthResponseSessionInfo { get; set; }
 }

@@ -75,22 +75,22 @@ class SFS3Client : ISFRemoteStorageClient
 	/// <param name="stageInfo">The command stage info.</param>
 	public SFS3Client(PutGetStageInfo stageInfo, int maxRetry, int parallel)
 	{
-		if (stageInfo.stageCredentials == null)
+		if (stageInfo.StageCredentials == null)
 			throw new ArgumentException("stageInfo.stageCredentials is null", nameof(stageInfo));
 
 		// Get the key id and secret key from the response
-		stageInfo.stageCredentials.TryGetValue(AWS_KEY_ID, out var awsAccessKeyId);
-		stageInfo.stageCredentials.TryGetValue(AWS_SECRET_KEY, out var awsSecretAccessKey);
+		stageInfo.StageCredentials.TryGetValue(AWS_KEY_ID, out var awsAccessKeyId);
+		stageInfo.StageCredentials.TryGetValue(AWS_SECRET_KEY, out var awsSecretAccessKey);
 		var clientConfig = new AmazonS3Config();
 		setCommonClientConfig(
 			clientConfig,
-			stageInfo.region,
-			stageInfo.endPoint,
+			stageInfo.Region,
+			stageInfo.EndPoint,
 			maxRetry,
 			parallel);
 
 		// Get the AWS token value and create the S3 client
-		if (stageInfo.stageCredentials.TryGetValue(AWS_TOKEN, out var awsSessionToken))
+		if (stageInfo.StageCredentials.TryGetValue(AWS_TOKEN, out var awsSessionToken))
 		{
 			m_S3Client = new AmazonS3Client(
 				awsAccessKeyId,
@@ -123,7 +123,7 @@ class SFS3Client : ISFRemoteStorageClient
 		var s3path = "";
 
 		// Split stage location as bucket name and path
-		if (stageLocation.Contains("/"))
+		if (stageLocation.Contains('/'))
 		{
 			bucketName = stageLocation.Substring(0, stageLocation.IndexOf('/'));
 
@@ -137,8 +137,8 @@ class SFS3Client : ISFRemoteStorageClient
 
 		return new RemoteLocation()
 		{
-			bucket = bucketName,
-			key = s3path
+			Bucket = bucketName,
+			Key = s3path
 		};
 	}
 
@@ -149,24 +149,24 @@ class SFS3Client : ISFRemoteStorageClient
 	/// <returns>The file header of the S3 file.</returns>
 	public FileHeader? GetFileHeader(SFFileMetadata fileMetadata)
 	{
-		if (fileMetadata.stageInfo == null)
+		if (fileMetadata.StageInfo == null)
 			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
-		if (fileMetadata.client == null)
+		if (fileMetadata.Client == null)
 			throw new ArgumentException("fileMetadata.client is null", nameof(fileMetadata));
-		if (fileMetadata.stageInfo.location == null)
+		if (fileMetadata.StageInfo.Location == null)
 			throw new ArgumentException("fileMetadata.stageInfo.location is null", nameof(fileMetadata));
 
-		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
+		var location = ExtractBucketNameAndPath(fileMetadata.StageInfo.Location);
 
 		// Get the client
-		var SFS3Client = (SFS3Client)fileMetadata.client;
+		var SFS3Client = (SFS3Client)fileMetadata.Client;
 		var client = SFS3Client.m_S3Client;
 
 		// Create the S3 request object
 		var request = new GetObjectRequest
 		{
-			BucketName = location.bucket,
-			Key = location.key + fileMetadata.destFileName
+			BucketName = location.Bucket,
+			Key = location.Key + fileMetadata.DestFileName
 		};
 
 		GetObjectResponse? response = null;
@@ -180,21 +180,21 @@ class SFS3Client : ISFRemoteStorageClient
 		{
 			if (err.ErrorCode == EXPIRED_TOKEN || err.ErrorCode == "400")
 			{
-				fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+				fileMetadata.ResultStatus = ResultStatus.RENEW_TOKEN.ToString();
 			}
 			else if (err.ErrorCode == NO_SUCH_KEY)
 			{
-				fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
+				fileMetadata.ResultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
 			}
 			else
 			{
-				fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
+				fileMetadata.ResultStatus = ResultStatus.ERROR.ToString();
 			}
 			return null;
 		}
 
 		// Update the result status of the file metadata
-		fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+		fileMetadata.ResultStatus = ResultStatus.UPLOADED.ToString();
 
 		var encryptionMetadata = new SFEncryptionMetadata
 		{
@@ -255,26 +255,26 @@ class SFS3Client : ISFRemoteStorageClient
 	/// <param name="encryptionMetadata">The encryption metadata for the header.</param>
 	public void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
 	{
-		if (fileMetadata.stageInfo == null)
+		if (fileMetadata.StageInfo == null)
 			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
-		if (fileMetadata.client == null)
+		if (fileMetadata.Client == null)
 			throw new ArgumentException("fileMetadata.client is null", nameof(fileMetadata));
-		if (fileMetadata.stageInfo.location == null)
+		if (fileMetadata.StageInfo.Location == null)
 			throw new ArgumentException("fileMetadata.stageInfo.location is null", nameof(fileMetadata));
 
-		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
+		var location = ExtractBucketNameAndPath(fileMetadata.StageInfo.Location);
 
 		// Get the client
-		var client = ((SFS3Client)fileMetadata.client).m_S3Client;
+		var client = ((SFS3Client)fileMetadata.Client).m_S3Client;
 
 		// Convert file bytes to memory stream
 		using (var stream = new MemoryStream(fileBytes))
 		{
 			// Create S3 PUT request
-			PutObjectRequest putObjectRequest = new PutObjectRequest
+			var putObjectRequest = new PutObjectRequest
 			{
-				BucketName = location.bucket,
-				Key = location.key + fileMetadata.destFileName,
+				BucketName = location.Bucket,
+				Key = location.Key + fileMetadata.DestFileName,
 				InputStream = stream,
 				ContentType = HTTP_HEADER_VALUE_OCTET_STREAM
 			};
@@ -293,18 +293,18 @@ class SFS3Client : ISFRemoteStorageClient
 			{
 				if (err.ErrorCode == EXPIRED_TOKEN)
 				{
-					fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+					fileMetadata.ResultStatus = ResultStatus.RENEW_TOKEN.ToString();
 				}
 				else
 				{
-					fileMetadata.lastError = err;
-					fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+					fileMetadata.LastError = err;
+					fileMetadata.ResultStatus = ResultStatus.NEED_RETRY.ToString();
 				}
 				return;
 			}
 
-			fileMetadata.destFileSize = fileMetadata.uploadSize;
-			fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+			fileMetadata.DestFileSize = fileMetadata.UploadSize;
+			fileMetadata.ResultStatus = ResultStatus.UPLOADED.ToString();
 		}
 	}
 
@@ -316,23 +316,23 @@ class SFS3Client : ISFRemoteStorageClient
 	/// <param name="maxConcurrency">Number of max concurrency.</param>
 	public void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency)
 	{
-		if (fileMetadata.stageInfo == null)
+		if (fileMetadata.StageInfo == null)
 			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
-		if (fileMetadata.client == null)
+		if (fileMetadata.Client == null)
 			throw new ArgumentException("fileMetadata.client is null", nameof(fileMetadata));
-		if (fileMetadata.stageInfo.location == null)
+		if (fileMetadata.StageInfo.Location == null)
 			throw new ArgumentException("fileMetadata.stageInfo.location is null", nameof(fileMetadata));
 
-		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
+		var location = ExtractBucketNameAndPath(fileMetadata.StageInfo.Location);
 
 		// Get the client
-		var client = ((SFS3Client)fileMetadata.client).m_S3Client;
+		var client = ((SFS3Client)fileMetadata.Client).m_S3Client;
 
 		// Create S3 GET request
 		var getObjectRequest = new GetObjectRequest
 		{
-			BucketName = location.bucket,
-			Key = location.key + fileMetadata.destFileName,
+			BucketName = location.Bucket,
+			Key = location.Key + fileMetadata.DestFileName,
 		};
 
 		try
@@ -349,16 +349,16 @@ class SFS3Client : ISFRemoteStorageClient
 		{
 			if (err.ErrorCode == EXPIRED_TOKEN)
 			{
-				fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+				fileMetadata.ResultStatus = ResultStatus.RENEW_TOKEN.ToString();
 			}
 			else
 			{
-				fileMetadata.lastError = err;
-				fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+				fileMetadata.LastError = err;
+				fileMetadata.ResultStatus = ResultStatus.NEED_RETRY.ToString();
 			}
 			return;
 		}
 
-		fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
+		fileMetadata.ResultStatus = ResultStatus.DOWNLOADED.ToString();
 	}
 }

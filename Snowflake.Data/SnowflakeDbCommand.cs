@@ -148,7 +148,7 @@ public class SnowflakeDbCommand : DbCommand
 
 	protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
 	{
-		SFBaseResultSet resultSet = ExecuteInternal();
+		var resultSet = ExecuteInternal();
 		return new SnowflakeDbDataReader(resultSet, m_Connection!, behavior);
 	}
 
@@ -169,7 +169,7 @@ public class SnowflakeDbCommand : DbCommand
 		}
 		else
 		{
-			for (int i = 0; i < parameters.Count; i++)
+			for (var i = 0; i < parameters.Count; i++)
 			{
 				var parameter = parameters[i];
 				var bindingType = "";
@@ -183,14 +183,14 @@ public class SnowflakeDbCommand : DbCommand
 					effectiveValue is not byte[])
 				{
 					var vals = new List<object?>();
-					foreach (object? val in (Array)effectiveValue)
+					foreach (var val in (Array)effectiveValue)
 					{
 						// if the user is using interface, SFDataType will be None and there will
 						// a conversion from DbType to SFDataType
 						// if the user is using concrete class, they should specify SFDataType.
 						if (parameter.SFDataType == SFDataType.None)
 						{
-							var typeAndVal = SFDataConverter.csharpTypeValToSfTypeVal(parameter.DbType, val);
+							var typeAndVal = SFDataConverter.CSharpTypeValToSfTypeVal(parameter.DbType, val);
 
 							bindingType = typeAndVal.Item1;
 							vals.Add(typeAndVal.Item2);
@@ -207,7 +207,7 @@ public class SnowflakeDbCommand : DbCommand
 				{
 					if (parameter.SFDataType == SFDataType.None)
 					{
-						var typeAndVal = SFDataConverter.csharpTypeValToSfTypeVal(parameter.DbType, parameter.Value);
+						var typeAndVal = SFDataConverter.CSharpTypeValToSfTypeVal(parameter.DbType, parameter.Value);
 						bindingType = typeAndVal.Item1;
 						bindingVal = typeAndVal.Item2;
 					}

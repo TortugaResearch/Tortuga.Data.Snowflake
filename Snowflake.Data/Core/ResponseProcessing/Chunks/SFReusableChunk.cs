@@ -53,7 +53,7 @@ class SFReusableChunk : IResultChunk
 
 	public void AddCell(byte[]? bytes, int length)
 	{
-		data.add(bytes, length);
+		data.Add(bytes, length);
 	}
 
 	class BlockResultData
@@ -82,13 +82,13 @@ class SFReusableChunk : IResultChunk
 			m_CurrentDatOffset = 0;
 			m_NextIndex = 0;
 			var bytesNeeded = uncompressedSize - (rowCount * 2) - (rowCount * colCount);
-			m_BlockCount = getBlock(bytesNeeded - 1) + 1;
-			m_MetaBlockCount = getMetaBlock(rowCount * colCount - 1) + 1;
+			m_BlockCount = GetBlock(bytesNeeded - 1) + 1;
+			m_MetaBlockCount = GetMetaBlock(rowCount * colCount - 1) + 1;
 		}
 
 		public UTF8Buffer? get(int index)
 		{
-			var length = m_Lengths[getMetaBlock(index)][getMetaBlockIndex(index)];
+			var length = m_Lengths[GetMetaBlock(index)][GetMetaBlockIndex(index)];
 
 			if (length == NULL_VALUE)
 			{
@@ -96,17 +96,17 @@ class SFReusableChunk : IResultChunk
 			}
 			else
 			{
-				var offset = m_Offsets[getMetaBlock(index)][getMetaBlockIndex(index)];
+				var offset = m_Offsets[GetMetaBlock(index)][GetMetaBlockIndex(index)];
 
 				// Create string from the char arrays
-				if (spaceLeftOnBlock(offset) < length)
+				if (SpaceLeftOnBlock(offset) < length)
 				{
 					var copied = 0;
 					var cell = new byte[length];
 					while (copied < length)
 					{
-						var copySize = Math.Min(length - copied, spaceLeftOnBlock(offset + copied));
-						Array.Copy(m_Data[getBlock(offset + copied)], getBlockOffset(offset + copied), cell, copied, copySize);
+						var copySize = Math.Min(length - copied, SpaceLeftOnBlock(offset + copied));
+						Array.Copy(m_Data[GetBlock(offset + copied)], GetBlockOffset(offset + copied), cell, copied, copySize);
 
 						copied += copySize;
 					}
@@ -114,79 +114,79 @@ class SFReusableChunk : IResultChunk
 				}
 				else
 				{
-					return new UTF8Buffer(m_Data[getBlock(offset)], getBlockOffset(offset), length);
+					return new UTF8Buffer(m_Data[GetBlock(offset)], GetBlockOffset(offset), length);
 				}
 			}
 		}
 
-		public void add(byte[]? bytes, int length)
+		public void Add(byte[]? bytes, int length)
 		{
 			if (m_Data.Count < m_BlockCount || m_Offsets.Count < m_MetaBlockCount)
 			{
-				allocateArrays();
+				AllocateArrays();
 			}
 
 			if (bytes == null)
 			{
-				m_Lengths[getMetaBlock(m_NextIndex)]
-					[getMetaBlockIndex(m_NextIndex)] = NULL_VALUE;
+				m_Lengths[GetMetaBlock(m_NextIndex)]
+					[GetMetaBlockIndex(m_NextIndex)] = NULL_VALUE;
 			}
 			else
 			{
 				var offset = m_CurrentDatOffset;
 
 				// store offset and length
-				var block = getMetaBlock(m_NextIndex);
-				var index = getMetaBlockIndex(m_NextIndex);
+				var block = GetMetaBlock(m_NextIndex);
+				var index = GetMetaBlockIndex(m_NextIndex);
 				m_Offsets[block][index] = offset;
 				m_Lengths[block][index] = length;
 
 				// copy bytes to data array
 				var copied = 0;
-				if (spaceLeftOnBlock(offset) < length)
+				if (SpaceLeftOnBlock(offset) < length)
 				{
 					while (copied < length)
 					{
-						var copySize = Math.Min(length - copied, spaceLeftOnBlock(offset + copied));
-						Array.Copy(bytes, copied, m_Data[getBlock(offset + copied)], getBlockOffset(offset + copied), copySize);
+						var copySize = Math.Min(length - copied, SpaceLeftOnBlock(offset + copied));
+						Array.Copy(bytes, copied, m_Data[GetBlock(offset + copied)], GetBlockOffset(offset + copied), copySize);
 						copied += copySize;
 					}
 				}
 				else
 				{
-					Array.Copy(bytes, 0, m_Data[getBlock(offset)], getBlockOffset(offset), length);
+					Array.Copy(bytes, 0, m_Data[GetBlock(offset)], GetBlockOffset(offset), length);
 				}
 				m_CurrentDatOffset += length;
 			}
 			m_NextIndex++;
 		}
 
-		static int getBlock(int offset)
+		static int GetBlock(int offset)
 		{
 			return offset >> blockLengthBits;
 		}
 
-		static int getBlockOffset(int offset)
+		static int GetBlockOffset(int offset)
 		{
 			return offset & (blockLength - 1);
 		}
 
-		static int spaceLeftOnBlock(int offset)
+		static int SpaceLeftOnBlock(int offset)
 		{
-			return blockLength - getBlockOffset(offset);
+			return blockLength - GetBlockOffset(offset);
 		}
 
-		static int getMetaBlock(int index)
+		static int GetMetaBlock(int index)
 		{
 			return index >> metaBlockLengthBits;
 		}
 
-		static int getMetaBlockIndex(int index)
+		static int GetMetaBlockIndex(int index)
 		{
 			return index & (metaBlockLength - 1);
 		}
 
-		void allocateArrays()
+		void AllocateArrays()
 		{
 			while (m_Data.Count < m_BlockCount)
 			{

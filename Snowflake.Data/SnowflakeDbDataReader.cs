@@ -17,7 +17,7 @@ public class SnowflakeDbDataReader : DbDataReader
 	readonly SnowflakeDbConnection m_Connection;
 	readonly DataTable m_SchemaTable;
 	bool m_IsClosed;
-	SFBaseResultSet m_ResultSet;
+	readonly SFBaseResultSet m_ResultSet;
 
 	internal SnowflakeDbDataReader(SFBaseResultSet resultSet, SnowflakeDbConnection connection, CommandBehavior commandBehavior)
 	{
@@ -50,7 +50,7 @@ public class SnowflakeDbDataReader : DbDataReader
 	public override void Close()
 	{
 		base.Close();
-		m_ResultSet.close();
+		m_ResultSet.Close();
 		m_IsClosed = true;
 		if (m_CommandBehavior.HasFlag(CommandBehavior.CloseConnection))
 			m_Connection.Close();
@@ -85,7 +85,7 @@ public class SnowflakeDbDataReader : DbDataReader
 		if (m_ResultSet.SFResultSetMetaData == null)
 			throw new InvalidOperationException($"{nameof(m_ResultSet.SFResultSetMetaData)} is null.");
 
-		return m_ResultSet.SFResultSetMetaData.getColumnTypeByIndex(ordinal).ToString();
+		return m_ResultSet.SFResultSetMetaData.GetColumnTypeByIndex(ordinal).ToString();
 	}
 
 	public override DateTime GetDateTime(int ordinal) => m_ResultSet.GetValue<DateTime>(ordinal);
@@ -107,7 +107,7 @@ public class SnowflakeDbDataReader : DbDataReader
 		if (m_ResultSet.SFResultSetMetaData == null)
 			throw new InvalidOperationException($"{nameof(m_ResultSet.SFResultSetMetaData)} is null.");
 
-		return m_ResultSet.SFResultSetMetaData.getCSharpTypeByIndex(ordinal);
+		return m_ResultSet.SFResultSetMetaData.GetCSharpTypeByIndex(ordinal);
 	}
 
 	public override float GetFloat(int ordinal) => m_ResultSet.GetValue<float>(ordinal);
@@ -131,7 +131,7 @@ public class SnowflakeDbDataReader : DbDataReader
 	{
 		if (m_ResultSet.SFResultSetMetaData == null)
 			throw new InvalidOperationException($"{nameof(m_ResultSet.SFResultSetMetaData)} is null.");
-		return m_ResultSet.SFResultSetMetaData.getColumnIndexByName(name);
+		return m_ResultSet.SFResultSetMetaData.GetColumnIndexByName(name);
 	}
 
 	public string? GetQueryId() => m_ResultSet.m_QueryId;
@@ -179,7 +179,7 @@ public class SnowflakeDbDataReader : DbDataReader
 		return await m_ResultSet.NextAsync().ConfigureAwait(false);
 	}
 
-	private DataTable PopulateSchemaTable(SFBaseResultSet resultSet)
+	static DataTable PopulateSchemaTable(SFBaseResultSet resultSet)
 	{
 		var table = new DataTable("SchemaTable");
 
@@ -197,16 +197,16 @@ public class SnowflakeDbDataReader : DbDataReader
 
 		var columnOrdinal = 0;
 		var sfResultSetMetaData = resultSet.SFResultSetMetaData;
-		foreach (var rowType in sfResultSetMetaData.rowTypes)
+		foreach (var rowType in sfResultSetMetaData.m_RowTypes)
 		{
 			var row = table.NewRow();
 
-			row[SchemaTableColumn.ColumnName] = rowType.name;
+			row[SchemaTableColumn.ColumnName] = rowType.Name;
 			row[SchemaTableColumn.ColumnOrdinal] = columnOrdinal;
-			row[SchemaTableColumn.ColumnSize] = (int)rowType.length;
-			row[SchemaTableColumn.NumericPrecision] = (int)rowType.precision;
-			row[SchemaTableColumn.NumericScale] = (int)rowType.scale;
-			row[SchemaTableColumn.AllowDBNull] = rowType.nullable;
+			row[SchemaTableColumn.ColumnSize] = (int)rowType.Length;
+			row[SchemaTableColumn.NumericPrecision] = (int)rowType.Precision;
+			row[SchemaTableColumn.NumericScale] = (int)rowType.Scale;
+			row[SchemaTableColumn.AllowDBNull] = rowType.Nullable;
 
 			var types = sfResultSetMetaData.GetTypesByIndex(columnOrdinal);
 			row[SchemaTableColumn.ProviderType] = types.Item1;

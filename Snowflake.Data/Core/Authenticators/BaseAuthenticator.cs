@@ -25,12 +25,12 @@ abstract class Authenticator
 		Session = session;
 
 		// Update the value for insecureMode because it can be different for each session
-		m_ClientEnv.insecureMode = session.m_Properties[SFSessionProperty.INSECUREMODE];
+		m_ClientEnv.InsecureMode = session.m_Properties[SFSessionProperty.INSECUREMODE];
 		if (session.m_Properties.TryGetValue(SFSessionProperty.APPLICATION, out var applicationName))
 		{
 			// If an application name has been specified in the connection setting, use it
 			// Otherwise, it will default to the running process name
-			m_ClientEnv.application = applicationName;
+			m_ClientEnv.Application = applicationName;
 		}
 	}
 
@@ -48,7 +48,7 @@ abstract class Authenticator
 	{
 		var loginRequest = BuildLoginRequest();
 
-		var response = Session.m_RestRequester.Post<LoginResponse>(loginRequest);
+		var response = Session.RestRequester.Post<LoginResponse>(loginRequest);
 
 		Session.ProcessLoginResponse(response);
 	}
@@ -57,7 +57,7 @@ abstract class Authenticator
 	{
 		var loginRequest = BuildLoginRequest();
 
-		var response = await Session.m_RestRequester.PostAsync<LoginResponse>(loginRequest, cancellationToken).ConfigureAwait(false);
+		var response = await Session.RestRequester.PostAsync<LoginResponse>(loginRequest, cancellationToken).ConfigureAwait(false);
 
 		Session.ProcessLoginResponse(response);
 	}
@@ -79,19 +79,19 @@ abstract class Authenticator
 		// build uri
 		var loginUrl = Session.BuildLoginUrl();
 
-		LoginRequestData data = new LoginRequestData()
+		var data = new LoginRequestData()
 		{
-			loginName = Session.m_Properties[SFSessionProperty.USER],
-			accountName = Session.m_Properties[SFSessionProperty.ACCOUNT],
-			clientAppId = SFEnvironment.DriverName,
-			clientAppVersion = SFEnvironment.DriverVersion,
-			clientEnv = m_ClientEnv,
+			LoginName = Session.m_Properties[SFSessionProperty.USER],
+			AccountName = Session.m_Properties[SFSessionProperty.ACCOUNT],
+			ClientAppId = SFEnvironment.DriverName,
+			ClientAppVersion = SFEnvironment.DriverVersion,
+			ClientEnv = m_ClientEnv,
 			SessionParameters = Session.ParameterMap,
 			Authenticator = AuthName,
 		};
 
 		SetSpecializedAuthenticatorData(data);
 
-		return Session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { data = data });
+		return Session.BuildTimeoutRestRequest(loginUrl, new LoginRequest() { Data = data });
 	}
 }

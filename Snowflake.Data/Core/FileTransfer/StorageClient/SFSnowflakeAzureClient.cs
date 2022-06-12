@@ -33,19 +33,19 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 	/// <param name="stageInfo">The command stage info.</param>
 	public SFSnowflakeAzureClient(PutGetStageInfo stageInfo)
 	{
-		if (stageInfo.stageCredentials == null)
+		if (stageInfo.StageCredentials == null)
 			throw new ArgumentException("stageInfo.stageCredentials is null", nameof(stageInfo));
 
 		// Get the Azure SAS token and create the client
-		if (stageInfo.stageCredentials.TryGetValue(AZURE_SAS_TOKEN, out var sasToken))
+		if (stageInfo.StageCredentials.TryGetValue(AZURE_SAS_TOKEN, out var sasToken))
 		{
-			var blobEndpoint = $"https://{stageInfo.storageAccount}.blob.core.windows.net";
+			var blobEndpoint = $"https://{stageInfo.StorageAccount}.blob.core.windows.net";
 			m_BlobServiceClient = new BlobServiceClient(new Uri(blobEndpoint),
 				new AzureSasCredential(sasToken));
 		}
 		else
 		{
-			throw new ArgumentException($"{nameof(stageInfo)}.{nameof(stageInfo.stageCredentials)} does not contain an AZURE_SAS_TOKEN", nameof(stageInfo));
+			throw new ArgumentException($"{nameof(stageInfo)}.{nameof(stageInfo.StageCredentials)} does not contain an AZURE_SAS_TOKEN", nameof(stageInfo));
 		}
 	}
 
@@ -62,7 +62,7 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 		string? azurePath = null;
 
 		// Split stage location as bucket name and path
-		if (stageLocation.Contains("/"))
+		if (stageLocation.Contains('/'))
 		{
 			blobName = stageLocation.Substring(0, stageLocation.IndexOf('/'));
 
@@ -76,8 +76,8 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 
 		return new RemoteLocation()
 		{
-			bucket = blobName,
-			key = azurePath
+			Bucket = blobName,
+			Key = azurePath
 		};
 	}
 
@@ -88,16 +88,16 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 	/// <returns>The file header of the Azure file.</returns>
 	public FileHeader? GetFileHeader(SFFileMetadata fileMetadata)
 	{
-		if (fileMetadata.stageInfo == null)
+		if (fileMetadata.StageInfo == null)
 			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
-		if (fileMetadata.stageInfo.location == null)
+		if (fileMetadata.StageInfo.Location == null)
 			throw new ArgumentException("fileMetadata.stageInfo.location is null", nameof(fileMetadata));
 
-		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
+		var location = ExtractBucketNameAndPath(fileMetadata.StageInfo.Location);
 
 		// Get the Azure client
-		var containerClient = m_BlobServiceClient.GetBlobContainerClient(location.bucket);
-		var blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+		var containerClient = m_BlobServiceClient.GetBlobContainerClient(location.Bucket);
+		var blobClient = containerClient.GetBlobClient(location.Key + fileMetadata.DestFileName);
 
 		BlobProperties response;
 		try
@@ -109,23 +109,23 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 		{
 			if (ex.Message.Contains(EXPIRED_TOKEN) || ex.Message.Contains("Status: 400"))
 			{
-				fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+				fileMetadata.ResultStatus = ResultStatus.RENEW_TOKEN.ToString();
 			}
 			else if (ex.Message.Contains(NO_SUCH_KEY) || ex.Message.Contains("Status: 404"))
 			{
-				fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
+				fileMetadata.ResultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
 			}
 			else
 			{
-				fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
+				fileMetadata.ResultStatus = ResultStatus.ERROR.ToString();
 			}
 			return null;
 		}
 
-		fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+		fileMetadata.ResultStatus = ResultStatus.UPLOADED.ToString();
 
 		dynamic encryptionData = JsonConvert.DeserializeObject(response.Metadata["encryptiondata"])!;
-		SFEncryptionMetadata encryptionMetadata = new SFEncryptionMetadata
+		var encryptionMetadata = new SFEncryptionMetadata
 		{
 			iv = encryptionData["ContentEncryptionIV"],
 			key = encryptionData.WrappedContentKey["EncryptedKey"],
@@ -148,13 +148,13 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 	/// <param name="encryptionMetadata">The encryption metadata for the header.</param>
 	public void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
 	{
-		if (fileMetadata.stageInfo == null)
+		if (fileMetadata.StageInfo == null)
 			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
-		if (fileMetadata.stageInfo.location == null)
+		if (fileMetadata.StageInfo.Location == null)
 			throw new ArgumentException("fileMetadata.stageInfo.location is null", nameof(fileMetadata));
 
 		// Create the JSON for the encryption data header
-		string encryptionData = JsonConvert.SerializeObject(new EncryptionData
+		var encryptionData = JsonConvert.SerializeObject(new EncryptionData
 		{
 			EncryptionMode = "FullBlob",
 			WrappedContentKey = new WrappedContentInfo
@@ -176,16 +176,18 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 		});
 
 		// Create the metadata to use for the header
-		var metadata = new Dictionary<string, string?>();
-		metadata.Add("encryptiondata", encryptionData);
-		metadata.Add("matdesc", encryptionMetadata.matDesc);
-		metadata.Add("sfcdigest", fileMetadata.sha256Digest);
+		var metadata = new Dictionary<string, string?>
+		{
+			{ "encryptiondata", encryptionData },
+			{ "matdesc", encryptionMetadata.matDesc },
+			{ "sfcdigest", fileMetadata.Sha256Digest }
+		};
 
-		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
+		var location = ExtractBucketNameAndPath(fileMetadata.StageInfo.Location);
 
 		// Get the Azure client
-		var containerClient = m_BlobServiceClient.GetBlobContainerClient(location.bucket);
-		var blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+		var containerClient = m_BlobServiceClient.GetBlobContainerClient(location.Bucket);
+		var blobClient = containerClient.GetBlobClient(location.Key + fileMetadata.DestFileName);
 
 		try
 		{
@@ -200,23 +202,23 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 		{
 			if (ex.Message.Contains("Status: 400"))
 			{
-				fileMetadata.resultStatus = ResultStatus.RENEW_PRESIGNED_URL.ToString();
+				fileMetadata.ResultStatus = ResultStatus.RENEW_PRESIGNED_URL.ToString();
 			}
 			else if (ex.Message.Contains("Status: 401"))
 			{
-				fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+				fileMetadata.ResultStatus = ResultStatus.RENEW_TOKEN.ToString();
 			}
 			else if (ex.Message.Contains("Status: 403") ||
 				ex.Message.Contains("Status: 500") ||
 				ex.Message.Contains("Status: 503"))
 			{
-				fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+				fileMetadata.ResultStatus = ResultStatus.NEED_RETRY.ToString();
 			}
 			return;
 		}
 
-		fileMetadata.destFileSize = fileMetadata.uploadSize;
-		fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+		fileMetadata.DestFileSize = fileMetadata.UploadSize;
+		fileMetadata.ResultStatus = ResultStatus.UPLOADED.ToString();
 	}
 
 	/// <summary>
@@ -227,16 +229,16 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 	/// <param name="maxConcurrency">Number of max concurrency.</param>
 	public void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency)
 	{
-		if (fileMetadata.stageInfo == null)
+		if (fileMetadata.StageInfo == null)
 			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
-		if (fileMetadata.stageInfo.location == null)
+		if (fileMetadata.StageInfo.Location == null)
 			throw new ArgumentException("fileMetadata.stageInfo.location is null", nameof(fileMetadata));
 
-		var location = ExtractBucketNameAndPath(fileMetadata.stageInfo.location);
+		var location = ExtractBucketNameAndPath(fileMetadata.StageInfo.Location);
 
 		// Get the Azure client
-		var containerClient = m_BlobServiceClient.GetBlobContainerClient(location.bucket);
-		var blobClient = containerClient.GetBlobClient(location.key + fileMetadata.destFileName);
+		var containerClient = m_BlobServiceClient.GetBlobContainerClient(location.Bucket);
+		var blobClient = containerClient.GetBlobClient(location.Key + fileMetadata.DestFileName);
 
 		try
 		{
@@ -247,17 +249,17 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 		{
 			if (ex.Message.Contains("Status: 401"))
 			{
-				fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
+				fileMetadata.ResultStatus = ResultStatus.RENEW_TOKEN.ToString();
 			}
 			else if (ex.Message.Contains("Status: 403") ||
 				ex.Message.Contains("Status: 500") ||
 				ex.Message.Contains("Status: 503"))
 			{
-				fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
+				fileMetadata.ResultStatus = ResultStatus.NEED_RETRY.ToString();
 			}
 			return;
 		}
 
-		fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
+		fileMetadata.ResultStatus = ResultStatus.DOWNLOADED.ToString();
 	}
 }

@@ -14,11 +14,6 @@ class JsonUtils
 	/// This is to avoid issues when changes are made system wide to the default and keep
 	/// our settings locals.
 	/// </summary>
-	public static readonly JsonSerializerSettings JsonSettings = new JsonSerializerSettings()
-	{
-		ContractResolver = new DefaultContractResolver()
-		{
-			NamingStrategy = new DefaultNamingStrategy()
-		}
-	};
+	public static readonly JsonSerializerSettings JsonSettings =
+		new() { ContractResolver = new DefaultContractResolver() { NamingStrategy = new DefaultNamingStrategy() } };
 }

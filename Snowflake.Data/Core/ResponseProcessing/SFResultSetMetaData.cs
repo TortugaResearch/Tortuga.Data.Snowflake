@@ -8,51 +8,51 @@ namespace Tortuga.Data.Snowflake.Core.ResponseProcessing;
 
 class SFResultSetMetaData
 {
-	int m_ColumnCount;
+	readonly int m_ColumnCount;
 
-	internal readonly string? dateOutputFormat;
+	internal readonly string? m_DateOutputFormat;
 
-	internal readonly string? timeOutputFormat;
+	internal readonly string? m_TimeOutputFormat;
 
-	internal readonly string? timestampeNTZOutputFormat;
+	internal readonly string? m_TimestampeNTZOutputFormat;
 
-	internal readonly string? timestampeLTZOutputFormat;
+	internal readonly string? m_TimestampeLTZOutputFormat;
 
-	internal readonly string? timestampeTZOutputFormat;
+	internal readonly string? m_TimestampeTZOutputFormat;
 
-	internal List<ExecResponseRowType> rowTypes;
+	internal List<ExecResponseRowType> m_RowTypes;
 
-	internal readonly SFStatementType statementType;
+	internal readonly SFStatementType m_StatementType;
 
-	internal readonly List<Tuple<SFDataType, Type>> columnTypes;
+	internal readonly List<Tuple<SFDataType, Type>> m_ColumnTypes;
 
 	/// <summary>
 	///     This map is used to cache column name to column index. Index is 0-based.
 	/// </summary>
-	Dictionary<string, int> columnNameToIndexCache = new Dictionary<string, int>();
+	readonly Dictionary<string, int> m_ColumnNameToIndexCache = new();
 
 	internal SFResultSetMetaData(QueryExecResponseData queryExecResponseData)
 	{
-		if (queryExecResponseData.rowType == null)
+		if (queryExecResponseData.RowType == null)
 			throw new ArgumentException($"queryExecResponseData.rowType is null", nameof(queryExecResponseData));
-		if (queryExecResponseData.parameters == null)
+		if (queryExecResponseData.Parameters == null)
 			throw new ArgumentException($"queryExecResponseData.parameters is null", nameof(queryExecResponseData));
 
-		rowTypes = queryExecResponseData.rowType;
-		m_ColumnCount = rowTypes.Count;
-		statementType = findStatementTypeById(queryExecResponseData.statementTypeId);
-		columnTypes = InitColumnTypes();
+		m_RowTypes = queryExecResponseData.RowType;
+		m_ColumnCount = m_RowTypes.Count;
+		m_StatementType = FindStatementTypeById(queryExecResponseData.StatementTypeId);
+		m_ColumnTypes = InitColumnTypes();
 
-		foreach (NameValueParameter parameter in queryExecResponseData.parameters)
+		foreach (var parameter in queryExecResponseData.Parameters)
 		{
-			switch (parameter.name)
+			switch (parameter.Name)
 			{
 				case "DATE_OUTPUT_FORMAT":
-					dateOutputFormat = parameter.value;
+					m_DateOutputFormat = parameter.Value;
 					break;
 
 				case "TIME_OUTPUT_FORMAT":
-					timeOutputFormat = parameter.value;
+					m_TimeOutputFormat = parameter.Value;
 					break;
 			}
 		}
@@ -60,22 +60,22 @@ class SFResultSetMetaData
 
 	internal SFResultSetMetaData(PutGetResponseData putGetResponseData)
 	{
-		if (putGetResponseData.rowType == null)
+		if (putGetResponseData.RowType == null)
 			throw new ArgumentException($"putGetResponseData.rowType is null", nameof(putGetResponseData));
 
-		rowTypes = putGetResponseData.rowType;
-		m_ColumnCount = rowTypes.Count;
-		statementType = findStatementTypeById(putGetResponseData.statementTypeId);
-		columnTypes = InitColumnTypes();
+		m_RowTypes = putGetResponseData.RowType;
+		m_ColumnCount = m_RowTypes.Count;
+		m_StatementType = FindStatementTypeById(putGetResponseData.StatementTypeId);
+		m_ColumnTypes = InitColumnTypes();
 	}
 
 	List<Tuple<SFDataType, Type>> InitColumnTypes()
 	{
-		List<Tuple<SFDataType, Type>> types = new List<Tuple<SFDataType, Type>>();
-		for (int i = 0; i < m_ColumnCount; i++)
+		var types = new List<Tuple<SFDataType, Type>>();
+		for (var i = 0; i < m_ColumnCount; i++)
 		{
-			var column = rowTypes[i];
-			var dataType = GetSFDataType(column.type);
+			var column = m_RowTypes[i];
+			var dataType = GetSFDataType(column.Type);
 			var nativeType = GetNativeTypeForColumn(dataType, column);
 
 			types.Add(Tuple.Create(dataType, nativeType));
@@ -86,21 +86,20 @@ class SFResultSetMetaData
 	/// <summary>
 	/// </summary>
 	/// <returns>index of column given a name, -1 if no column names are found</returns>
-	internal int getColumnIndexByName(string targetColumnName)
+	internal int GetColumnIndexByName(string targetColumnName)
 	{
-		int resultIndex;
-		if (columnNameToIndexCache.TryGetValue(targetColumnName, out resultIndex))
+		if (m_ColumnNameToIndexCache.TryGetValue(targetColumnName, out var resultIndex))
 		{
 			return resultIndex;
 		}
 		else
 		{
-			int indexCounter = 0;
-			foreach (ExecResponseRowType rowType in rowTypes)
+			var indexCounter = 0;
+			foreach (var rowType in m_RowTypes)
 			{
-				if (String.Compare(rowType.name, targetColumnName, false) == 0)
+				if (string.Compare(rowType.Name, targetColumnName, false) == 0)
 				{
-					columnNameToIndexCache[targetColumnName] = indexCounter;
+					m_ColumnNameToIndexCache[targetColumnName] = indexCounter;
 					return indexCounter;
 				}
 				indexCounter++;
@@ -109,12 +108,12 @@ class SFResultSetMetaData
 		return -1;
 	}
 
-	internal SFDataType getColumnTypeByIndex(int targetIndex)
+	internal SFDataType GetColumnTypeByIndex(int targetIndex)
 	{
 		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
 			throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
 
-		return columnTypes[targetIndex].Item1;
+		return m_ColumnTypes[targetIndex].Item1;
 	}
 
 	internal Tuple<SFDataType, Type> GetTypesByIndex(int targetIndex)
@@ -122,24 +121,23 @@ class SFResultSetMetaData
 		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
 			throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
 
-		return columnTypes[targetIndex];
+		return m_ColumnTypes[targetIndex];
 	}
 
-	SFDataType GetSFDataType(string? type)
+	static SFDataType GetSFDataType(string? type)
 	{
-		SFDataType result;
-		if (Enum.TryParse(type, true, out result))
+		if (Enum.TryParse(type, true, out SFDataType result))
 			return result;
 
 		throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unknow column type: {type}");
 	}
 
-	Type GetNativeTypeForColumn(SFDataType sfType, ExecResponseRowType col)
+	static Type GetNativeTypeForColumn(SFDataType sfType, ExecResponseRowType col)
 	{
 		switch (sfType)
 		{
 			case SFDataType.FIXED:
-				return col.scale == 0 ? typeof(long) : typeof(decimal);
+				return col.Scale == 0 ? typeof(long) : typeof(decimal);
 
 			case SFDataType.REAL:
 				return typeof(double);
@@ -171,13 +169,13 @@ class SFResultSetMetaData
 		}
 	}
 
-	internal Type getCSharpTypeByIndex(int targetIndex)
+	internal Type GetCSharpTypeByIndex(int targetIndex)
 	{
 		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
 			throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
 
-		SFDataType sfType = getColumnTypeByIndex(targetIndex);
-		return GetNativeTypeForColumn(sfType, rowTypes[targetIndex]);
+		var sfType = GetColumnTypeByIndex(targetIndex);
+		return GetNativeTypeForColumn(sfType, m_RowTypes[targetIndex]);
 	}
 
 	internal string? getColumnNameByIndex(int targetIndex)
@@ -185,10 +183,10 @@ class SFResultSetMetaData
 		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
 			throw new SnowflakeDbException(SFError.COLUMN_INDEX_OUT_OF_BOUND, targetIndex);
 
-		return rowTypes[targetIndex].name;
+		return m_RowTypes[targetIndex].Name;
 	}
 
-	SFStatementType findStatementTypeById(long id)
+	static SFStatementType FindStatementTypeById(long id)
 	{
 #pragma warning disable CS8605 // Unboxing a possibly null value. Workaround for .NET Core 3.1 warning. Doesn't apply to .NET 4.x or .NET 6
 		foreach (SFStatementType type in Enum.GetValues(typeof(SFStatementType)))

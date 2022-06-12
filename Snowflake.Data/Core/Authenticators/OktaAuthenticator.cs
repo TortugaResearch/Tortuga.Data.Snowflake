@@ -11,7 +11,7 @@ using Tortuga.HttpClientUtilities;
 namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
 /// <summary>
-/// OktaAuthenticator would perform serveral steps of authentication with Snowflake and Okta idp
+/// OktaAuthenticator would perform several steps of authentication with Snowflake and Okta idp
 /// </summary>
 class OktaAuthenticator : Authenticator
 {
@@ -42,20 +42,20 @@ class OktaAuthenticator : Authenticator
 	public override void Login()
 	{
 		var authenticatorRestRequest = BuildAuthenticatorRestRequest();
-		var authenticatorResponse = Session.m_RestRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
+		var authenticatorResponse = Session.RestRequester.Post<AuthenticatorResponse>(authenticatorRestRequest);
 		authenticatorResponse.FilterFailedResponse();
-		var ssoUrl = new Uri(authenticatorResponse.data!.ssoUrl!);
-		var tokenUrl = new Uri(authenticatorResponse.data!.tokenUrl!);
+		var ssoUrl = new Uri(authenticatorResponse.Data!.ssoUrl!);
+		var tokenUrl = new Uri(authenticatorResponse.Data!.tokenUrl!);
 
 		VerifyUrls(ssoUrl, m_OktaUrl);
 		VerifyUrls(tokenUrl, m_OktaUrl);
 
 		var idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
-		var idpResponse = Session.m_RestRequester.Post<IdpTokenResponse>(idpTokenRestRequest);
+		var idpResponse = Session.RestRequester.Post<IdpTokenResponse>(idpTokenRestRequest);
 		var onetimeToken = idpResponse.CookieToken;
 
 		var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
-		using (var samlRawResponse = Session.m_RestRequester.Get(samlRestRequest))
+		using (var samlRawResponse = Session.RestRequester.Get(samlRestRequest))
 		{
 			m_SamlRawHtmlString = samlRawResponse.Content.ReadAsString();
 		}
@@ -69,20 +69,20 @@ class OktaAuthenticator : Authenticator
 	async public override Task LoginAsync(CancellationToken cancellationToken)
 	{
 		var authenticatorRestRequest = BuildAuthenticatorRestRequest();
-		var authenticatorResponse = await Session.m_RestRequester.PostAsync<AuthenticatorResponse>(authenticatorRestRequest, cancellationToken).ConfigureAwait(false);
+		var authenticatorResponse = await Session.RestRequester.PostAsync<AuthenticatorResponse>(authenticatorRestRequest, cancellationToken).ConfigureAwait(false);
 		authenticatorResponse.FilterFailedResponse();
-		var ssoUrl = new Uri(authenticatorResponse.data!.ssoUrl!);
-		var tokenUrl = new Uri(authenticatorResponse.data!.tokenUrl!);
+		var ssoUrl = new Uri(authenticatorResponse.Data!.ssoUrl!);
+		var tokenUrl = new Uri(authenticatorResponse.Data!.tokenUrl!);
 
 		VerifyUrls(ssoUrl, m_OktaUrl);
 		VerifyUrls(tokenUrl, m_OktaUrl);
 
 		var idpTokenRestRequest = BuildIdpTokenRestRequest(tokenUrl);
-		var idpResponse = await Session.m_RestRequester.PostAsync<IdpTokenResponse>(idpTokenRestRequest, cancellationToken).ConfigureAwait(false);
+		var idpResponse = await Session.RestRequester.PostAsync<IdpTokenResponse>(idpTokenRestRequest, cancellationToken).ConfigureAwait(false);
 		var onetimeToken = idpResponse.CookieToken;
 
 		var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
-		using (var samlRawResponse = await Session.m_RestRequester.GetAsync(samlRestRequest, cancellationToken).ConfigureAwait(false))
+		using (var samlRawResponse = await Session.RestRequester.GetAsync(samlRestRequest, cancellationToken).ConfigureAwait(false))
 		{
 			m_SamlRawHtmlString = await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
 		}

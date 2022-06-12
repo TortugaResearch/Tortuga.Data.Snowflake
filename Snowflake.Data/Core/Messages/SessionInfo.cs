@@ -9,14 +9,14 @@ namespace Tortuga.Data.Snowflake.Core.Messages;
 class SessionInfo
 {
 	[JsonProperty(PropertyName = "databaseName")]
-	internal string? databaseName { get; set; }
+	internal string? DatabaseName { get; set; }
 
 	[JsonProperty(PropertyName = "schemaName")]
-	internal string? schemaName { get; set; }
+	internal string? SchemaName { get; set; }
 
 	[JsonProperty(PropertyName = "warehouseName")]
-	internal string? warehouseName { get; set; }
+	internal string? WarehouseName { get; set; }
 
 	[JsonProperty(PropertyName = "roleName")]
-	internal string? roleName { get; set; }
+	internal string? RoleName { get; set; }
 }

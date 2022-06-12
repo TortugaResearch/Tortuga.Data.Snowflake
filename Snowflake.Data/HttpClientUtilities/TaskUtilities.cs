@@ -4,8 +4,7 @@ namespace Tortuga.HttpClientUtilities;
 
 static class TaskUtilities
 {
-	static readonly TaskFactory s_TaskFactory = new TaskFactory(CancellationToken.None,
-		TaskCreationOptions.None, TaskContinuationOptions.None, TaskScheduler.Default);
+	static readonly TaskFactory s_TaskFactory = new(default, default, default, TaskScheduler.Default);
 
 	/// <summary>
 	/// Runs the task on a separate thread and waits for it to complete.
