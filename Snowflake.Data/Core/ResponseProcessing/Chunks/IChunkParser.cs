@@ -4,17 +4,25 @@
 
 namespace Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
 
-interface IChunkParser
+abstract class ChunkParser
 {
 	/// <summary>
 	///     Parse source data stream, result will be store into SFResultChunk.rowset
 	/// </summary>
 	/// <param name="chunk"></param>
-	Task ParseChunkAsync(IResultChunk chunk);
+	public abstract Task ParseChunkAsync(IResultChunk chunk);
 
 	/// <summary>
 	///     Parse source data stream, result will be store into SFResultChunk.rowset
 	/// </summary>
 	/// <param name="chunk"></param>
-	void ParseChunk(IResultChunk chunk);
+	public abstract void ParseChunk(IResultChunk chunk);
+
+	public static ChunkParser GetParser(SnowflakeDbConfiguration configuration, Stream stream)
+	{
+		if (!configuration.UseV2JsonParser)
+			return new ChunkDeserializer(stream);
+		else
+			return new ChunkStreamingParser(stream);
+	}
 }

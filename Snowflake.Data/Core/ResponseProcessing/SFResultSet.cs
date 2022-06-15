@@ -36,7 +36,7 @@ class SFResultSet : SFBaseResultSet
 		{
 			// counting the first chunk
 			//_totalChunkCount = responseData.chunks.Count;
-			m_ChunkDownloader = ChunkDownloaderFactory.GetDownloader(responseData, this, cancellationToken);
+			m_ChunkDownloader = GetDownloader(responseData, cancellationToken);
 		}
 
 		m_CurrentChunk = new SFResultChunk(responseData.RowSet);
@@ -212,5 +212,43 @@ class SFResultSet : SFBaseResultSet
 
 		if (responseData.Parameters != null)
 			session.UpdateSessionParameterMap(responseData.Parameters);
+	}
+
+	IChunkDownloader GetDownloader(QueryExecResponseData responseData, CancellationToken cancellationToken)
+	{
+		var ChunkDownloaderVersion = Configuration.ChunkDownloaderVersion;
+		if (Configuration.UseV2ChunkDownloader)
+			ChunkDownloaderVersion = 2;
+
+		switch (ChunkDownloaderVersion)
+		{
+			case 1:
+				return new SFBlockingChunkDownloader(responseData.RowType!.Count,
+					responseData.Chunks!,
+					responseData.Qrmk!,
+					responseData.ChunkHeaders!,
+					cancellationToken,
+					this);
+
+			case 2:
+
+				if (SFStatement == null)
+					throw new InvalidOperationException($"{nameof(SFStatement)} is null");
+
+				return new SFChunkDownloaderV2(responseData.RowType!.Count,
+					responseData.Chunks!,
+					responseData.Qrmk!,
+					responseData.ChunkHeaders!,
+					cancellationToken,
+					SFStatement.SFSession.RestRequester, Configuration);
+
+			default:
+				return new SFBlockingChunkDownloaderV3(responseData.RowType!.Count,
+					responseData.Chunks!,
+					responseData.Qrmk!,
+					responseData.ChunkHeaders!,
+					cancellationToken,
+					this);
+		}
 	}
 }

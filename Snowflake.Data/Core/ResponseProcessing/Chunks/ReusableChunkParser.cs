@@ -4,7 +4,7 @@
 
 namespace Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
 
-class ReusableChunkParser : IChunkParser
+class ReusableChunkParser : ChunkParser
 {
 	// Very fast parser, only supports strings and nulls
 	// Never generates parsing errors
@@ -16,7 +16,7 @@ class ReusableChunkParser : IChunkParser
 		this.stream = stream;
 	}
 
-	public void ParseChunk(IResultChunk chunk)
+	public override void ParseChunk(IResultChunk chunk)
 	{
 		SFReusableChunk rc = (SFReusableChunk)chunk;
 
@@ -88,7 +88,7 @@ class ReusableChunkParser : IChunkParser
 			throw new SnowflakeDbException(SnowflakeError.InternalError, $"Unexpected end of stream in string");
 	}
 
-	public async Task ParseChunkAsync(IResultChunk chunk)
+	public override async Task ParseChunkAsync(IResultChunk chunk)
 	{
 		await Task.Run(() => ParseChunk(chunk));
 	}

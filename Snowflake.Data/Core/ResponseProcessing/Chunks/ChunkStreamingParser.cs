@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
 
-class ChunkStreamingParser : IChunkParser
+class ChunkStreamingParser : ChunkParser
 {
 	readonly Stream m_Stream;
 
@@ -15,7 +15,7 @@ class ChunkStreamingParser : IChunkParser
 		m_Stream = stream;
 	}
 
-	public void ParseChunk(IResultChunk chunk)
+	public override void ParseChunk(IResultChunk chunk)
 	{
 		// parse results row by row
 		using (var sr = new StreamReader(m_Stream))
@@ -59,7 +59,7 @@ class ChunkStreamingParser : IChunkParser
 		}
 	}
 
-	public async Task ParseChunkAsync(IResultChunk chunk)
+	public override async Task ParseChunkAsync(IResultChunk chunk)
 	{
 		await Task.Run(() => ParseChunk(chunk)); ;
 	}

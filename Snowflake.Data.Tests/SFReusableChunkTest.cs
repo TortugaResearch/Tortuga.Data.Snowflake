@@ -15,19 +15,19 @@ class SFReusableChunkTest
 	[Test]
 	public async Task TestSimpleChunk()
 	{
-		string data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";
-		byte[] bytes = Encoding.UTF8.GetBytes(data);
-		Stream stream = new MemoryStream(bytes);
-		IChunkParser parser = new ReusableChunkParser(stream);
+		var data = "[ [\"1\", \"1.234\", \"abcde\"],  [\"2\", \"5.678\", \"fghi\"] ]";
+		var bytes = Encoding.UTF8.GetBytes(data);
+		var stream = new MemoryStream(bytes);
+		var parser = new ReusableChunkParser(stream);
 
-		ExecResponseChunk chunkInfo = new ExecResponseChunk()
+		var chunkInfo = new ExecResponseChunk()
 		{
 			url = "fake",
 			uncompressedSize = 100,
 			rowCount = 2
 		};
 
-		SFReusableChunk chunk = new SFReusableChunk(3);
+		var chunk = new SFReusableChunk(3);
 		chunk.Reset(chunkInfo, 0);
 
 		await parser.ParseChunkAsync(chunk);
@@ -43,19 +43,19 @@ class SFReusableChunkTest
 	[Test]
 	public async Task TestChunkWithNull()
 	{
-		string data = "[ [null, \"1.234\", null],  [\"2\", null, \"fghi\"] ]";
-		byte[] bytes = Encoding.UTF8.GetBytes(data);
-		Stream stream = new MemoryStream(bytes);
-		IChunkParser parser = new ReusableChunkParser(stream);
+		var data = "[ [null, \"1.234\", null],  [\"2\", null, \"fghi\"] ]";
+		var bytes = Encoding.UTF8.GetBytes(data);
+		var stream = new MemoryStream(bytes);
+		var parser = new ReusableChunkParser(stream);
 
-		ExecResponseChunk chunkInfo = new ExecResponseChunk()
+		var chunkInfo = new ExecResponseChunk()
 		{
 			url = "fake",
 			uncompressedSize = 100,
 			rowCount = 2
 		};
 
-		SFReusableChunk chunk = new SFReusableChunk(3);
+		var chunk = new SFReusableChunk(3);
 		chunk.Reset(chunkInfo, 0);
 
 		await parser.ParseChunkAsync(chunk);
@@ -71,19 +71,19 @@ class SFReusableChunkTest
 	[Test]
 	public async Task TestChunkWithDate()
 	{
-		string data = "[ [null, \"2019-08-21T11:58:00\", null],  [\"2\", null, \"fghi\"] ]";
-		byte[] bytes = Encoding.UTF8.GetBytes(data);
-		Stream stream = new MemoryStream(bytes);
-		IChunkParser parser = new ReusableChunkParser(stream);
+		var data = "[ [null, \"2019-08-21T11:58:00\", null],  [\"2\", null, \"fghi\"] ]";
+		var bytes = Encoding.UTF8.GetBytes(data);
+		var stream = new MemoryStream(bytes);
+		var parser = new ReusableChunkParser(stream);
 
-		ExecResponseChunk chunkInfo = new ExecResponseChunk()
+		var chunkInfo = new ExecResponseChunk()
 		{
 			url = "fake",
 			uncompressedSize = 100,
 			rowCount = 2
 		};
 
-		SFReusableChunk chunk = new SFReusableChunk(3);
+		var chunk = new SFReusableChunk(3);
 		chunk.Reset(chunkInfo, 0);
 
 		await parser.ParseChunkAsync(chunk);
@@ -99,19 +99,19 @@ class SFReusableChunkTest
 	[Test]
 	public async Task TestChunkWithEscape()
 	{
-		string data = "[ [\"\\\\åäö\\nÅÄÖ\\r\", \"1.234\", null],  [\"2\", null, \"fghi\"] ]";
-		byte[] bytes = Encoding.UTF8.GetBytes(data);
-		Stream stream = new MemoryStream(bytes);
-		IChunkParser parser = new ReusableChunkParser(stream);
+		var data = "[ [\"\\\\åäö\\nÅÄÖ\\r\", \"1.234\", null],  [\"2\", null, \"fghi\"] ]";
+		var bytes = Encoding.UTF8.GetBytes(data);
+		var stream = new MemoryStream(bytes);
+		var parser = new ReusableChunkParser(stream);
 
-		ExecResponseChunk chunkInfo = new ExecResponseChunk()
+		var chunkInfo = new ExecResponseChunk()
 		{
 			url = "fake",
 			uncompressedSize = bytes.Length,
 			rowCount = 2
 		};
 
-		SFReusableChunk chunk = new SFReusableChunk(3);
+		var chunk = new SFReusableChunk(3);
 		chunk.Reset(chunkInfo, 0);
 
 		await parser.ParseChunkAsync(chunk);
@@ -127,20 +127,20 @@ class SFReusableChunkTest
 	[Test]
 	public async Task TestChunkWithLongString()
 	{
-		string longstring = new string('å', 10 * 1000 * 1000);
-		string data = "[ [\"åäö\\nÅÄÖ\\r\", \"1.234\", null],  [\"2\", null, \"" + longstring + "\"] ]";
-		byte[] bytes = Encoding.UTF8.GetBytes(data);
-		Stream stream = new MemoryStream(bytes);
-		IChunkParser parser = new ReusableChunkParser(stream);
+		var longstring = new string('å', 10 * 1000 * 1000);
+		var data = "[ [\"åäö\\nÅÄÖ\\r\", \"1.234\", null],  [\"2\", null, \"" + longstring + "\"] ]";
+		var bytes = Encoding.UTF8.GetBytes(data);
+		var stream = new MemoryStream(bytes);
+		var parser = new ReusableChunkParser(stream);
 
-		ExecResponseChunk chunkInfo = new ExecResponseChunk()
+		var chunkInfo = new ExecResponseChunk()
 		{
 			url = "fake",
 			uncompressedSize = bytes.Length,
 			rowCount = 2
 		};
 
-		SFReusableChunk chunk = new SFReusableChunk(3);
+		var chunk = new SFReusableChunk(3);
 		chunk.Reset(chunkInfo, 0);
 
 		await parser.ParseChunkAsync(chunk);

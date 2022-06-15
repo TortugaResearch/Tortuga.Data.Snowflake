@@ -9,8 +9,14 @@ namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 /// <summary>
 /// The interface for the storage clients.
 /// </summary>
-static class SFRemoteStorageUtil
+class SFRemoteStorage : SFStorage
 {
+	public static readonly SFRemoteStorage Instance = new();
+
+	private SFRemoteStorage()
+	{
+	}
+
 	/// <summary>
 	/// Strings to indicate specific storage type.
 	/// </summary>
@@ -157,7 +163,7 @@ static class SFRemoteStorageUtil
 	/// Attempt upload of a file and retry if fails.
 	/// </summary>
 	/// <param name="fileMetadata">The file metadata of the file to upload</param>
-	internal static void UploadOneFileWithRetry(SFFileMetadata fileMetadata)
+	internal override void UploadOneFileWithRetry(SFFileMetadata fileMetadata)
 	{
 		if (fileMetadata.Client == null)
 			throw new ArgumentException("fileMetadata.client is null", nameof(fileMetadata));
@@ -205,7 +211,7 @@ static class SFRemoteStorageUtil
 	/// </summary>
 	/// <summary>
 	/// <param name="fileMetadata">The file metadata of the file to download</param>
-	internal static void DownloadOneFile(SFFileMetadata fileMetadata)
+	internal override void DownloadOneFile(SFFileMetadata fileMetadata)
 	{
 		if (fileMetadata.LocalLocation == null)
 			throw new ArgumentException("fileMetadata.localLocation is null", nameof(fileMetadata));

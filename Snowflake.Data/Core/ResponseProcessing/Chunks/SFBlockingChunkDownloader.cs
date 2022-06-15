@@ -150,7 +150,7 @@ class SFBlockingChunkDownloader : IChunkDownloader
 
 		var concatStream = new ConcatenatedStream(new Stream[3] { openBracket, content, closeBracket });
 
-		var parser = ChunkParserFactory.GetParser(m_ResultSet.Configuration, concatStream);
+		var parser = ChunkParser.GetParser(m_ResultSet.Configuration, concatStream);
 		parser.ParseChunk(resultChunk);
 	}
 }

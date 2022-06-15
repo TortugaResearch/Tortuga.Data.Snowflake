@@ -9,6 +9,8 @@ using System.Text.RegularExpressions;
 using Tortuga.Data.Snowflake.Core.Authenticators;
 using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
+using static System.StringComparison;
+using static Tortuga.Data.Snowflake.SnowflakeError;
 
 namespace Tortuga.Data.Snowflake.Core.Sessions;
 
@@ -179,7 +181,7 @@ class SFSession
 	internal void Open()
 	{
 		if (m_Authenticator == null)
-			m_Authenticator = AuthenticatorFactory.GetAuthenticator(this);
+			m_Authenticator = GetAuthenticator();
 
 		m_Authenticator.Login();
 	}
@@ -187,7 +189,7 @@ class SFSession
 	internal async Task OpenAsync(CancellationToken cancellationToken)
 	{
 		if (m_Authenticator == null)
-			m_Authenticator = AuthenticatorFactory.GetAuthenticator(this);
+			m_Authenticator = GetAuthenticator();
 
 		await m_Authenticator.LoginAsync(cancellationToken).ConfigureAwait(false);
 	}
@@ -293,4 +295,39 @@ class SFSession
 	}
 
 	internal SnowflakeDbConfiguration Configuration { get; }
+
+	/// <summary>
+	/// Generate the authenticator given the session
+	/// </summary>
+	/// <param name="session">session that requires the authentication</param>
+	/// <returns>authenticator</returns>
+	/// <exception cref="SnowflakeDbException">when authenticator is unknown</exception>
+	Authenticator GetAuthenticator()
+	{
+		var type = m_Properties[SFSessionProperty.AUTHENTICATOR];
+
+		if (type.Equals(BasicAuthenticator.AUTH_NAME, InvariantCultureIgnoreCase))
+		{
+			return new BasicAuthenticator(this);
+		}
+		else if (type.Equals(ExternalBrowserAuthenticator.AUTH_NAME, InvariantCultureIgnoreCase))
+		{
+			return new ExternalBrowserAuthenticator(this);
+		}
+		else if (type.Equals(KeyPairAuthenticator.AUTH_NAME, InvariantCultureIgnoreCase))
+		{
+			return new KeyPairAuthenticator(this);
+		}
+		else if (type.Equals(OAuthAuthenticator.AUTH_NAME, InvariantCultureIgnoreCase))
+		{
+			return new OAuthAuthenticator(this);
+		}
+		// Okta would provide a url of form: https://xxxxxx.okta.com or https://xxxxxx.oktapreview.com or https://vanity.url/snowflake/okta
+		else if (type.Contains("okta") && type.StartsWith("https://"))
+		{
+			return new OktaAuthenticator(this, type);
+		}
+
+		throw new SnowflakeDbException(UnknownAuthenticator, type);
+	}
 }

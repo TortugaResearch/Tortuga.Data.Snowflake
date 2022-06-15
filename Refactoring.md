@@ -1766,3 +1766,78 @@ Classes with only static members such as `ChunkDownloaderFactory` should be mark
 
 Allowing objects of these types to be created is misleading to the developers, as those objects would not be useful for anything.
 
+## Round 39 - Utility Classes
+
+The previous round of refactoring revealed that there are over 20 static utility classes. This is probably too many. While utility classes such as `System.Math` make a lot of sense, such a high count for one library suggests that there are some organizational issues.
+
+### Static Functions that Should be Methods
+
+Some of the static classes have methods that are only invoked from one place. For example, `ChunkDownloaderFactory.GetDownloader` is only called by `SFResultSet`. And it takes a `SFResultSet` as a parameter.
+
+Clearly the `GetDownloader` belongs inside `SFResultSet`. And once there, it can be turned into a private instance method.
+
+The `AuthenticatorFactory.GetAuthenticator` method is another example of this. Though it is used twice, in both cases it is being called from the same object, with that object passing itself as a parameter.
+
+Fundamentally, there is nothing wrong with a static function taking a `this` argument. That's basically what a method is. It's just that we call the parameter `this` and put the matching argument on the left side of the `.`.
+
+But from an organizational standpoint, it is preferable to put data and operations that act on that data together. That's the philosophical basis for object-oriented programming.
+
+
+### Avoid Extension Methods
+
+Extension methods are wonderful for adding functionality to a class from a separate library. Or for adding functionality to types that can't have methods such as `enum`. They also make sense with the `this` parameter could be null such as `string.IsNullOrEmpty(string?)`. 
+
+They shouldn't be used when the function could be easily changed into a normal method. An example of this is `ResultSetUtil.CalculateUpdateCount`, which we will move into `SFBaseResultSet`.
+
+### Static Functions that Should be in Base Classes
+
+The `ChunkParserFactory.GetParser` method is used to return instances of an `IChunkParser`. The two are so closely related that it doesn't really make sense to have them in distinct files. Whenever you are working with `IChunkParser`, you need to know about `ChunkParserFactory.GetParser`.
+
+But they can't be together under the current design because interfaces like `IChunkParser` can't have static methods (yet).
+
+What we can do is change `IChunkParser` into a base class. And then we can move `GetParser` into it.
+
+
+## Static Classes that Should Be Singletons
+
+Consider this scenario. The static utility class `SFLocalStorageUtil` is used by `SFFileTransferAgent`. Can you match the descriptions with the class names?
+
+* "Class responsible for uploading and downloading files to the remote client."
+* "The storage client for local upload/download."
+
+They both have the terms "client", "upload", and "download". At first glance it appears that they are the same class, divided into two parts.
+
+But wait, there is also `SFRemoteStorageUtil`. This is a far more complicated set of functions. But an interesting feature is that it shares 2 method signatures with `SFLocalStorageUtil`. So it appears that the relationship between the two utility classes is wrong.
+
+Looking how it is used, we can see the problem.
+
+```csharp
+if (StorageClientType.REMOTE == GetStorageClientType(m_TransferMetadata.StageInfo!))
+	// Upload the file using the remote client SDK and the file metadata
+	SFRemoteStorageUtil.UploadOneFileWithRetry(fileMetadata);
+else
+	// Upload the file using the local client SDK and the file metadata
+	SFLocalStorageUtil.UploadOneFileWithRetry(fileMetadata);
+```
+
+The classes `SFLocalStorageUtil` and `SFRemoteStorageUtil` have a polymorphic relationship, but aren't treated as such. We are using this `if` statement to simulate virtual dispatch. Here are the steps:
+
+* Create a base class called `SFStorage`.
+* Rename `SFLocalStorageUtil` to `SFLocalStorage` and `SFRemoteStorageUtil` to `SFRemoteStorage`.
+* Change `SFLocalStorage` and `SFRemoteStorage` to inherit from `SFStorage`.
+* Make `UploadOneFileWithRetry` and `DownloadOneFile` into abstract methods in `SFStorage` and update the subclasses to match.
+* Give `SFLocalStorage` and `SFRemoteStorage` a static `Instance` field and private constructor. 
+* Change `SFFileTransferAgent.GetStorageClientType` to return a `SFStorage` subclass.
+
+### Merging Utility Classes
+
+The static classes `HttpUtil` and `Utilities` both deal with `HttpClient` related classes, so they should be merged.
+
+We could also merge them with the `HttpClientUtilities` classes. But those are generic enough that we'll be pulling time into their own library in the future.
+
+
+### Summary
+
+From over 20 static classes, we're down to 11 library specific static classes, 3 static classes that will be moved to a future library, and 1 static class for legacy .NET support.
+
+

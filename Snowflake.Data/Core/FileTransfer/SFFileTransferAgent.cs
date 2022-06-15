@@ -537,7 +537,7 @@ class SFFileTransferAgent
 
 		var response = sfStatement.ExecuteHelper<PutGetExecResponse, PutGetResponseData>(0, m_TransferMetadata.Command!, null, false);
 
-		return SFRemoteStorageUtil.GetRemoteStorageType(response.Data!);
+		return SFRemoteStorage.GetRemoteStorageType(response.Data!);
 	}
 
 	/// <summary>
@@ -545,11 +545,10 @@ class SFFileTransferAgent
 	/// </summary>
 	/// <param name="fileMetadata">The metadata of the file to upload.</param>
 	/// <returns>The result outcome for each file.</returns>
-	void UploadFilesInSequential(
-		SFFileMetadata fileMetadata)
+	void UploadFilesInSequential(SFFileMetadata fileMetadata)
 	{
 		/// The storage client used to upload/download data from files or streams
-		fileMetadata.Client = SFRemoteStorageUtil.GetRemoteStorageType(m_TransferMetadata);
+		fileMetadata.Client = SFRemoteStorage.GetRemoteStorageType(m_TransferMetadata);
 		var resultMetadata = UploadSingleFile(fileMetadata);
 
 		if (resultMetadata.ResultStatus == ResultStatus.RENEW_TOKEN.ToString())
@@ -565,11 +564,10 @@ class SFFileTransferAgent
 	/// </summary>
 	/// <param name="fileMetadata">The metadata of the file to download.</param>
 	/// <returns>The result outcome for each file.</returns>
-	void DownloadFilesInSequential(
-		SFFileMetadata fileMetadata)
+	void DownloadFilesInSequential(SFFileMetadata fileMetadata)
 	{
 		/// The storage client used to upload/download data from files or streams
-		fileMetadata.Client = SFRemoteStorageUtil.GetRemoteStorageType(m_TransferMetadata);
+		fileMetadata.Client = SFRemoteStorage.GetRemoteStorageType(m_TransferMetadata);
 		var resultMetadata = DownloadSingleFile(fileMetadata);
 
 		if (resultMetadata.ResultStatus == ResultStatus.RENEW_TOKEN.ToString())
@@ -586,9 +584,7 @@ class SFFileTransferAgent
 	/// <param name="filesMetadata">The list of files to upload in parallel.</param>
 	/// <param name="parallel">The number of files to upload in parallel.</param>
 	/// <returns>The result outcome for each file.</returns>
-	void UploadFilesInParallel(
-		List<SFFileMetadata> filesMetadata,
-		int parallel)
+	void UploadFilesInParallel(List<SFFileMetadata> filesMetadata, int parallel)
 	{
 		var listOfActions = new List<Action>();
 		foreach (var fileMetadata in filesMetadata)
@@ -620,8 +616,7 @@ class SFFileTransferAgent
 	/// <param name="storageClient">Storage client to upload the file with.</param>
 	/// <param name="fileMetadata">The metadata of the file to upload.</param>
 	/// <returns>The result outcome.</returns>
-	SFFileMetadata UploadSingleFile(
-		SFFileMetadata fileMetadata)
+	SFFileMetadata UploadSingleFile(SFFileMetadata fileMetadata)
 	{
 		fileMetadata.RealSrcFilePath = fileMetadata.SrcFilePath;
 
@@ -637,12 +632,7 @@ class SFFileTransferAgent
 			// Calculate the digest
 			GetDigestAndSizeForFile(fileMetadata);
 
-			if (StorageClientType.REMOTE == GetStorageClientType(m_TransferMetadata.StageInfo!))
-				// Upload the file using the remote client SDK and the file metadata
-				SFRemoteStorageUtil.UploadOneFileWithRetry(fileMetadata);
-			else
-				// Upload the file using the local client SDK and the file metadata
-				SFLocalStorageUtil.UploadOneFileWithRetry(fileMetadata);
+			GetStorageClientType(m_TransferMetadata.StageInfo!).UploadOneFileWithRetry(fileMetadata);
 		}
 		finally
 		{
@@ -658,20 +648,14 @@ class SFFileTransferAgent
 	/// <param name="storageClient">Storage client to download the file with.</param>
 	/// <param name="fileMetadata">The metadata of the file to download.</param>
 	/// <returns>The result outcome.</returns>
-	SFFileMetadata DownloadSingleFile(
-		SFFileMetadata fileMetadata)
+	SFFileMetadata DownloadSingleFile(SFFileMetadata fileMetadata)
 	{
 		// Create tmp folder to store compressed files
 		fileMetadata.TmpDir = GetTemporaryDirectory();
 
 		try
 		{
-			if (StorageClientType.REMOTE == GetStorageClientType(m_TransferMetadata.StageInfo!))
-				// Upload the file using the remote client SDK and the file metadata
-				SFRemoteStorageUtil.DownloadOneFile(fileMetadata);
-			else
-				// Upload the file using the local client SDK and the file metadata
-				SFLocalStorageUtil.DownloadOneFile(fileMetadata);
+			GetStorageClientType(m_TransferMetadata.StageInfo!).DownloadOneFile(fileMetadata);
 		}
 		finally
 		{
@@ -698,13 +682,11 @@ class SFFileTransferAgent
 	/// </summary>
 	/// <param name="stageInfo">The stage info used to get the stage location type.</param>
 	/// <returns>The storage client type.</returns>
-	public static StorageClientType GetStorageClientType(PutGetStageInfo stageInfo)
+	public static SFStorage GetStorageClientType(PutGetStageInfo stageInfo)
 	{
-		var stageLocationType = stageInfo.LocationType;
-
-		if (stageLocationType == LOCAL_FS)
-			return StorageClientType.LOCAL;
+		if (stageInfo.LocationType == LOCAL_FS)
+			return SFLocalStorage.Instance;
 		else
-			return StorageClientType.REMOTE;
+			return SFRemoteStorage.Instance;
 	}
 }

@@ -7,13 +7,19 @@ namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 /// <summary>
 /// The storage client for local upload/download.
 /// </summary>
-static class SFLocalStorageUtil
+class SFLocalStorage : SFStorage
 {
+	public static readonly SFLocalStorage Instance = new();
+
+	private SFLocalStorage()
+	{
+	}
+
 	/// <summary>
 	/// Write the file locally.
 	/// <param name="fileMetadata">The metadata of the file to upload.</param>
 	/// </summary>
-	internal static void UploadOneFileWithRetry(SFFileMetadata fileMetadata)
+	internal override void UploadOneFileWithRetry(SFFileMetadata fileMetadata)
 	{
 		if (fileMetadata.StageInfo == null)
 			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));
@@ -42,7 +48,7 @@ static class SFLocalStorageUtil
 	/// Download the file locally.
 	/// <param name="fileMetadata">The metadata of the file to download.</param>
 	/// </summary>
-	internal static void DownloadOneFile(SFFileMetadata fileMetadata)
+	internal override void DownloadOneFile(SFFileMetadata fileMetadata)
 	{
 		if (fileMetadata.StageInfo == null)
 			throw new ArgumentException("fileMetadata.stageInfo is null", nameof(fileMetadata));

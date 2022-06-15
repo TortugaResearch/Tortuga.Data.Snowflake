@@ -83,4 +83,60 @@ abstract class SFBaseResultSet
 	internal void Close() => m_IsClosed = true;
 
 	internal SnowflakeDbConfiguration Configuration { get; }
+
+	internal int CalculateUpdateCount()
+	{
+		if (SFResultSetMetaData == null)
+			throw new InvalidOperationException($"{nameof(SFResultSetMetaData)} is null");
+
+		long updateCount = 0;
+		switch (SFResultSetMetaData.m_StatementType)
+		{
+			case SFStatementType.INSERT:
+			case SFStatementType.UPDATE:
+			case SFStatementType.DELETE:
+			case SFStatementType.MERGE:
+			case SFStatementType.MULTI_INSERT:
+				Next();
+				for (var i = 0; i < m_ColumnCount; i++)
+				{
+					updateCount += GetValue<long>(i);
+				}
+
+				break;
+
+			case SFStatementType.COPY:
+				var index = SFResultSetMetaData.GetColumnIndexByName("rows_loaded");
+				if (index >= 0)
+				{
+					Next();
+					updateCount = GetValue<long>(index);
+					Rewind();
+				}
+				break;
+
+			case SFStatementType.COPY_UNLOAD:
+				var rowIndex = SFResultSetMetaData.GetColumnIndexByName("rows_unloaded");
+				if (rowIndex >= 0)
+				{
+					Next();
+					updateCount = GetValue<long>(rowIndex);
+					Rewind();
+				}
+				break;
+
+			case SFStatementType.SELECT:
+				updateCount = -1;
+				break;
+
+			default:
+				updateCount = 0;
+				break;
+		}
+
+		if (updateCount > int.MaxValue)
+			return -1;
+
+		return (int)updateCount;
+	}
 }
