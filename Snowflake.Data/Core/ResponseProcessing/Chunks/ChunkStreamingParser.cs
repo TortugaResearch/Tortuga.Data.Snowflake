@@ -52,7 +52,7 @@ class ChunkStreamingParser : IChunkParser
 						break;
 
 					default:
-						throw new SnowflakeDbException(SFError.INTERNAL_ERROR, $"Unexpected token type: {jr.TokenType}");
+						throw new SnowflakeDbException(SnowflakeError.InternalError, $"Unexpected token type: {jr.TokenType}");
 				}
 			}
 			((SFResultChunk)chunk).RowSet = outputMatrix;

@@ -166,7 +166,7 @@ public class SnowflakeDbConnection : DbConnection
 		{
 			// Otherwise when Dispose() is called, the close request would timeout.
 			m_ConnectionState = ConnectionState.Closed;
-			throw new SnowflakeDbException(e, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INTERNAL_ERROR, "Unable to connect. " + e.Message);
+			throw new SnowflakeDbException(e, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SnowflakeError.InternalError, "Unable to connect. " + e.Message);
 		}
 		m_ConnectionState = ConnectionState.Open;
 	}
@@ -193,7 +193,7 @@ public class SnowflakeDbConnection : DbConnection
 		{
 			// Otherwise when Dispose() is called, the close request would timeout.
 			m_ConnectionState = ConnectionState.Closed;
-			throw new SnowflakeDbException(ex, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INTERNAL_ERROR, "Unable to connect. " + ex.Message);
+			throw new SnowflakeDbException(ex, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SnowflakeError.InternalError, "Unable to connect. " + ex.Message);
 		}
 		m_ConnectionState = ConnectionState.Open;
 	}

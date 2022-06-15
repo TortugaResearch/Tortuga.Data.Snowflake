@@ -14,7 +14,7 @@ using System.Security.Cryptography;
 using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.Sessions;
 using static Tortuga.Data.Snowflake.Core.Sessions.SFSessionProperty;
-using static Tortuga.Data.Snowflake.SFError;
+using static Tortuga.Data.Snowflake.SnowflakeError;
 
 namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
@@ -43,7 +43,7 @@ class KeyPairAuthenticator : Authenticator
 		if (!session.m_Properties.ContainsKey(PRIVATE_KEY_FILE) && !session.m_Properties.ContainsKey(PRIVATE_KEY))
 		{
 			// There is no PRIVATE_KEY_FILE defined, can't authenticate with key-pair
-			throw new SnowflakeDbException(INVALID_CONNECTION_STRING, "Missing required PRIVATE_KEY_FILE or PRIVATE_KEY for key pair authentication");
+			throw new SnowflakeDbException(InvalidConnectionString, "Missing required PRIVATE_KEY_FILE or PRIVATE_KEY for key pair authentication");
 		}
 
 		m_RsaProvider = new RSACryptoServiceProvider();
@@ -131,7 +131,7 @@ class KeyPairAuthenticator : Authenticator
 			}
 			catch (Exception e)
 			{
-				throw new SnowflakeDbException(JWT_ERROR_READING_PK, hasPkPath ? pkPath : "with value passed in connection string", e.ToString(), e);
+				throw new SnowflakeDbException(JwtErrorReadingPk, hasPkPath ? pkPath : "with value passed in connection string", e.ToString(), e);
 			}
 		}
 

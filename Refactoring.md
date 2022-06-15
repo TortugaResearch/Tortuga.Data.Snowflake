@@ -1747,3 +1747,16 @@ return value is SnowflakeDbParameter parameter && m_ParameterList.Contains(param
 ```
 
 
+## Round 37 - Test Cleanup
+
+* Move classes into individual files.
+* Rename `SFError` to `SnowflakeError` for consistency with other type names.
+* Change assertions to use enums instead of hard-coded numbers
+
+
+```csharp
+Assert.AreEqual(270053, e.ErrorCode);
+
+Assert.AreEqual(SnowflakeError.UnsupportedDotnetType, e.SnowflakeError);
+```
+

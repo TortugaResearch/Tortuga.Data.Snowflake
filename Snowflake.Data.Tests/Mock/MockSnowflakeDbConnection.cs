@@ -40,7 +40,7 @@ class MockSnowflakeDbConnection : SnowflakeDbConnection
 		{
 			// Otherwise when Dispose() is called, the close request would timeout.
 			m_ConnectionState = System.Data.ConnectionState.Closed;
-			throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR, "Unable to connect");
+			throw new SnowflakeDbException(ex, SnowflakeError.InternalError, "Unable to connect");
 		}
 	}
 
@@ -68,7 +68,7 @@ class MockSnowflakeDbConnection : SnowflakeDbConnection
 		catch (Exception ex) when (ex is not TaskCanceledException || !cancellationToken.IsCancellationRequested)
 		{
 			m_ConnectionState = ConnectionState.Closed;
-			throw new SnowflakeDbException(ex, SFError.INTERNAL_ERROR, "Unable to connect");
+			throw new SnowflakeDbException(ex, SnowflakeError.InternalError, "Unable to connect");
 		}
 	}
 

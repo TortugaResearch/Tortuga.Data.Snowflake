@@ -302,7 +302,7 @@ class SFFileTransferAgent
 				if (!compressionType.IsSupported)
 				{
 					//   SqlState.FEATURE_NOT_SUPPORTED = 0A000
-					throw new SnowflakeDbException("0A000", SFError.INTERNAL_ERROR, compressionType.Name);
+					throw new SnowflakeDbException("0A000", SnowflakeError.InternalError, compressionType.Name);
 				}
 
 				var fileMetadata = new SFFileMetadata()

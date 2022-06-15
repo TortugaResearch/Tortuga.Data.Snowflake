@@ -50,7 +50,7 @@ class SFStatement
 		lock (m_RequestIdLock)
 		{
 			if (m_RequestId != null)
-				throw new SnowflakeDbException(SFError.STATEMENT_ALREADY_RUNNING_QUERY);
+				throw new SnowflakeDbException(SnowflakeError.StatementAlreadyRunningQuery);
 
 			m_RequestId = Guid.NewGuid().ToString();
 		}

@@ -16,7 +16,7 @@ class SFConnectionIT : SFBaseTest
 	[Test]
 	public void TestBasicConnection()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -47,7 +47,7 @@ class SFConnectionIT : SFBaseTest
 		// Valid names
 		foreach (var appName in validApplicationNames)
 		{
-			using (IDbConnection conn = new SnowflakeDbConnection())
+			using (var conn = new SnowflakeDbConnection())
 			{
 				conn.ConnectionString = ConnectionString;
 				conn.ConnectionString += $"application={appName}";
@@ -108,42 +108,42 @@ class SFConnectionIT : SFBaseTest
 
 	public void TestCrlCheckSwitchConnection()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString + ";INSECUREMODE=true";
 			conn.Open();
 			Assert.AreEqual(ConnectionState.Open, conn.State);
 		}
 
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 			Assert.AreEqual(ConnectionState.Open, conn.State);
 		}
 
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString + ";INSECUREMODE=false";
 			conn.Open();
 			Assert.AreEqual(ConnectionState.Open, conn.State);
 		}
 
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 			Assert.AreEqual(ConnectionState.Open, conn.State);
 		}
 
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString + ";INSECUREMODE=false";
 			conn.Open();
 			Assert.AreEqual(ConnectionState.Open, conn.State);
 		}
 
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString + ";INSECUREMODE=true";
 			conn.Open();
@@ -207,7 +207,7 @@ class SFConnectionIT : SFBaseTest
 				}
 				catch (SnowflakeDbException e)
 				{
-					Assert.AreEqual(SFError.REQUEST_TIMEOUT, e.SFErrorCode);
+					Assert.AreEqual(SnowflakeError.RequestTimeout, e.SnowflakeError);
 				}
 				stopwatch.Stop();
 
@@ -241,7 +241,7 @@ class SFConnectionIT : SFBaseTest
 				}
 				catch (SnowflakeDbException e)
 				{
-					Assert.AreEqual(SFError.REQUEST_TIMEOUT, e.SFErrorCode);
+					Assert.AreEqual(SnowflakeError.RequestTimeout, e.SnowflakeError);
 				}
 				stopwatch.Stop();
 
@@ -273,7 +273,7 @@ class SFConnectionIT : SFBaseTest
 			}
 			catch (SnowflakeDbException e)
 			{
-				Assert.AreEqual(SFError.REQUEST_TIMEOUT, e.SFErrorCode);
+				Assert.AreEqual(SnowflakeError.RequestTimeout, e.SnowflakeError);
 
 				stopwatch.Stop();
 				// Should timeout after the default timeout (120 sec)
@@ -302,7 +302,7 @@ class SFConnectionIT : SFBaseTest
 			}
 			catch (SnowflakeDbException e)
 			{
-				Assert.AreEqual(SFError.INTERNAL_ERROR, e.SFErrorCode);
+				Assert.AreEqual(SnowflakeError.InternalError, e.SnowflakeError);
 			}
 
 			Assert.AreEqual(ConnectionState.Closed, conn.State);
@@ -316,7 +316,7 @@ class SFConnectionIT : SFBaseTest
 		$"account={TestConfig.Account};role={TestConfig.Role};db={TestConfig.Database};schema={TestConfig.Schema};warehouse={"WAREHOUSE_NEVER_EXISTS"};user={TestConfig.User};password={TestConfig.Password};";
 
 		// By default should validate parameters
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			try
 			{
@@ -331,7 +331,7 @@ class SFConnectionIT : SFBaseTest
 		}
 
 		// This should succeed
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = connectionString + ";VALIDATE_DEFAULT_PARAMETERS=false";
 			conn.Open();
@@ -342,14 +342,14 @@ class SFConnectionIT : SFBaseTest
 	public void TestInvalidConnectionString()
 	{
 		var invalidStrings = new[] {
-			// missing required connection property password
-			"ACCOUNT=testaccount;user=testuser",
-			// invalid account value
-			"ACCOUNT=A=C;USER=testuser;password=123",
-				"complete_invalid_string",
-			};
+		// missing required connection property password
+		"ACCOUNT=testaccount;user=testuser",
+		// invalid account value
+		"ACCOUNT=A=C;USER=testuser;password=123",
+			"complete_invalid_string",
+		};
 
-		var expectedErrorCode = new[] { 270006, 270008, 270008 };
+		var expectedErrorCode = new[] { SnowflakeError.MissingConnectionProperty, SnowflakeError.InvalidConnectionString, SnowflakeError.InvalidConnectionString };
 
 		using (var conn = new SnowflakeDbConnection())
 		{
@@ -363,7 +363,7 @@ class SFConnectionIT : SFBaseTest
 				}
 				catch (SnowflakeDbException e)
 				{
-					Assert.AreEqual(expectedErrorCode[i], e.ErrorCode);
+					Assert.AreEqual(expectedErrorCode[i], e.SnowflakeError);
 				}
 			}
 		}
@@ -502,10 +502,10 @@ class SFConnectionIT : SFBaseTest
 	{
 		var wrongAuthenticators = new[]
 		{
-				"http://snowflakecomputing.okta.com",
-				"https://snowflake.com",
-				"unknown",
-		};
+			"http://snowflakecomputing.okta.com",
+			"https://snowflake.com",
+			"unknown",
+	};
 
 		foreach (var wrongAuthenticator in wrongAuthenticators)
 		{
@@ -517,7 +517,7 @@ class SFConnectionIT : SFBaseTest
 			}
 			catch (SnowflakeDbException e)
 			{
-				Assert.AreEqual(SFError.UNKNOWN_AUTHENTICATOR, e.SFErrorCode);
+				Assert.AreEqual(SnowflakeError.UnknownAuthenticator, e.SnowflakeError);
 			}
 		}
 	}
@@ -559,7 +559,7 @@ class SFConnectionIT : SFBaseTest
 			catch (SnowflakeDbException e)
 			{
 				// Expected
-				Assert.AreEqual(270007, e.ErrorCode); //Timeout error
+				Assert.AreEqual(SnowflakeError.RequestTimeout, e.SnowflakeError);
 			}
 		}
 	}
@@ -584,216 +584,6 @@ class SFConnectionIT : SFBaseTest
 			conn.ConnectionString = $"{ConnectionString};useProxy=true;proxyHost=Invalid;proxyPort=8080;nonProxyHosts=*.foo.com %7C{TestConfig.Account}.snowflakecomputing.com|localhost";
 			conn.Open();
 			// Because testConfig.host is in the bypass list, the proxy should not be used
-		}
-	}
-}
-
-[TestFixture]
-class SFConnectionITAsync : SFBaseTestAsync
-{
-	[Test]
-	public void TestCancelLoginBeforeTimeout()
-	{
-		using (var conn = new MockSnowflakeDbConnection())
-		{
-			// No timeout
-			var timeoutSec = 0;
-			var infiniteLoginTimeOut = $"{ConnectionString};connection_timeout={timeoutSec}";
-
-			conn.ConnectionString = infiniteLoginTimeOut;
-
-			Assert.AreEqual(conn.State, ConnectionState.Closed);
-			// At this point the connection string has not been parsed, it will return the
-			// default value
-			//Assert.AreEqual(120, conn.ConnectionTimeout);
-
-			var connectionCancelToken = new CancellationTokenSource();
-			var connectTask = conn.OpenAsync(connectionCancelToken.Token);
-
-			// Sleep for 130 sec (more than the default connection timeout and the httpclient
-			// timeout to make sure there are no false positive )
-			Thread.Sleep(130 * 1000);
-
-			Assert.AreEqual(ConnectionState.Connecting, conn.State);
-
-			// Cancel the connection because it will never succeed since there is no
-			// connection_timeout defined
-			connectionCancelToken.Cancel();
-
-			try
-			{
-				connectTask.Wait();
-			}
-			catch (AggregateException e)
-			{
-				Assert.AreEqual("System.Threading.Tasks.TaskCanceledException", e.InnerException.GetType().ToString());
-			}
-
-			Assert.AreEqual(ConnectionState.Closed, conn.State);
-			Assert.AreEqual(0, conn.ConnectionTimeout);
-		}
-	}
-
-	[Test]
-	public void TestAsyncLoginTimeout()
-	{
-		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-		{
-			using (var conn = new MockSnowflakeDbConnection())
-			{
-				var timeoutSec = 5;
-				var loginTimeOut5sec = $"{ConnectionString};connection_timeout={timeoutSec}";
-				conn.ConnectionString = loginTimeOut5sec;
-
-				Assert.AreEqual(conn.State, ConnectionState.Closed);
-
-				var connectionCancelToken = new CancellationTokenSource();
-				var stopwatch = Stopwatch.StartNew();
-				try
-				{
-					var connectTask = conn.OpenAsync(connectionCancelToken.Token);
-					connectTask.Wait();
-				}
-				catch (AggregateException e)
-				{
-					Assert.AreEqual(SFError.REQUEST_TIMEOUT, ((SnowflakeDbException)e.InnerException).SFErrorCode);
-				}
-				stopwatch.Stop();
-
-				// Should timeout after 5sec
-				Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 5 * 1000 - 30); //The -30 is to account for rounding errors in the Windows timer
-
-				Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (6) * 1000); // But never more than 1 sec (max backoff) after the default timeout
-
-				Assert.AreEqual(ConnectionState.Closed, conn.State);
-				Assert.AreEqual(5, conn.ConnectionTimeout);
-			}
-		}
-	}
-
-	[Test]
-	public void TestAsyncDefaultLoginTimeout()
-	{
-		using (var conn = new MockSnowflakeDbConnection())
-		{
-			conn.ConnectionString = ConnectionString;
-
-			Assert.AreEqual(conn.State, ConnectionState.Closed);
-
-			var connectionCancelToken = new CancellationTokenSource();
-			var stopwatch = Stopwatch.StartNew();
-			try
-			{
-				var connectTask = conn.OpenAsync(connectionCancelToken.Token);
-				connectTask.Wait();
-			}
-			catch (AggregateException e)
-			{
-				Assert.AreEqual(SFError.REQUEST_TIMEOUT, ((SnowflakeDbException)e.InnerException).SFErrorCode);
-			}
-			stopwatch.Stop();
-
-			// Should timeout after the default timeout (120 sec)
-			Assert.GreaterOrEqual(stopwatch.ElapsedMilliseconds, 120 * 1000);
-			// But never more than 16 sec (max backoff) after the default timeout
-			Assert.LessOrEqual(stopwatch.ElapsedMilliseconds, (120 + 16) * 1000);
-
-			Assert.AreEqual(ConnectionState.Closed, conn.State);
-			Assert.AreEqual(120, conn.ConnectionTimeout);
-		}
-	}
-
-	[Test]
-	public void TestAsyncConnectionFailFast()
-	{
-		using (var conn = new SnowflakeDbConnection())
-		{
-			// Just a way to get a 404 on the login request and make sure there are no retry
-			var invalidConnectionString = "host=docs.microsoft.com;connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;";
-
-			conn.ConnectionString = invalidConnectionString;
-
-			Assert.AreEqual(conn.State, ConnectionState.Closed);
-			var connectionCancelToken = new CancellationTokenSource();
-			Task connectTask = null;
-			try
-			{
-				connectTask = conn.OpenAsync(connectionCancelToken.Token);
-				connectTask.Wait();
-				Assert.Fail();
-			}
-			catch (AggregateException e)
-			{
-				Assert.AreEqual(SFError.INTERNAL_ERROR, ((SnowflakeDbException)e.InnerException).SFErrorCode);
-			}
-
-			Assert.AreEqual(ConnectionState.Closed, conn.State);
-			Assert.IsTrue(connectTask.IsFaulted);
-		}
-	}
-
-	[Test]
-	public void TestCloseAsync()
-	{
-		// https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.close
-		// https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.closeasync
-		// An application can call Close or CloseAsync more than one time.
-		// No exception is generated.
-		using (var conn = new SnowflakeDbConnection())
-		{
-			conn.ConnectionString = ConnectionString;
-			Assert.AreEqual(conn.State, ConnectionState.Closed);
-			Task task = null;
-
-			// Close the connection. It's not opened yet, but it should not have any issue
-			task = conn.CloseAsync(new CancellationTokenSource().Token);
-			task.Wait();
-			Assert.AreEqual(conn.State, ConnectionState.Closed);
-
-			// Open the connection
-			task = conn.OpenAsync(new CancellationTokenSource().Token);
-			task.Wait();
-			Assert.AreEqual(conn.State, ConnectionState.Open);
-
-			// Close the opened connection
-			task = conn.CloseAsync(new CancellationTokenSource().Token);
-			task.Wait();
-			Assert.AreEqual(conn.State, ConnectionState.Closed);
-
-			// Close the connection again.
-			task = conn.CloseAsync(new CancellationTokenSource().Token);
-			task.Wait();
-			Assert.AreEqual(conn.State, ConnectionState.Closed);
-		}
-	}
-
-	[Test]
-	public void TestCloseAsyncFailure()
-	{
-		using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
-		{
-			conn.ConnectionString = ConnectionString;
-			Assert.AreEqual(conn.State, ConnectionState.Closed);
-			Task task = null;
-
-			// Open the connection
-			task = conn.OpenAsync(new CancellationTokenSource().Token);
-			task.Wait();
-			Assert.AreEqual(conn.State, ConnectionState.Open);
-
-			// Close the opened connection
-			task = conn.CloseAsync(new CancellationTokenSource().Token);
-			try
-			{
-				task.Wait();
-				Assert.Fail();
-			}
-			catch (AggregateException e)
-			{
-				Assert.AreEqual(MockCloseSessionException.SESSION_CLOSE_ERROR,
-					((SnowflakeDbException)(e.InnerException)).ErrorCode);
-			}
-			Assert.AreEqual(conn.State, ConnectionState.Open);
 		}
 	}
 }

@@ -105,7 +105,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 						// An equal sign was not doubled or something else happened
 						// making the connection invalid
 						var invalidStringDetail = $"Invalid key value pair {keyVal}";
-						throw new SnowflakeDbException(SFError.INVALID_CONNECTION_STRING, new object[] { invalidStringDetail });
+						throw new SnowflakeDbException(SnowflakeError.InvalidConnectionString, new object[] { invalidStringDetail });
 					}
 				}
 
@@ -131,7 +131,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 			catch (Exception e)
 			{
 				// The useProxy setting is not a valid boolean value
-				throw new SnowflakeDbException(e, SFError.INVALID_CONNECTION_STRING, e.Message);
+				throw new SnowflakeDbException(e, SnowflakeError.InvalidConnectionString, e.Message);
 			}
 		}
 
@@ -179,7 +179,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 			// if required property, check if exists in the dictionary
 			if (isRequired && !properties.ContainsKey(sessionProperty))
 			{
-				throw new SnowflakeDbException(SFError.MISSING_CONNECTION_PROPERTY, sessionProperty);
+				throw new SnowflakeDbException(SnowflakeError.MissingConnectionProperty, sessionProperty);
 			}
 
 			// add default value to the map

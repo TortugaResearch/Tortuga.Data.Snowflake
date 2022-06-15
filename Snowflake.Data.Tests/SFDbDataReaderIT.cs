@@ -300,7 +300,7 @@ class SFDbDataReaderIT : SFBaseTest
 				}
 				catch (SnowflakeDbException e)
 				{
-					Assert.AreEqual(270003, e.ErrorCode);
+					Assert.AreEqual(SnowflakeError.InvalidDataConversion, e.SnowflakeError);
 				}
 			}
 
@@ -445,7 +445,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetTimestampTZ()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -489,7 +489,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetTimestampLTZ()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -718,7 +718,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetChars()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -955,7 +955,7 @@ class SFDbDataReaderIT : SFBaseTest
 			}
 			catch (SnowflakeDbException e)
 			{
-				Assert.AreEqual(270002, e.ErrorCode);
+				Assert.AreEqual(SnowflakeError.ColumnIndexOutOfBound, e.SnowflakeError);
 			}
 
 			try
@@ -965,7 +965,7 @@ class SFDbDataReaderIT : SFBaseTest
 			}
 			catch (SnowflakeDbException e)
 			{
-				Assert.AreEqual(270002, e.ErrorCode);
+				Assert.AreEqual(SnowflakeError.ColumnIndexOutOfBound, e.SnowflakeError);
 			}
 			reader.Close();
 
@@ -1016,7 +1016,7 @@ class SFDbDataReaderIT : SFBaseTest
 					}
 					catch (SnowflakeDbException e)
 					{
-						Assert.AreEqual(270010, e.ErrorCode);
+						Assert.AreEqual(SnowflakeError.DataReaderAlreadyClosed, e.SnowflakeError);
 					}
 
 					try
@@ -1026,7 +1026,7 @@ class SFDbDataReaderIT : SFBaseTest
 					}
 					catch (SnowflakeDbException e)
 					{
-						Assert.AreEqual(270010, e.ErrorCode);
+						Assert.AreEqual(SnowflakeError.DataReaderAlreadyClosed, e.SnowflakeError);
 					}
 				}
 			}
@@ -1074,7 +1074,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetGuid()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();

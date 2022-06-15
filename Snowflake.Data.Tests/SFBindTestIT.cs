@@ -166,7 +166,7 @@ class SFBindTestIT : SFBaseTest
 							}
 							catch (SnowflakeDbException e)
 							{
-								Assert.AreEqual(270053, e.ErrorCode);
+								Assert.AreEqual(SnowflakeError.UnsupportedDotnetType, e.SnowflakeError);
 							}
 						}
 					}
@@ -332,7 +332,7 @@ class SFBindTestIT : SFBaseTest
 							}
 							catch (SnowflakeDbException e)
 							{
-								Assert.AreEqual(270053, e.ErrorCode);
+								Assert.AreEqual(SnowflakeError.UnsupportedDotnetType, e.SnowflakeError);
 							}
 						}
 					}
@@ -473,7 +473,7 @@ class SFBindTestIT : SFBaseTest
 								}
 								catch (SnowflakeDbException e)
 								{
-									Assert.AreEqual(270054, e.ErrorCode);
+									Assert.AreEqual(SnowflakeError.UnsupportedSnowflakeTypeForParam, e.SnowflakeError);
 								}
 							}
 						}
@@ -508,7 +508,7 @@ class SFBindTestIT : SFBaseTest
 	[Test]
 	public void TestParameterCollection()
 	{
-		using (IDbConnection conn = new SnowflakeDbConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();

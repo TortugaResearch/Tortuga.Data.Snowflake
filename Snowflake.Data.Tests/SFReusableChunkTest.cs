@@ -179,7 +179,7 @@ class SFReusableChunkTest
 		}
 		catch (SnowflakeDbException e)
 		{
-			Assert.AreEqual(SFError.INTERNAL_ERROR, e.SFErrorCode);
+			Assert.AreEqual(SnowflakeError.InternalError, e.SnowflakeError);
 		}
 	}
 
@@ -209,7 +209,7 @@ class SFReusableChunkTest
 		}
 		catch (SnowflakeDbException e)
 		{
-			Assert.AreEqual(SFError.INTERNAL_ERROR, e.SFErrorCode);
+			Assert.AreEqual(SnowflakeError.InternalError, e.SnowflakeError);
 		}
 	}
 

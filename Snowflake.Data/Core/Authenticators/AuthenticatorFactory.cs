@@ -4,7 +4,7 @@
 
 using Tortuga.Data.Snowflake.Core.Sessions;
 using static System.StringComparison;
-using static Tortuga.Data.Snowflake.SFError;
+using static Tortuga.Data.Snowflake.SnowflakeError;
 
 namespace Tortuga.Data.Snowflake.Core.Authenticators;
 
@@ -45,6 +45,6 @@ class AuthenticatorFactory
 			return new OktaAuthenticator(session, type);
 		}
 
-		throw new SnowflakeDbException(UNKNOWN_AUTHENTICATOR, type);
+		throw new SnowflakeDbException(UnknownAuthenticator, type);
 	}
 }

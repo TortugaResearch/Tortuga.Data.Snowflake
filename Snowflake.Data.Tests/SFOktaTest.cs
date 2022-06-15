@@ -25,7 +25,7 @@ class SFOktaTest
 		}
 		catch (SnowflakeDbException e)
 		{
-			Assert.AreEqual(SFError.IDP_SSO_TOKEN_URL_MISMATCH, e.SFErrorCode);
+			Assert.AreEqual(SnowflakeError.IdpSsoTokenUrlMismatch, e.SnowflakeError);
 		}
 	}
 
@@ -46,7 +46,7 @@ class SFOktaTest
 		}
 		catch (SnowflakeDbException e)
 		{
-			Assert.AreEqual(SFError.IDP_SAML_POSTBACK_NOTFOUND, e.SFErrorCode);
+			Assert.AreEqual(SnowflakeError.IdpSamlPostbackNotFound, e.SnowflakeError);
 		}
 	}
 
@@ -67,7 +67,7 @@ class SFOktaTest
 		}
 		catch (SnowflakeDbException e)
 		{
-			Assert.AreEqual(SFError.IDP_SAML_POSTBACK_INVALID, e.SFErrorCode);
+			Assert.AreEqual(SnowflakeError.IdpSamlPostbackInvalid, e.SnowflakeError);
 		}
 	}
 }

@@ -91,7 +91,7 @@ class SFSession
 		m_Properties.TryGetValue(SFSessionProperty.APPLICATION, out var applicationNameSetting);
 		if (!string.IsNullOrEmpty(applicationNameSetting) && !APPLICATION_REGEX.IsMatch(applicationNameSetting))
 		{
-			throw new SnowflakeDbException(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INVALID_CONNECTION_PARAMETER_VALUE, applicationNameSetting, SFSessionProperty.APPLICATION.ToString());
+			throw new SnowflakeDbException(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SnowflakeError.InvalidConnectionParameterValue, applicationNameSetting, SFSessionProperty.APPLICATION.ToString());
 		}
 
 		ParameterMap = new();
@@ -133,7 +133,7 @@ class SFSession
 		}
 		catch (Exception e)
 		{
-			throw new SnowflakeDbException(e, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SFError.INVALID_CONNECTION_STRING, "Unable to connect");
+			throw new SnowflakeDbException(e, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SnowflakeError.InvalidConnectionString, "Unable to connect");
 		}
 
 		m_ConnectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
