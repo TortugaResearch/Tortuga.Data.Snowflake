@@ -7,7 +7,7 @@ using Newtonsoft.Json.Serialization;
 
 namespace Tortuga.Data.Snowflake.Core;
 
-class JsonUtils
+static class JsonUtils
 {
 	/// <summary>
 	/// Default serialization settings for JSON serialization and deserialization.

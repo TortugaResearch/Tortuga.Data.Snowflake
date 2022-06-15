@@ -9,7 +9,7 @@ namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 /// <summary>
 /// The interface for the storage clients.
 /// </summary>
-class SFRemoteStorageUtil
+static class SFRemoteStorageUtil
 {
 	/// <summary>
 	/// Strings to indicate specific storage type.

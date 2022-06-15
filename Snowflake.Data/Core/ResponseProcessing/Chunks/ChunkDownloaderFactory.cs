@@ -6,7 +6,7 @@ using Tortuga.Data.Snowflake.Core.Messages;
 
 namespace Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
 
-class ChunkDownloaderFactory
+static class ChunkDownloaderFactory
 {
 	public static IChunkDownloader GetDownloader(QueryExecResponseData responseData, SFBaseResultSet resultSet, CancellationToken cancellationToken)
 	{

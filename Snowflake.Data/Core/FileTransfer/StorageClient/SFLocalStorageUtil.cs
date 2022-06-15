@@ -7,7 +7,7 @@ namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 /// <summary>
 /// The storage client for local upload/download.
 /// </summary>
-class SFLocalStorageUtil
+static class SFLocalStorageUtil
 {
 	/// <summary>
 	/// Write the file locally.

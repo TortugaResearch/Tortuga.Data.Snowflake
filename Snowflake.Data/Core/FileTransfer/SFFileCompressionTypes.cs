@@ -4,7 +4,7 @@
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer;
 
-class SFFileCompressionTypes
+static class SFFileCompressionTypes
 {
 	const byte MAX_MAGIC_BYTES = 4;
 

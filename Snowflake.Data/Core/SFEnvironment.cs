@@ -2,7 +2,7 @@
 
 namespace Tortuga.Data.Snowflake.Core;
 
-class SFEnvironment
+static class SFEnvironment
 {
 	static SFEnvironment()
 	{

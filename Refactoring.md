@@ -1760,3 +1760,9 @@ Assert.AreEqual(270053, e.ErrorCode);
 Assert.AreEqual(SnowflakeError.UnsupportedDotnetType, e.SnowflakeError);
 ```
 
+## Round 38 - Static Classes
+
+Classes with only static members such as `ChunkDownloaderFactory` should be marked as `static`. 
+
+Allowing objects of these types to be created is misleading to the developers, as those objects would not be useful for anything.
+

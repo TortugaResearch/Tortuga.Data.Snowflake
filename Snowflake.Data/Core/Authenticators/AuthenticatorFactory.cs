@@ -11,7 +11,7 @@ namespace Tortuga.Data.Snowflake.Core.Authenticators;
 /// <summary>
 /// Authenticator Factory to build authenticators
 /// </summary>
-class AuthenticatorFactory
+static class AuthenticatorFactory
 {
 	/// <summary>
 	/// Generate the authenticator given the session

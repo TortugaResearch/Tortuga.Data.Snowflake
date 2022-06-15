@@ -2,7 +2,7 @@
 
 namespace Tortuga.Data.Snowflake.Core;
 
-class FastParser
+static class FastParser
 {
 	public static long FastParseInt64(byte[] s, int offset, int len)
 	{

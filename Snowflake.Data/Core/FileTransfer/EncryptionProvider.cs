@@ -6,7 +6,7 @@ namespace Tortuga.Data.Snowflake.Core.FileTransfer;
 /// <summary>
 /// The encryptor/decryptor for PUT/GET files.
 /// </summary>
-class EncryptionProvider
+static class EncryptionProvider
 {
 	// The default block size for AES
 	const int AES_BLOCK_SIZE = 128;
