@@ -1841,3 +1841,67 @@ We could also merge them with the `HttpClientUtilities` classes. But those are g
 From over 20 static classes, we're down to 11 library specific static classes, 3 static classes that will be moved to a future library, and 1 static class for legacy .NET support.
 
 
+## Round 40 - Race Condition in HttpUtil?
+
+Consider this line:
+
+```csharp
+static readonly Dictionary<string, HttpClient> s_HttpClients = new();
+```
+
+Because it is a mutable collection in a static field, we have to look around to see if it is being used correctly. If it's not, there could be a race condition that breaks the dictionary such as subsequent calls to it will always fail.
+
+One way to protect it is with a lock around `s_HttpClients`? At first glance it doesn’t look like it.
+
+```csharp
+static HttpClient RegisterNewHttpClientIfNecessary(HttpClientConfig config)
+{
+	var name = config.ConfKey;
+	if (!s_HttpClients.ContainsKey(name))
+	{
+		var httpClient = new HttpClient(new RetryHandler(setupCustomHttpHandler(config)))
+		{
+			Timeout = Timeout.InfiniteTimeSpan
+		};
+
+		// Add the new client key to the list
+		s_HttpClients.Add(name, httpClient);
+	}
+
+	return s_HttpClients[name];
+}
+```
+
+But actually, ` RegisterNewHttpClientIfNecessary` is currently called only in one place. At that place does have a lock.
+
+```csharp
+internal static HttpClient GetHttpClient(HttpClientConfig config)
+{
+	lock (s_HttpClientProviderLock)
+	{
+		return RegisterNewHttpClientIfNecessary(config);
+	}
+}
+```
+
+This is not acceptable. Every future developer who looks at this code is going to have to review it for potential race conditions. They can’t just look at it any one place to understand whether or not it’s written correctly.
+
+
+Fortunately, there is an easy alternative that uses a ` ConcurrentDictionary` which eliminates the lock and private function. 
+
+```csharp
+internal static HttpClient GetHttpClient(HttpClientConfig config)
+{
+	var name = config.ConfKey ?? throw new ArgumentException($"{nameof(config.ConfKey)} is null", nameof(config));
+
+	return s_HttpClients.GetOrAdd(name, _ => new HttpClient(new RetryHandler(setupCustomHttpHandler(config))) { Timeout = Timeout.InfiniteTimeSpan });
+}
+```
+
+Taking a more holistic look at ` HttpUtil`, one has to ask why it is a singleton class rather than just a static module? It implements no interfaces and is sealed, so there are no opportunities for polymorphism.  The constructor is private, so there will never be more than one instance. 
+
+Looking further, it is only used by `SFSession` and is specially designed for that class’s needs. It isn’t a generic utility class at all. Furthermore, it is at the heart of what `SFSession`, which is managing HTTP connections. 
+
+So this should have been moved into `SFSession` in the previous round of refactoring, leaving just `GetOptionOrDefault` and `SetOption` on their own.
+
+Once in `SFSession`, the `GetHttpClient` method can be inlined. We'll leave its helper function, `SetupCustomHttpHandler`, alone as it is quite long and complex.

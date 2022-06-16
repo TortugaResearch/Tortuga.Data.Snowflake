@@ -2,8 +2,8 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
+using Tortuga.Data.Snowflake.Core;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
-using Tortuga.Data.Snowflake.Core.Sessions;
 
 namespace Tortuga.Data.Snowflake.Tests.Mock;
 

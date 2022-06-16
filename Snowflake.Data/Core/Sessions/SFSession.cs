@@ -3,8 +3,10 @@
  */
 
 using Microsoft.AspNetCore.WebUtilities;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Security;
+using System.Security.Authentication;
 using System.Text.RegularExpressions;
 using Tortuga.Data.Snowflake.Core.Authenticators;
 using Tortuga.Data.Snowflake.Core.Messages;
@@ -130,7 +132,8 @@ class SFSession
 			var httpClientConfig = new HttpClientConfig(!m_InsecureMode, proxyHost, proxyPort, proxyUser, proxyPwd, noProxyHosts);
 
 			// Get the http client for the config
-			m_HttpClient = HttpUtil.GetHttpClient(httpClientConfig);
+			m_HttpClient = s_HttpClients.GetOrAdd(httpClientConfig.ConfKey, _ => new HttpClient(new RetryHandler(SetupCustomHttpHandler(httpClientConfig))) { Timeout = Timeout.InfiniteTimeSpan });
+
 			RestRequester = new RestRequester(m_HttpClient);
 		}
 		catch (Exception e)
@@ -329,5 +332,58 @@ class SFSession
 		}
 
 		throw new SnowflakeDbException(UnknownAuthenticator, type);
+	}
+
+	static readonly ConcurrentDictionary<string, HttpClient> s_HttpClients = new();
+
+	static HttpClientHandler SetupCustomHttpHandler(HttpClientConfig config)
+	{
+		var httpHandler = new HttpClientHandler()
+		{
+			// Verify no certificates have been revoked
+			CheckCertificateRevocationList = config.CrlCheckEnabled,
+			// Enforce tls v1.2
+			SslProtocols = SslProtocols.Tls12,
+			AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+			UseCookies = false // Disable cookies
+		};
+		// Add a proxy if necessary
+		if (config.ProxyHost != null)
+		{
+			// Proxy needed
+			var proxy = new WebProxy(config.ProxyHost, int.Parse(config.ProxyPort!));
+
+			// Add credential if provided
+			if (!string.IsNullOrEmpty(config.ProxyUser))
+			{
+				ICredentials credentials = new NetworkCredential(config.ProxyUser, config.ProxyPassword);
+				proxy.Credentials = credentials;
+			}
+
+			// Add bypasslist if provided
+			if (!string.IsNullOrEmpty(config.NoProxyList))
+			{
+				var bypassList = config.NoProxyList!.Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
+				// Convert simplified syntax to standard regular expression syntax
+				for (var i = 0; i < bypassList.Length; i++)
+				{
+					string? entry;
+
+					// Get the original entry
+					entry = bypassList[i].Trim();
+					// . -> [.] because . means any char
+					entry = entry.Replace(".", "[.]");
+					// * -> .*  because * is a quantifier and need a char or group to apply to
+					entry = entry.Replace("*", ".*");
+
+					// Replace with the valid entry syntax
+					bypassList[i] = entry;
+				}
+				proxy.BypassList = bypassList;
+			}
+
+			httpHandler.Proxy = proxy;
+		}
+		return httpHandler;
 	}
 }
