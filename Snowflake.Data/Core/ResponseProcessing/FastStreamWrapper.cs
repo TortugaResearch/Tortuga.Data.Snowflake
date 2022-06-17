@@ -8,8 +8,8 @@ class FastStreamWrapper
 {
 	readonly Stream m_WrappedStream;
 	readonly byte[] m_Buffer = new byte[32768];
-	int m_Count = 0;
-	int m_Next = 0;
+	int m_Count;
+	int m_Next;
 
 	public FastStreamWrapper(Stream s)
 	{

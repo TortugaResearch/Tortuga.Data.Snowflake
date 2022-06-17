@@ -5,3 +5,4 @@
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("Tortuga.Data.Snowflake.Tests")]
+[assembly: CLSCompliant(false)]

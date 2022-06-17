@@ -84,7 +84,7 @@ class OktaAuthenticator : Authenticator
 		var samlRestRequest = BuildSAMLRestRequest(ssoUrl, onetimeToken);
 		using (var samlRawResponse = await Session.RestRequester.GetAsync(samlRestRequest, cancellationToken).ConfigureAwait(false))
 		{
-			m_SamlRawHtmlString = await samlRawResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+			m_SamlRawHtmlString = await samlRawResponse.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 		}
 
 		VerifyPostbackUrl();
@@ -141,13 +141,13 @@ class OktaAuthenticator : Authenticator
 	void VerifyPostbackUrl()
 	{
 		if (m_SamlRawHtmlString == null)
-			throw new NullReferenceException($"Internal error. {nameof(m_SamlRawHtmlString)} should have been set previously.");
+			throw new InvalidOperationException($"Internal error. {nameof(m_SamlRawHtmlString)} should have been set previously.");
 
-		var formIndex = m_SamlRawHtmlString.IndexOf("<form");
+		var formIndex = m_SamlRawHtmlString.IndexOf("<form", StringComparison.Ordinal);
 
 		// skip 'action="' (length = 8)
-		var startIndex = m_SamlRawHtmlString.IndexOf("action=", formIndex) + 8;
-		var length = m_SamlRawHtmlString.IndexOf('"', startIndex) - startIndex;
+		var startIndex = m_SamlRawHtmlString.IndexOf("action=", formIndex, StringComparison.Ordinal) + 8;
+		var length = m_SamlRawHtmlString.IndexOf("\"", startIndex, StringComparison.Ordinal) - startIndex;
 
 		Uri postBackUrl;
 		try

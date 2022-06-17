@@ -6,6 +6,8 @@ namespace Tortuga.Data.Snowflake;
 
 public enum SnowflakeError
 {
+	None = 0,
+
 	InternalError = 270001,
 
 	ColumnIndexOutOfBound = 270002,

@@ -11,11 +11,13 @@ using Tortuga.Data.Snowflake.Core.ResponseProcessing;
 
 namespace Tortuga.Data.Snowflake;
 
-public class SnowflakeDbDataReader : DbDataReader
+public class SnowflakeDbDataReader : DbDataReader, IEnumerable<SnowflakeDbDataReader>
 {
 	readonly CommandBehavior m_CommandBehavior;
 	readonly SnowflakeDbConnection m_Connection;
+#pragma warning disable CA2213 // Disposable fields should be disposed
 	readonly DataTable m_SchemaTable;
+#pragma warning restore CA2213 // Disposable fields should be disposed
 	bool m_IsClosed;
 	readonly SFBaseResultSet m_ResultSet;
 
@@ -134,7 +136,7 @@ public class SnowflakeDbDataReader : DbDataReader
 		return m_ResultSet.SFResultSetMetaData.GetColumnIndexByName(name);
 	}
 
-	public string? GetQueryId() => m_ResultSet.m_QueryId;
+	public string? QueryId => m_ResultSet.m_QueryId;
 
 	public override DataTable GetSchemaTable() => m_SchemaTable;
 
@@ -156,6 +158,9 @@ public class SnowflakeDbDataReader : DbDataReader
 
 	public override int GetValues(object[] values)
 	{
+		if (values == null)
+			throw new ArgumentNullException(nameof(values), $"{nameof(values)} is null.");
+
 		var count = Math.Min(FieldCount, values.Length);
 		for (var i = 0; i < count; i++)
 		{
@@ -279,6 +284,14 @@ public class SnowflakeDbDataReader : DbDataReader
 			Array.Copy(data, dataOffset, buffer, bufferOffset, elementsRead);
 
 			return elementsRead;
+		}
+	}
+
+	IEnumerator<SnowflakeDbDataReader> IEnumerable<SnowflakeDbDataReader>.GetEnumerator()
+	{
+		while (Read())
+		{
+			yield return this;
 		}
 	}
 }

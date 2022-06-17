@@ -1,4 +1,6 @@
-﻿namespace Tortuga.HttpClientUtilities;
+﻿using System.Net;
+
+namespace Tortuga.HttpClientUtilities;
 
 static class HttpContentSynchronously
 {
@@ -97,4 +99,78 @@ static class HttpContentSynchronously
 	{
 		return TaskUtilities.RunSynchronously(() => content.ReadAsStringAsync(), cancellationToken);
 	}
+
+#if !NET6_0_OR_GREATER
+
+	/// <summary>
+	/// Serializes the HTTP content into a stream of bytes and copies it to stream.
+	/// </summary>
+	/// <param name="content">The content.</param>
+	/// <param name="stream">The target stream.</param>
+	/// <param name="context">Information about the transport (for example, the channel binding token). This parameter may be null.</param>
+	/// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+	public static void CopyTo(this HttpContent content, Stream stream, TransportContext? context, CancellationToken cancellationToken)
+	{
+		TaskUtilities.RunSynchronously(() => content.CopyToAsync(stream, context, cancellationToken), cancellationToken);
+	}
+
+	/// <summary>
+	/// Serialize the HTTP content into a stream of bytes and copies it to the stream
+	/// object provided as the stream parameter.</summary>
+	/// <param name="content">The content.</param>
+	/// <param name="stream">The target stream.</param>
+	/// <param name="context">Information about the transport (channel binding token, for example). This parameter may be null.</param>
+	/// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+	public static Task CopyToAsync(this HttpContent content, Stream stream, TransportContext? context, CancellationToken cancellationToken)
+	{
+		cancellationToken.ThrowIfCancellationRequested();
+		return content.CopyToAsync(stream, context);
+	}
+
+	/// <summary>
+	/// Serialize the HTTP content into a stream of bytes and copies it to the stream object provided as the stream parameter.
+	/// </summary>
+	/// <param name="content">The content.</param>
+	/// <param name="stream">The target stream.</param>
+	/// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+	public static Task CopyToAsync(this HttpContent content, Stream stream, CancellationToken cancellationToken)
+	{
+		cancellationToken.ThrowIfCancellationRequested();
+		return content.CopyToAsync(stream);
+	}
+
+	/// <summary>
+	/// Serialize the HTTP content to a byte array as an asynchronous operation.
+	/// </summary>
+	/// <param name="content">The content.</param>
+	/// <param name="cancellationToken">//     The cancellation token to cancel the operation.</param>
+	public static Task<byte[]> ReadAsByteArrayAsync(this HttpContent content, CancellationToken cancellationToken)
+	{
+		cancellationToken.ThrowIfCancellationRequested();
+		return content.ReadAsByteArrayAsync();
+	}
+
+	/// <summary>
+	/// Serialize the HTTP content and return a stream that represents the content as an asynchronous operation.
+	/// </summary>
+	/// <param name="content">The content.</param>
+	/// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+	public static Task<Stream> ReadAsStreamAsync(this HttpContent content, CancellationToken cancellationToken)
+	{
+		cancellationToken.ThrowIfCancellationRequested();
+		return content.ReadAsStreamAsync();
+	}
+
+	/// <summary>
+	/// Serialize the HTTP content to a string as an asynchronous operation.
+	/// </summary>
+	/// <param name="content">The content.</param>
+	/// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+	public static Task<string> ReadAsStringAsync(this HttpContent content, CancellationToken cancellationToken)
+	{
+		cancellationToken.ThrowIfCancellationRequested();
+		return content.ReadAsStringAsync();
+	}
+
+#endif
 }

@@ -6,6 +6,7 @@ using System.Data;
 using System.Globalization;
 using System.Text;
 using Tortuga.Data.Snowflake.Core.ResponseProcessing;
+using Tortuga.Data.Snowflake.Legacy;
 
 namespace Tortuga.Data.Snowflake.Core;
 
@@ -68,7 +69,7 @@ static class SFDataConverter
 			}
 			else if (destType == typeof(byte[]))
 			{
-				return srcType == SFDataType.BINARY ?
+				return srcType == SFDataType.Binary ?
 					HexToBytes(srcVal.ToString()) : srcVal.GetBytes();
 			}
 			else if (destType == typeof(short))
@@ -97,7 +98,7 @@ static class SFDataConverter
 			}
 			else if (destType == typeof(char[]))
 			{
-				var data = srcType == SFDataType.BINARY ? HexToBytes(srcVal.ToString()) : srcVal.GetBytes();
+				var data = srcType == SFDataType.Binary ? HexToBytes(srcVal.ToString()) : srcVal.GetBytes();
 				return Encoding.UTF8.GetString(data).ToCharArray();
 			}
 			else
@@ -115,7 +116,7 @@ static class SFDataConverter
 	{
 		switch (srcType)
 		{
-			case SFDataType.TIME:
+			case SFDataType.Time:
 				// Convert fractional seconds since midnight to TimeSpan
 				//  A single tick represents one hundred nanoseconds or one ten-millionth of a second.
 				// There are 10,000 ticks in a millisecond
@@ -130,12 +131,12 @@ static class SFDataConverter
 	{
 		switch (srcType)
 		{
-			case SFDataType.DATE:
+			case SFDataType.Date:
 				var srcValLong = FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, srcVal.length);
 				return UnixEpoch.AddDays(srcValLong);
 
-			case SFDataType.TIME:
-			case SFDataType.TIMESTAMP_NTZ:
+			case SFDataType.Time:
+			case SFDataType.TimestampNtz:
 				var tickDiff = GetTicksFromSecondAndNanosecond(srcVal);
 				return UnixEpoch.AddTicks(tickDiff);
 
@@ -148,7 +149,7 @@ static class SFDataConverter
 	{
 		switch (srcType)
 		{
-			case SFDataType.TIMESTAMP_TZ:
+			case SFDataType.TimestampTz:
 				var spaceIndex = Array.IndexOf(srcVal.Buffer, (byte)' ', srcVal.offset, srcVal.length); ;
 				if (spaceIndex == -1)
 				{
@@ -163,7 +164,7 @@ static class SFDataConverter
 					var offSetTimespan = new TimeSpan((offset - 1440) / 60, 0, 0);
 					return new DateTimeOffset(UnixEpoch.Ticks + GetTicksFromSecondAndNanosecond(timeVal), TimeSpan.Zero).ToOffset(offSetTimespan);
 				}
-			case SFDataType.TIMESTAMP_LTZ:
+			case SFDataType.TimestampLtz:
 				return new DateTimeOffset(UnixEpoch.Ticks + GetTicksFromSecondAndNanosecond(srcVal), TimeSpan.Zero).ToLocalTime();
 
 			default:
@@ -234,51 +235,51 @@ static class SFDataConverter
 			case DbType.UInt32:
 			case DbType.UInt64:
 			case DbType.VarNumeric:
-				destType = SFDataType.FIXED;
+				destType = SFDataType.Fixed;
 				break;
 
 			case DbType.Boolean:
-				destType = SFDataType.BOOLEAN;
+				destType = SFDataType.Boolean;
 				break;
 
 			case DbType.Double:
 			case DbType.Single:
-				destType = SFDataType.REAL;
+				destType = SFDataType.Real;
 				break;
 
 			case DbType.Guid:
 			case DbType.String:
 			case DbType.StringFixedLength:
-				destType = SFDataType.TEXT;
+				destType = SFDataType.Text;
 				break;
 
 			case DbType.Date:
-				destType = SFDataType.DATE;
+				destType = SFDataType.Date;
 				break;
 
 			case DbType.Time:
-				destType = SFDataType.TIME;
+				destType = SFDataType.Time;
 				break;
 
 			case DbType.DateTime:
 			case DbType.DateTime2:
-				destType = SFDataType.TIMESTAMP_NTZ;
+				destType = SFDataType.TimestampNtz;
 				break;
 
 			// By default map DateTimeoffset to TIMESTAMP_TZ
 			case DbType.DateTimeOffset:
-				destType = SFDataType.TIMESTAMP_TZ;
+				destType = SFDataType.TimestampTz;
 				break;
 
 			case DbType.Binary:
-				destType = SFDataType.BINARY;
+				destType = SFDataType.Binary;
 				break;
 
 			default:
 				throw new SnowflakeDbException(SnowflakeError.UnsupportedDotnetType, srcType);
 		}
 		destVal = csharpValToSfVal(destType, srcVal);
-		return Tuple.Create(destType.ToString(), destVal);
+		return Tuple.Create(destType.ToSql(), destVal);
 	}
 
 	static string BytesToHex(byte[] bytes)
@@ -286,7 +287,7 @@ static class SFDataConverter
 		var hexBuilder = new StringBuilder(bytes.Length * 2);
 		foreach (var b in bytes)
 		{
-			hexBuilder.AppendFormat("{0:x2}", b);
+			hexBuilder.AppendFormat(CultureInfo.InvariantCulture, "{0:x2}", b);
 		}
 		return hexBuilder.ToString();
 	}
@@ -309,26 +310,26 @@ static class SFDataConverter
 
 		switch (sfDataType)
 		{
-			case SFDataType.TIMESTAMP_LTZ:
+			case SFDataType.TimestampLtz:
 				if (srcVal.GetType() != typeof(DateTimeOffset))
 				{
 					throw new SnowflakeDbException(SnowflakeError.InvalidDataConversion, srcVal,
-						srcVal.GetType().ToString(), SFDataType.TIMESTAMP_LTZ.ToString());
+						srcVal.GetType().ToString(), SFDataType.TimestampLtz.ToString());
 				}
 				else
 				{
-					destVal = ((long)(((DateTimeOffset)srcVal).UtcTicks - UnixEpoch.Ticks) * 100).ToString();
+					destVal = ((long)(((DateTimeOffset)srcVal).UtcTicks - UnixEpoch.Ticks) * 100).ToString(CultureInfo.InvariantCulture);
 				}
 				break;
 
-			case SFDataType.FIXED:
-			case SFDataType.BOOLEAN:
-			case SFDataType.REAL:
-			case SFDataType.TEXT:
+			case SFDataType.Fixed:
+			case SFDataType.Boolean:
+			case SFDataType.Real:
+			case SFDataType.Text:
 				destVal = string.Format(CultureInfo.InvariantCulture, "{0}", srcVal);
 				break;
 
-			case SFDataType.TIME:
+			case SFDataType.Time:
 				if (srcVal.GetType() != typeof(DateTime))
 				{
 					throw new SnowflakeDbException(SnowflakeError.InvalidDataConversion, srcVal, srcVal.GetType().ToString(), DbType.Time.ToString());
@@ -338,11 +339,11 @@ static class SFDataConverter
 					var srcDt = ((DateTime)srcVal);
 					var nanoSinceMidNight = (long)(srcDt.Ticks - srcDt.Date.Ticks) * 100L;
 
-					destVal = nanoSinceMidNight.ToString();
+					destVal = nanoSinceMidNight.ToString(CultureInfo.InvariantCulture);
 				}
 				break;
 
-			case SFDataType.DATE:
+			case SFDataType.Date:
 				if (srcVal.GetType() != typeof(DateTime))
 				{
 					throw new SnowflakeDbException(SnowflakeError.InvalidDataConversion, srcVal, srcVal.GetType().ToString(), DbType.Date.ToString());
@@ -352,11 +353,11 @@ static class SFDataConverter
 					var dt = ((DateTime)srcVal).Date;
 					var ts = dt.Subtract(UnixEpoch);
 					var millis = (long)(ts.TotalMilliseconds);
-					destVal = millis.ToString();
+					destVal = millis.ToString(CultureInfo.InvariantCulture);
 				}
 				break;
 
-			case SFDataType.TIMESTAMP_NTZ:
+			case SFDataType.TimestampNtz:
 				if (srcVal.GetType() != typeof(DateTime))
 				{
 					throw new SnowflakeDbException(SnowflakeError.InvalidDataConversion, srcVal,
@@ -371,7 +372,7 @@ static class SFDataConverter
 				}
 				break;
 
-			case SFDataType.TIMESTAMP_TZ:
+			case SFDataType.TimestampTz:
 				if (srcVal.GetType() != typeof(DateTimeOffset))
 				{
 					throw new SnowflakeDbException(SnowflakeError.InvalidDataConversion, srcVal, srcVal.GetType().ToString(), DbType.DateTimeOffset.ToString());
@@ -379,11 +380,11 @@ static class SFDataConverter
 				else
 				{
 					var dtOffset = (DateTimeOffset)srcVal;
-					destVal = String.Format("{0} {1}", (dtOffset.UtcTicks - UnixEpoch.Ticks) * 100L, dtOffset.Offset.TotalMinutes + 1440);
+					destVal = String.Format(CultureInfo.InvariantCulture, "{0} {1}", (dtOffset.UtcTicks - UnixEpoch.Ticks) * 100L, dtOffset.Offset.TotalMinutes + 1440);
 				}
 				break;
 
-			case SFDataType.BINARY:
+			case SFDataType.Binary:
 				if (srcVal.GetType() != typeof(byte[]))
 				{
 					throw new SnowflakeDbException(SnowflakeError.InvalidDataConversion, srcVal, srcVal.GetType().ToString(), DbType.Binary.ToString());
@@ -404,7 +405,7 @@ static class SFDataConverter
 	internal static string toDateString(DateTime date, string formatter)
 	{
 		// change formatter from "YYYY-MM-DD" to "yyyy-MM-dd"
-		formatter = formatter.Replace("Y", "y").Replace("m", "M").Replace("D", "d");
-		return date.ToString(formatter);
+		formatter = formatter.Replace("Y", "y", StringComparison.Ordinal).Replace("m", "M", StringComparison.Ordinal).Replace("D", "d", StringComparison.Ordinal);
+		return date.ToString(formatter, CultureInfo.InvariantCulture);
 	}
 }

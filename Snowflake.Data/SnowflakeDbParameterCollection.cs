@@ -7,7 +7,7 @@ using System.Data.Common;
 
 namespace Tortuga.Data.Snowflake;
 
-public class SnowflakeDbParameterCollection : DbParameterCollection
+public class SnowflakeDbParameterCollection : DbParameterCollection, IList<SnowflakeDbParameter>
 {
 	readonly object m_SyncRoot = new();
 
@@ -42,6 +42,9 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
 
 	public override void AddRange(Array values)
 	{
+		if (values == null)
+			throw new ArgumentNullException(nameof(values), $"{nameof(values)} is null.");
+
 		foreach (SnowflakeDbParameter? value in values)
 			m_ParameterList.Add(value ?? throw new ArgumentException("The values array contains a null.", nameof(values)));
 	}
@@ -57,6 +60,9 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
 
 	public override void CopyTo(Array array, int index)
 	{
+		if (array == null)
+			throw new ArgumentNullException(nameof(array), $"{nameof(array)} is null.");
+
 		var untypedArray = (object[])array;
 		for (var i = 0; i < m_ParameterList.Count; i++)
 			untypedArray[i + index] = m_ParameterList[i];
@@ -98,6 +104,20 @@ public class SnowflakeDbParameterCollection : DbParameterCollection
 	{
 		m_ParameterList[index] = (SnowflakeDbParameter)value;
 	}
+
+	public int IndexOf(SnowflakeDbParameter item) => m_ParameterList.IndexOf(item);
+
+	public void Insert(int index, SnowflakeDbParameter item) => m_ParameterList.Insert(index, item);
+
+	void ICollection<SnowflakeDbParameter>.Add(SnowflakeDbParameter item) => Add(item);
+
+	public bool Contains(SnowflakeDbParameter item) => m_ParameterList.Contains(item);
+
+	public void CopyTo(SnowflakeDbParameter[] array, int arrayIndex) => m_ParameterList.CopyTo(array, arrayIndex);
+
+	public bool Remove(SnowflakeDbParameter item) => m_ParameterList.Remove(item);
+
+	IEnumerator<SnowflakeDbParameter> IEnumerable<SnowflakeDbParameter>.GetEnumerator() => m_ParameterList.GetEnumerator();
 
 	public new SnowflakeDbParameter this[int index]
 	{

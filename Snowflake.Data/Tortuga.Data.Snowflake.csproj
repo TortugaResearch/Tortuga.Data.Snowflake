@@ -17,15 +17,12 @@
 		<ImplicitUsings>true</ImplicitUsings>
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 		<Nullable>enable</Nullable>
+		<AnalysisLevel>5.0-all</AnalysisLevel>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('$(TargetFramework)', '^net\d'))">
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net472'">
 		<DefineConstants>NETFRAMEWORK</DefineConstants>
 	</PropertyGroup>
-
-	<ItemGroup>
-	  <Compile Remove="Core\FileTransfer\StorageClient\ISFLocalStorage.cs" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="AWSSDK.S3" Version="3.7.0.4" />

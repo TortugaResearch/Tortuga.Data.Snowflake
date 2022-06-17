@@ -24,7 +24,9 @@ class ChunkStreamingParser : ChunkParser
 			var row = 0;
 			var col = 0;
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 			var outputMatrix = new string?[chunk.GetRowCount(), ((SFResultChunk)chunk).ColCount];
+#pragma warning restore CA1814 // Prefer jagged arrays over multidimensional
 
 			while (jr.Read())
 			{
@@ -61,6 +63,6 @@ class ChunkStreamingParser : ChunkParser
 
 	public override async Task ParseChunkAsync(IResultChunk chunk)
 	{
-		await Task.Run(() => ParseChunk(chunk)); ;
+		await Task.Run(() => ParseChunk(chunk)).ConfigureAwait(false);
 	}
 }

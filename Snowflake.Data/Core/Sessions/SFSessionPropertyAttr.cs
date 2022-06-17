@@ -5,7 +5,7 @@
 namespace Tortuga.Data.Snowflake.Core.Sessions;
 
 [AttributeUsage(AttributeTargets.Field)]
-class SFSessionPropertyAttribute : Attribute
+sealed class SFSessionPropertyAttribute : Attribute
 {
 	public string? DefaultValue { get; init; }
 	public bool Required { get; init; }

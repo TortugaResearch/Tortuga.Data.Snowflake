@@ -205,12 +205,12 @@ static class SFFileCompressionTypes
 	/// <returns>The corresponding SFFileCompressionType if supported, None if no match</returns>
 	public static SFFileCompressionType LookUpByName(string name)
 	{
-		if (name.StartsWith("."))
+		if (name.StartsWith(".", StringComparison.Ordinal))
 			name = name.Substring(1);
 
 		foreach (var compType in compressionTypes)
 		{
-			if (compType.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+			if (compType.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
 				return compType;
 		}
 

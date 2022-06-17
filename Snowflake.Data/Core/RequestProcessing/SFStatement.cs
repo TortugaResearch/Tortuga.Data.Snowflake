@@ -2,6 +2,7 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+using System.Globalization;
 using System.Text;
 using Tortuga.Data.Snowflake.Core.FileTransfer;
 using Tortuga.Data.Snowflake.Core.Messages;
@@ -37,7 +38,7 @@ class SFStatement
 	private CancellationTokenSource? m_LinkedCancellationTokenSource;
 
 	// Flag indicating if the SQL query is a regular query or a PUT/GET query
-	internal bool m_IsPutGetQuery = false;
+	internal bool m_IsPutGetQuery;
 
 	internal SFStatement(SFSession session)
 	{
@@ -67,7 +68,7 @@ class SFStatement
 		AssignQueryRequestId();
 
 		var startTime = DateTime.UtcNow - new DateTime(1970, 1, 1);
-		var secondsSinceEpoch = Convert.ToInt64(startTime.TotalMilliseconds).ToString();
+		var secondsSinceEpoch = Convert.ToInt64(startTime.TotalMilliseconds).ToString(CultureInfo.InvariantCulture);
 		var parameters = new Dictionary<string, string?>()
 			{
 				{ RestParams.SF_QUERY_REQUEST_ID, m_RequestId },
@@ -87,7 +88,7 @@ class SFStatement
 		return new SFRestRequest
 		{
 			Url = queryUri,
-			AuthorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken),
+			AuthorizationToken = string.Format(CultureInfo.InvariantCulture, SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken),
 			ServiceName = SFSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
 							? (string?)SFSession.ParameterMap[SFSessionParameter.SERVICE_NAME] : null,
 			JsonBody = postBody,
@@ -103,7 +104,7 @@ class SFStatement
 		return new SFRestRequest()
 		{
 			Url = uri,
-			AuthorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken),
+			AuthorizationToken = String.Format(CultureInfo.InvariantCulture, SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken),
 			HttpTimeout = Timeout.InfiniteTimeSpan,
 			RestTimeout = Timeout.InfiniteTimeSpan
 		};
@@ -179,7 +180,7 @@ class SFStatement
 				if (SessionExpired(response))
 				{
 					SFSession.renewSession();
-					queryRequest.AuthorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken);
+					queryRequest.AuthorizationToken = string.Format(CultureInfo.InvariantCulture, SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken);
 				}
 				else
 				{
@@ -216,7 +217,7 @@ class SFStatement
 
 		try
 		{
-			if (trimmedSql.StartsWith("PUT") || trimmedSql.StartsWith("GET"))
+			if (trimmedSql.StartsWith("PUT", StringComparison.Ordinal) || trimmedSql.StartsWith("GET", StringComparison.Ordinal))
 			{
 				m_IsPutGetQuery = true;
 				var response = ExecuteHelper<PutGetExecResponse, PutGetResponseData>(timeout, sql, bindings, describeOnly);
@@ -242,7 +243,7 @@ class SFStatement
 					if (SessionExpired(response))
 					{
 						SFSession.renewSession();
-						queryRequest.AuthorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken);
+						queryRequest.AuthorizationToken = string.Format(CultureInfo.InvariantCulture, SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken);
 					}
 					else
 					{
@@ -297,7 +298,7 @@ class SFStatement
 			return new SFRestRequest()
 			{
 				Url = uri,
-				AuthorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken),
+				AuthorizationToken = string.Format(CultureInfo.InvariantCulture, SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken),
 				JsonBody = postBody
 			};
 		}
@@ -342,7 +343,7 @@ class SFStatement
 				if (SessionExpired(response))
 				{
 					SFSession.renewSession();
-					queryRequest.AuthorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken);
+					queryRequest.AuthorizationToken = string.Format(CultureInfo.InvariantCulture, SF_AUTHORIZATION_SNOWFLAKE_FMT, SFSession.m_SessionToken);
 				}
 				else
 				{
@@ -395,14 +396,14 @@ class SFStatement
 			if (('/' == sqlQueryBuf[idx]) && (idx + 1 < sqlQueryLen) && ('*' == sqlQueryBuf[idx + 1]))
 			{
 				// Search for the matching */
-				var matchingPos = originalSql.IndexOf("*/", idx + 2);
+				var matchingPos = originalSql.IndexOf("*/", idx + 2, StringComparison.Ordinal);
 				if (matchingPos >= 0) // Found the comment closing, skip to after
 					idx = matchingPos + 2;
 			}
 			else if ((sqlQueryBuf[idx] == '-') && (idx + 1 < sqlQueryLen) && (sqlQueryBuf[idx + 1] == '-'))
 			{
 				// Search for the new line
-				var newlinePos = originalSql.IndexOf("\n", idx + 2);
+				var newlinePos = originalSql.IndexOf("\n", idx + 2, StringComparison.Ordinal);
 
 				if (newlinePos >= 0) // Found the new line, skip to after
 					idx = newlinePos + 1;

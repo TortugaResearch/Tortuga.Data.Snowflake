@@ -2,29 +2,29 @@
  * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
  */
 
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Security;
 using Tortuga.Data.Snowflake.Core;
 using Tortuga.Data.Snowflake.Core.Sessions;
 
 namespace Tortuga.Data.Snowflake;
 
-[System.ComponentModel.DesignerCategory("Code")]
+[DesignerCategory("Code")]
 public class SnowflakeDbConnection : DbConnection
 {
 	internal ConnectionState m_ConnectionState;
 	internal int m_ConnectionTimeout;
-
-	static readonly object s_markerObject = new();
 
 	string m_ConnectionString = "";
 
 	public SnowflakeDbConnection()
 	{
 		m_ConnectionState = ConnectionState.Closed;
-		m_ConnectionTimeout = int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttribute>()?.DefaultValue ?? "0");
+		m_ConnectionTimeout = int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttribute>()?.DefaultValue ?? "0", CultureInfo.InvariantCulture);
 	}
 
 	[AllowNull]
@@ -104,48 +104,14 @@ public class SnowflakeDbConnection : DbConnection
 	{
 		if (m_ConnectionState != ConnectionState.Closed && SfSession != null)
 			SfSession.Close();
-
 		m_ConnectionState = ConnectionState.Closed;
 	}
 
-	public Task CloseAsync(CancellationToken cancellationToken)
+	public async Task CloseAsync(CancellationToken cancellationToken)
 	{
-		var taskCompletionSource = new TaskCompletionSource<object>();
-
-		if (cancellationToken.IsCancellationRequested)
-		{
-			taskCompletionSource.SetCanceled();
-		}
-		else
-		{
-			if (m_ConnectionState != ConnectionState.Closed && SfSession != null)
-			{
-				SfSession.CloseAsync(cancellationToken).ContinueWith(
-					previousTask =>
-					{
-						if (previousTask.IsFaulted)
-						{
-							// Exception from SfSession.CloseAsync
-							taskCompletionSource.SetException(previousTask.Exception!.InnerException ?? previousTask.Exception);
-						}
-						else if (previousTask.IsCanceled)
-						{
-							m_ConnectionState = ConnectionState.Closed;
-							taskCompletionSource.SetCanceled();
-						}
-						else
-						{
-							taskCompletionSource.SetResult(s_markerObject);
-							m_ConnectionState = ConnectionState.Closed;
-						}
-					}, cancellationToken);
-			}
-			else
-			{
-				taskCompletionSource.SetResult(s_markerObject);
-			}
-		}
-		return taskCompletionSource.Task;
+		if (m_ConnectionState != ConnectionState.Closed && SfSession != null)
+			await SfSession.CloseAsync(cancellationToken).ConfigureAwait(false);
+		m_ConnectionState = ConnectionState.Closed;
 	}
 
 	public bool IsOpen() => m_ConnectionState == ConnectionState.Open;
@@ -238,6 +204,7 @@ public class SnowflakeDbConnection : DbConnection
 		{
 			// Prevent an exception from being thrown when disposing of this object
 		}
+		base.Dispose(disposing);
 	}
 
 	/// <summary>

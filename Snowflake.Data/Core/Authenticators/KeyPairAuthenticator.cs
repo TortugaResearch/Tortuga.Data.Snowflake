@@ -8,6 +8,7 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -22,7 +23,7 @@ namespace Tortuga.Data.Snowflake.Core.Authenticators;
 /// KeyPairAuthenticator is used for Key pair based authentication.
 /// See <see cref="https://docs.snowflake.com/en/user-guide/key-pair-auth.html"/> for more information.
 /// </summary>
-class KeyPairAuthenticator : Authenticator
+class KeyPairAuthenticator : Authenticator, IDisposable
 {
 	// The authenticator setting value to use to authenticate using key pair authentication.
 	public const string AUTH_NAME = "snowflake_jwt";
@@ -126,7 +127,7 @@ class KeyPairAuthenticator : Authenticator
 				}
 				if (keypair == null)
 				{
-					throw new Exception("Unknown error.");
+					throw new SnowflakeDbException(SnowflakeError.InternalError, "Unknown error.");
 				}
 			}
 			catch (Exception e)
@@ -158,10 +159,10 @@ class KeyPairAuthenticator : Authenticator
 		 *
 		 * Note : Lifetime = 120sec for Python impl, 60sec for Jdbc and Odbc
 		*/
-		var accountUser = Session.m_Properties[SFSessionProperty.ACCOUNT].ToUpper() + "." + Session.m_Properties[SFSessionProperty.USER].ToUpper();
+		var accountUser = Session.m_Properties[SFSessionProperty.ACCOUNT].ToUpperInvariant() + "." + Session.m_Properties[SFSessionProperty.USER].ToUpperInvariant();
 		var issuer = accountUser + "." + publicKeyFingerPrint;
 		var claims = new[] {
-						new Claim(JwtRegisteredClaimNames.Iat, secondsSinceEpoch.ToString(), ClaimValueTypes.Integer64),
+						new Claim(JwtRegisteredClaimNames.Iat, secondsSinceEpoch.ToString(CultureInfo.InvariantCulture), ClaimValueTypes.Integer64),
 						new Claim(JwtRegisteredClaimNames.Sub, accountUser),
 					};
 
@@ -212,5 +213,10 @@ class KeyPairAuthenticator : Authenticator
 			else
 				return m_Password.ToCharArray();
 		}
+	}
+
+	public void Dispose()
+	{
+		m_RsaProvider.Dispose();
 	}
 }

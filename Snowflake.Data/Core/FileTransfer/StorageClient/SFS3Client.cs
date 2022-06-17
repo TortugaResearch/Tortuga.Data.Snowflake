@@ -6,6 +6,7 @@ using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Tortuga.Data.Snowflake.Legacy;
 using Tortuga.HttpClientUtilities;
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
@@ -13,7 +14,7 @@ namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 /// <summary>
 /// The S3 client used to transfer files to the remote S3 storage.
 /// </summary>
-class SFS3Client : ISFRemoteStorageClient
+class SFS3Client : ISFRemoteStorageClient, IDisposable
 {
 	/// <summary>
 	/// The metadata of the S3 file.
@@ -123,13 +124,13 @@ class SFS3Client : ISFRemoteStorageClient
 		var s3path = "";
 
 		// Split stage location as bucket name and path
-		if (stageLocation.Contains('/'))
+		if (stageLocation.Contains('/', StringComparison.Ordinal))
 		{
-			bucketName = stageLocation.Substring(0, stageLocation.IndexOf('/'));
+			bucketName = stageLocation.Substring(0, stageLocation.IndexOf('/', StringComparison.Ordinal));
 
-			s3path = stageLocation.Substring(stageLocation.IndexOf('/') + 1,
-				stageLocation.Length - stageLocation.IndexOf('/') - 1);
-			if (s3path != null && !s3path.EndsWith("/"))
+			s3path = stageLocation.Substring(stageLocation.IndexOf('/', StringComparison.Ordinal) + 1,
+				stageLocation.Length - stageLocation.IndexOf('/', StringComparison.Ordinal) - 1);
+			if (s3path != null && !s3path.EndsWith("/", StringComparison.Ordinal))
 			{
 				s3path += '/';
 			}
@@ -360,5 +361,10 @@ class SFS3Client : ISFRemoteStorageClient
 		}
 
 		fileMetadata.ResultStatus = ResultStatus.DOWNLOADED.ToString();
+	}
+
+	public void Dispose()
+	{
+		m_S3Client.Dispose();
 	}
 }

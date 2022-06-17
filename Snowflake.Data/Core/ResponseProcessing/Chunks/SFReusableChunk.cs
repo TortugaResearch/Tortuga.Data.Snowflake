@@ -71,8 +71,8 @@ class SFReusableChunk : IResultChunk
 		readonly List<byte[]> m_Data = new();
 		readonly List<int[]> m_Offsets = new();
 		readonly List<int[]> m_Lengths = new();
-		int m_NextIndex = 0;
-		int m_CurrentDatOffset = 0;
+		int m_NextIndex;
+		int m_CurrentDatOffset;
 
 		internal BlockResultData()
 		{ }

@@ -5,6 +5,7 @@
 using System.Net;
 using System.Security;
 using Tortuga.Data.Snowflake.Core.Authenticators;
+using Tortuga.Data.Snowflake.Legacy;
 
 namespace Tortuga.Data.Snowflake.Core.Sessions;
 
@@ -30,7 +31,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 				if (!ContainsKey(sessionProperty))
 					continue;
 
-				if (!this[sessionProperty].Equals(prop[sessionProperty]))
+				if (!this[sessionProperty].Equals(prop[sessionProperty], StringComparison.Ordinal))
 					return false;
 			}
 #pragma warning restore CS8605 // Unboxing a possibly null value.
@@ -64,7 +65,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 					var singleEqualIndex = -1;
 					while (currentIndex <= keyVal.Length)
 					{
-						currentIndex = keyVal.IndexOf("=", currentIndex);
+						currentIndex = keyVal.IndexOf("=", currentIndex, StringComparison.Ordinal);
 						if (-1 == currentIndex)
 						{
 							// No '=' found
@@ -97,8 +98,8 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 					{
 						// Split the key/value at the right index and deduplicate '=='
 						tokens = new string[2];
-						tokens[0] = keyVal.Substring(0, singleEqualIndex).Replace("==", "=");
-						tokens[1] = keyVal.Substring(singleEqualIndex + 1, keyVal.Length - (singleEqualIndex + 1)).Replace("==", "="); ;
+						tokens[0] = keyVal.Substring(0, singleEqualIndex).Replace("==", "=", StringComparison.Ordinal);
+						tokens[1] = keyVal.Substring(singleEqualIndex + 1, keyVal.Length - (singleEqualIndex + 1)).Replace("==", "=", StringComparison.Ordinal); ;
 					}
 					else
 					{
@@ -111,7 +112,7 @@ class SFSessionProperties : Dictionary<SFSessionProperty, string>
 
 				try
 				{
-					var p = (SFSessionProperty)Enum.Parse(typeof(SFSessionProperty), tokens[0].ToUpper());
+					var p = (SFSessionProperty)Enum.Parse(typeof(SFSessionProperty), tokens[0].ToUpperInvariant());
 					properties.Add(p, tokens[1]);
 				}
 				catch (ArgumentException)

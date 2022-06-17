@@ -9,7 +9,7 @@ using Tortuga.Data.Snowflake.Core.RequestProcessing;
 
 namespace Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
 
-class SFChunkDownloaderV2 : IChunkDownloader
+class SFChunkDownloaderV2 : IChunkDownloader, IDisposable
 {
 	readonly List<SFResultChunk> m_Chunks;
 
@@ -62,6 +62,7 @@ class SFChunkDownloaderV2 : IChunkDownloader
 
 	void FillDownloads()
 	{
+		m_DownloadTasks?.Dispose();
 		m_DownloadTasks = new BlockingCollection<Lazy<Task<IResultChunk>>>();
 
 		foreach (var c in m_Chunks)
@@ -116,19 +117,19 @@ class SFChunkDownloaderV2 : IChunkDownloader
 			ChunkHeaders = downloadContext.ChunkHeaders
 		};
 
-		Stream stream;
 		using (var httpResponse = await m_RestRequester.GetAsync(downloadRequest, downloadContext.CancellationToken).ConfigureAwait(false))
-		using (stream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false))
+		using (var stream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false))
 		{
-			if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out var encoding))
+			if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out var encoding)
+				&& string.Equals(encoding.First(), "gzip", StringComparison.OrdinalIgnoreCase))
 			{
-				if (string.Equals(encoding.First(), "gzip", StringComparison.OrdinalIgnoreCase))
-				{
-					stream = new GZipStream(stream, CompressionMode.Decompress);
-				}
+				using var stream2 = new GZipStream(stream, CompressionMode.Decompress);
+				parseStreamIntoChunk(stream2, chunk);
 			}
-
-			parseStreamIntoChunk(stream, chunk);
+			else
+			{
+				parseStreamIntoChunk(stream, chunk);
+			}
 		}
 
 		chunk.DownloadState = DownloadState.SUCCESS;
@@ -154,5 +155,10 @@ class SFChunkDownloaderV2 : IChunkDownloader
 
 		var parser = ChunkParser.GetParser(m_Configuration, concatStream);
 		parser.ParseChunk(resultChunk);
+	}
+
+	public void Dispose()
+	{
+		m_DownloadTasks?.Dispose();
 	}
 }

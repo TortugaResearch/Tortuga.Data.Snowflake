@@ -6,6 +6,8 @@ using System.Text;
 
 namespace Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 class SFResultChunk : IResultChunk
 {
 	public string?[,]? RowSet { get; set; }

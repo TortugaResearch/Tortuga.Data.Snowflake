@@ -75,7 +75,7 @@ class SFResultSetMetaData
 		for (var i = 0; i < m_ColumnCount; i++)
 		{
 			var column = m_RowTypes[i];
-			var dataType = GetSFDataType(column.Type);
+			var dataType = SFDataTypeExtensions.FromSql(column.Type!);
 			var nativeType = GetNativeTypeForColumn(dataType, column);
 
 			types.Add(Tuple.Create(dataType, nativeType));
@@ -97,7 +97,7 @@ class SFResultSetMetaData
 			var indexCounter = 0;
 			foreach (var rowType in m_RowTypes)
 			{
-				if (string.Compare(rowType.Name, targetColumnName, false) == 0)
+				if (string.Equals(rowType.Name, targetColumnName, StringComparison.Ordinal))
 				{
 					m_ColumnNameToIndexCache[targetColumnName] = indexCounter;
 					return indexCounter;
@@ -124,43 +124,35 @@ class SFResultSetMetaData
 		return m_ColumnTypes[targetIndex];
 	}
 
-	static SFDataType GetSFDataType(string? type)
-	{
-		if (Enum.TryParse(type, true, out SFDataType result))
-			return result;
-
-		throw new SnowflakeDbException(SnowflakeError.InternalError, $"Unknow column type: {type}");
-	}
-
 	static Type GetNativeTypeForColumn(SFDataType sfType, ExecResponseRowType col)
 	{
 		switch (sfType)
 		{
-			case SFDataType.FIXED:
+			case SFDataType.Fixed:
 				return col.Scale == 0 ? typeof(long) : typeof(decimal);
 
-			case SFDataType.REAL:
+			case SFDataType.Real:
 				return typeof(double);
 
-			case SFDataType.TEXT:
-			case SFDataType.VARIANT:
-			case SFDataType.OBJECT:
-			case SFDataType.ARRAY:
+			case SFDataType.Text:
+			case SFDataType.Variant:
+			case SFDataType.Object:
+			case SFDataType.Array:
 				return typeof(string);
 
-			case SFDataType.DATE:
-			case SFDataType.TIME:
-			case SFDataType.TIMESTAMP_NTZ:
+			case SFDataType.Date:
+			case SFDataType.Time:
+			case SFDataType.TimestampNtz:
 				return typeof(DateTime);
 
-			case SFDataType.TIMESTAMP_LTZ:
-			case SFDataType.TIMESTAMP_TZ:
+			case SFDataType.TimestampLtz:
+			case SFDataType.TimestampTz:
 				return typeof(DateTimeOffset);
 
-			case SFDataType.BINARY:
+			case SFDataType.Binary:
 				return typeof(byte[]);
 
-			case SFDataType.BOOLEAN:
+			case SFDataType.Boolean:
 				return typeof(bool);
 
 			default:

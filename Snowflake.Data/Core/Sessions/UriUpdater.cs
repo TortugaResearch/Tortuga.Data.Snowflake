@@ -4,6 +4,7 @@
 
 using Microsoft.AspNetCore.WebUtilities;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
+using Tortuga.Data.Snowflake.Legacy;
 
 namespace Tortuga.Data.Snowflake.Core.Sessions;
 
@@ -21,10 +22,10 @@ class UriUpdater
 		m_UriBuilder = new UriBuilder(uri);
 		rules = new List<IRule>();
 
-		if (uri.AbsolutePath.StartsWith(RestPath.SF_QUERY_PATH))
+		if (uri.AbsolutePath.StartsWith(RestPath.SF_QUERY_PATH, StringComparison.Ordinal))
 			rules.Add(new RetryCountRule());
 
-		if (uri.Query != null && uri.Query.Contains(RestParams.SF_QUERY_REQUEST_GUID))
+		if (uri.Query != null && uri.Query.Contains(RestParams.SF_QUERY_REQUEST_GUID, StringComparison.Ordinal))
 			rules.Add(new RequestUUIDRule());
 	}
 

@@ -29,7 +29,7 @@ class RestRequester : IRestRequester
 	{
 		using (var response = await SendAsync(HttpMethod.Post, request, cancellationToken).ConfigureAwait(false))
 		{
-			var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+			var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 			return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings)!;
 		}
 	}
@@ -44,7 +44,7 @@ class RestRequester : IRestRequester
 	{
 		using (var response = await GetAsync(request, cancellationToken).ConfigureAwait(false))
 		{
-			var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+			var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 			return JsonConvert.DeserializeObject<T>(json, JsonUtils.JsonSettings)!;
 		}
 	}

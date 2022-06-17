@@ -4,7 +4,9 @@
 
 using Google.Apis.Auth.OAuth2;
 using Newtonsoft.Json;
+using System.Globalization;
 using System.Net.Http.Headers;
+using Tortuga.Data.Snowflake.Legacy;
 using Tortuga.HttpClientUtilities;
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
@@ -12,7 +14,7 @@ namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 /// <summary>
 /// The GCS client used to transfer files to the remote Google Cloud Storage.
 /// </summary>
-class SFGCSClient : ISFRemoteStorageClient
+class SFGCSClient : ISFRemoteStorageClient, IDisposable
 {
 	/// <summary>
 	/// GCS header values.
@@ -74,13 +76,13 @@ class SFGCSClient : ISFRemoteStorageClient
 		var gcsPath = "";
 
 		// Split stage location as bucket name and path
-		if (stageLocation.Contains('/'))
+		if (stageLocation.Contains('/', StringComparison.Ordinal))
 		{
-			containerName = stageLocation.Substring(0, stageLocation.IndexOf('/'));
+			containerName = stageLocation.Substring(0, stageLocation.IndexOf('/', StringComparison.Ordinal));
 
-			gcsPath = stageLocation.Substring(stageLocation.IndexOf('/') + 1,
-				stageLocation.Length - stageLocation.IndexOf('/') - 1);
-			if (gcsPath != null && !gcsPath.EndsWith("/"))
+			gcsPath = stageLocation.Substring(stageLocation.IndexOf('/', StringComparison.Ordinal) + 1,
+				stageLocation.Length - stageLocation.IndexOf('/', StringComparison.Ordinal) - 1);
+			if (gcsPath != null && !gcsPath.EndsWith("/", StringComparison.Ordinal))
 			{
 				gcsPath += '/';
 			}
@@ -121,9 +123,9 @@ class SFGCSClient : ISFRemoteStorageClient
 			}
 			catch (HttpRequestException err)
 			{
-				if (err.Message.Contains("401") ||
-					err.Message.Contains("403") ||
-					err.Message.Contains("404"))
+				if (err.Message.Contains("401", StringComparison.Ordinal) ||
+					err.Message.Contains("403", StringComparison.Ordinal) ||
+					err.Message.Contains("404", StringComparison.Ordinal))
 				{
 					fileMetadata.ResultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
 					return new FileHeader();
@@ -148,24 +150,24 @@ class SFGCSClient : ISFRemoteStorageClient
 				return new FileHeader
 				{
 					digest = digest.ToString(),
-					contentLength = Convert.ToInt64(contentLength)
+					contentLength = Convert.ToInt64(contentLength, CultureInfo.InvariantCulture)
 				};
 			}
 			catch (HttpRequestException err)
 			{
 				// If file doesn't exist, GET request fails
 				fileMetadata.LastError = err;
-				if (err.Message.Contains("401"))
+				if (err.Message.Contains("401", StringComparison.Ordinal))
 				{
 					fileMetadata.ResultStatus = ResultStatus.RENEW_TOKEN.ToString();
 				}
-				else if (err.Message.Contains("403") ||
-					err.Message.Contains("500") ||
-					err.Message.Contains("503"))
+				else if (err.Message.Contains("403", StringComparison.Ordinal) ||
+					err.Message.Contains("500", StringComparison.Ordinal) ||
+					err.Message.Contains("503", StringComparison.Ordinal))
 				{
 					fileMetadata.ResultStatus = ResultStatus.NEED_RETRY.ToString();
 				}
-				else if (err.Message.Contains("404"))
+				else if (err.Message.Contains("404", StringComparison.Ordinal))
 				{
 					fileMetadata.ResultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
 				}
@@ -227,7 +229,7 @@ class SFGCSClient : ISFRemoteStorageClient
 		m_HttpClient.DefaultRequestHeaders.Add("x-goog-meta-encryptiondata", encryptionData);
 
 		// Convert file bytes to stream
-		var strm = new StreamContent(new MemoryStream(fileBytes));
+		using var strm = new StreamContent(new MemoryStream(fileBytes));
 		// Set the stream content type
 		strm.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
@@ -239,17 +241,17 @@ class SFGCSClient : ISFRemoteStorageClient
 		catch (HttpRequestException err)
 		{
 			fileMetadata.LastError = err;
-			if (err.Message.Contains("400") && GCS_ACCESS_TOKEN != null)
+			if (err.Message.Contains("400", StringComparison.Ordinal))
 			{
 				fileMetadata.ResultStatus = ResultStatus.RENEW_PRESIGNED_URL.ToString();
 			}
-			else if (err.Message.Contains("401"))
+			else if (err.Message.Contains("401", StringComparison.Ordinal))
 			{
 				fileMetadata.ResultStatus = ResultStatus.RENEW_TOKEN.ToString();
 			}
-			else if (err.Message.Contains("403") ||
-				err.Message.Contains("500") ||
-				err.Message.Contains("503"))
+			else if (err.Message.Contains("403", StringComparison.Ordinal) ||
+				err.Message.Contains("500", StringComparison.Ordinal) ||
+				err.Message.Contains("503", StringComparison.Ordinal))
 			{
 				fileMetadata.ResultStatus = ResultStatus.NEED_RETRY.ToString();
 			}
@@ -317,19 +319,19 @@ class SFGCSClient : ISFRemoteStorageClient
 
 			if (headers.TryGetValues(GCS_FILE_HEADER_CONTENT_LENGTH, out var values4))
 			{
-				fileMetadata.SrcFileSize = (long)Convert.ToDouble(values4.First());
+				fileMetadata.SrcFileSize = (long)Convert.ToDouble(values4.First(), CultureInfo.InvariantCulture);
 			}
 		}
 		catch (HttpRequestException err)
 		{
 			fileMetadata.LastError = err;
-			if (err.Message.Contains("401"))
+			if (err.Message.Contains("401", StringComparison.Ordinal))
 			{
 				fileMetadata.ResultStatus = ResultStatus.RENEW_TOKEN.ToString();
 			}
-			else if (err.Message.Contains("403") ||
-				err.Message.Contains("500") ||
-				err.Message.Contains("503"))
+			else if (err.Message.Contains("403", StringComparison.Ordinal) ||
+				err.Message.Contains("500", StringComparison.Ordinal) ||
+				err.Message.Contains("503", StringComparison.Ordinal))
 			{
 				fileMetadata.ResultStatus = ResultStatus.NEED_RETRY.ToString();
 			}
@@ -337,5 +339,11 @@ class SFGCSClient : ISFRemoteStorageClient
 		}
 
 		fileMetadata.ResultStatus = ResultStatus.DOWNLOADED.ToString();
+	}
+
+	public void Dispose()
+	{
+		m_StorageClient.Dispose();
+		m_HttpClient.Dispose();
 	}
 }

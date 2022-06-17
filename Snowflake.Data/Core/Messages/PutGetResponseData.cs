@@ -55,7 +55,10 @@ class PutGetResponseData : IQueryExecResponseData
 	internal List<ExecResponseRowType>? RowType { get; set; }
 
 	[JsonProperty(PropertyName = "rowset", NullValueHandling = NullValueHandling.Ignore)]
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 	internal string?[,]? RowSet { get; set; }
+
+#pragma warning restore CA1814 // Prefer jagged arrays over multidimensional
 
 	[JsonProperty(PropertyName = "parameters", NullValueHandling = NullValueHandling.Ignore)]
 	internal List<NameValueParameter>? Parameters { get; set; }

@@ -6,6 +6,7 @@ using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Newtonsoft.Json;
+using Tortuga.Data.Snowflake.Legacy;
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
 
@@ -62,13 +63,14 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 		string? azurePath = null;
 
 		// Split stage location as bucket name and path
-		if (stageLocation.Contains('/'))
+		if (stageLocation.Contains('/', StringComparison.Ordinal))
 		{
-			blobName = stageLocation.Substring(0, stageLocation.IndexOf('/'));
+			blobName = stageLocation.Substring(0, stageLocation.IndexOf('/', StringComparison.Ordinal));
 
-			azurePath = stageLocation.Substring(stageLocation.IndexOf('/') + 1,
-				stageLocation.Length - stageLocation.IndexOf('/') - 1);
-			if (azurePath != "" && !azurePath.EndsWith("/"))
+			azurePath = stageLocation.Substring(stageLocation.IndexOf('/', StringComparison.Ordinal) + 1,
+				stageLocation.Length - stageLocation.IndexOf('/', StringComparison.Ordinal) - 1);
+
+			if (!string.IsNullOrEmpty(azurePath) && !azurePath.EndsWith("/", StringComparison.Ordinal))
 			{
 				azurePath += "/";
 			}
@@ -107,11 +109,11 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 		}
 		catch (Exception ex)
 		{
-			if (ex.Message.Contains(EXPIRED_TOKEN) || ex.Message.Contains("Status: 400"))
+			if (ex.Message.Contains(EXPIRED_TOKEN, StringComparison.Ordinal) || ex.Message.Contains("Status: 400", StringComparison.Ordinal))
 			{
 				fileMetadata.ResultStatus = ResultStatus.RENEW_TOKEN.ToString();
 			}
-			else if (ex.Message.Contains(NO_SUCH_KEY) || ex.Message.Contains("Status: 404"))
+			else if (ex.Message.Contains(NO_SUCH_KEY, StringComparison.Ordinal) || ex.Message.Contains("Status: 404", StringComparison.Ordinal))
 			{
 				fileMetadata.ResultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
 			}
@@ -200,17 +202,17 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 		}
 		catch (Exception ex)
 		{
-			if (ex.Message.Contains("Status: 400"))
+			if (ex.Message.Contains("Status: 400", StringComparison.Ordinal))
 			{
 				fileMetadata.ResultStatus = ResultStatus.RENEW_PRESIGNED_URL.ToString();
 			}
-			else if (ex.Message.Contains("Status: 401"))
+			else if (ex.Message.Contains("Status: 401", StringComparison.Ordinal))
 			{
 				fileMetadata.ResultStatus = ResultStatus.RENEW_TOKEN.ToString();
 			}
-			else if (ex.Message.Contains("Status: 403") ||
-				ex.Message.Contains("Status: 500") ||
-				ex.Message.Contains("Status: 503"))
+			else if (ex.Message.Contains("Status: 403", StringComparison.Ordinal) ||
+				ex.Message.Contains("Status: 500", StringComparison.Ordinal) ||
+				ex.Message.Contains("Status: 503", StringComparison.Ordinal))
 			{
 				fileMetadata.ResultStatus = ResultStatus.NEED_RETRY.ToString();
 			}
@@ -247,13 +249,13 @@ class SFSnowflakeAzureClient : ISFRemoteStorageClient
 		}
 		catch (Exception ex)
 		{
-			if (ex.Message.Contains("Status: 401"))
+			if (ex.Message.Contains("Status: 401", StringComparison.Ordinal))
 			{
 				fileMetadata.ResultStatus = ResultStatus.RENEW_TOKEN.ToString();
 			}
-			else if (ex.Message.Contains("Status: 403") ||
-				ex.Message.Contains("Status: 500") ||
-				ex.Message.Contains("Status: 503"))
+			else if (ex.Message.Contains("Status: 403", StringComparison.Ordinal) ||
+				ex.Message.Contains("Status: 500", StringComparison.Ordinal) ||
+				ex.Message.Contains("Status: 503", StringComparison.Ordinal))
 			{
 				fileMetadata.ResultStatus = ResultStatus.NEED_RETRY.ToString();
 			}

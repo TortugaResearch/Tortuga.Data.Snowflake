@@ -4,6 +4,7 @@
 
 using Microsoft.AspNetCore.WebUtilities;
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Net;
 using System.Security;
 using System.Security.Authentication;
@@ -11,6 +12,7 @@ using System.Text.RegularExpressions;
 using Tortuga.Data.Snowflake.Core.Authenticators;
 using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
+using Tortuga.Data.Snowflake.Legacy;
 using static System.StringComparison;
 using static Tortuga.Data.Snowflake.SnowflakeError;
 
@@ -104,7 +106,7 @@ class SFSession
 		{
 			ParameterMap[SFSessionParameter.CLIENT_VALIDATE_DEFAULT_PARAMETERS] =
 				Boolean.Parse(m_Properties[SFSessionProperty.VALIDATE_DEFAULT_PARAMETERS]);
-			timeoutInSec = int.Parse(m_Properties[SFSessionProperty.CONNECTION_TIMEOUT]);
+			timeoutInSec = int.Parse(m_Properties[SFSessionProperty.CONNECTION_TIMEOUT], CultureInfo.InvariantCulture);
 			m_InsecureMode = Boolean.Parse(m_Properties[SFSessionProperty.INSECUREMODE]);
 			string? proxyHost = null;
 			string? proxyPort = null;
@@ -158,7 +160,7 @@ class SFSession
 		{
 			Scheme = m_Properties[SFSessionProperty.SCHEME],
 			Host = m_Properties[SFSessionProperty.HOST],
-			Port = int.Parse(m_Properties[SFSessionProperty.PORT]),
+			Port = int.Parse(m_Properties[SFSessionProperty.PORT], CultureInfo.InvariantCulture),
 			Path = path
 		};
 
@@ -214,7 +216,7 @@ class SFSession
 		var closeSessionRequest = new SFRestRequest
 		{
 			Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
-			AuthorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, m_SessionToken)
+			AuthorizationToken = string.Format(CultureInfo.InvariantCulture, SF_AUTHORIZATION_SNOWFLAKE_FMT, m_SessionToken)
 		};
 
 		RestRequester.Post<CloseResponse>(closeSessionRequest);
@@ -237,7 +239,7 @@ class SFSession
 		var closeSessionRequest = new SFRestRequest()
 		{
 			Url = BuildUri(RestPath.SF_SESSION_PATH, queryParams),
-			AuthorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, m_SessionToken)
+			AuthorizationToken = string.Format(CultureInfo.InvariantCulture, SF_AUTHORIZATION_SNOWFLAKE_FMT, m_SessionToken)
 		};
 
 		await RestRequester.PostAsync<CloseResponse>(closeSessionRequest, cancellationToken).ConfigureAwait(false);
@@ -261,7 +263,7 @@ class SFSession
 		{
 			JsonBody = postBody,
 			Url = BuildUri(RestPath.SF_TOKEN_REQUEST_PATH, parameters),
-			AuthorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, m_MasterToken),
+			AuthorizationToken = string.Format(CultureInfo.InvariantCulture, SF_AUTHORIZATION_SNOWFLAKE_FMT, m_MasterToken),
 			RestTimeout = Timeout.InfiniteTimeSpan
 		};
 
@@ -309,24 +311,24 @@ class SFSession
 	{
 		var type = m_Properties[SFSessionProperty.AUTHENTICATOR];
 
-		if (type.Equals(BasicAuthenticator.AUTH_NAME, InvariantCultureIgnoreCase))
+		if (type.Equals(BasicAuthenticator.AUTH_NAME, OrdinalIgnoreCase))
 		{
 			return new BasicAuthenticator(this);
 		}
-		else if (type.Equals(ExternalBrowserAuthenticator.AUTH_NAME, InvariantCultureIgnoreCase))
+		else if (type.Equals(ExternalBrowserAuthenticator.AUTH_NAME, OrdinalIgnoreCase))
 		{
 			return new ExternalBrowserAuthenticator(this);
 		}
-		else if (type.Equals(KeyPairAuthenticator.AUTH_NAME, InvariantCultureIgnoreCase))
+		else if (type.Equals(KeyPairAuthenticator.AUTH_NAME, OrdinalIgnoreCase))
 		{
 			return new KeyPairAuthenticator(this);
 		}
-		else if (type.Equals(OAuthAuthenticator.AUTH_NAME, InvariantCultureIgnoreCase))
+		else if (type.Equals(OAuthAuthenticator.AUTH_NAME, OrdinalIgnoreCase))
 		{
 			return new OAuthAuthenticator(this);
 		}
 		// Okta would provide a url of form: https://xxxxxx.okta.com or https://xxxxxx.oktapreview.com or https://vanity.url/snowflake/okta
-		else if (type.Contains("okta") && type.StartsWith("https://"))
+		else if (type.Contains("okta", OrdinalIgnoreCase) && type.StartsWith("https://", OrdinalIgnoreCase))
 		{
 			return new OktaAuthenticator(this, type);
 		}
@@ -338,6 +340,7 @@ class SFSession
 
 	static HttpClientHandler SetupCustomHttpHandler(HttpClientConfig config)
 	{
+#pragma warning disable CA5398 // Avoid hardcoded SslProtocols values
 		var httpHandler = new HttpClientHandler()
 		{
 			// Verify no certificates have been revoked
@@ -347,11 +350,12 @@ class SFSession
 			AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
 			UseCookies = false // Disable cookies
 		};
-		// Add a proxy if necessary
-		if (config.ProxyHost != null)
+#pragma warning restore CA5398 // Avoid hardcoded SslProtocols values
+
+		if (config.ProxyHost != null) // Add a proxy if necessary
 		{
 			// Proxy needed
-			var proxy = new WebProxy(config.ProxyHost, int.Parse(config.ProxyPort!));
+			var proxy = new WebProxy(config.ProxyHost, int.Parse(config.ProxyPort!, CultureInfo.InvariantCulture));
 
 			// Add credential if provided
 			if (!string.IsNullOrEmpty(config.ProxyUser))
@@ -372,9 +376,9 @@ class SFSession
 					// Get the original entry
 					entry = bypassList[i].Trim();
 					// . -> [.] because . means any char
-					entry = entry.Replace(".", "[.]");
+					entry = entry.Replace(".", "[.]", StringComparison.Ordinal);
 					// * -> .*  because * is a quantifier and need a char or group to apply to
-					entry = entry.Replace("*", ".*");
+					entry = entry.Replace("*", ".*", StringComparison.Ordinal);
 
 					// Replace with the valid entry syntax
 					bypassList[i] = entry;

@@ -2,6 +2,7 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
+using System.Globalization;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
 using Tortuga.Data.Snowflake.Core.Sessions;
 
@@ -70,7 +71,7 @@ class SFBlockingChunkDownloaderV3 : IChunkDownloader
 
 		var sessionParameters = resultSet.SFStatement.SFSession.ParameterMap;
 		var val = (string)sessionParameters[SFSessionParameter.CLIENT_PREFETCH_THREADS]!;
-		return int.Parse(val);
+		return int.Parse(val, CultureInfo.InvariantCulture);
 	}
 
 	/*public Task<IResultChunk> GetNextChunkAsync()
@@ -100,11 +101,11 @@ class SFBlockingChunkDownloaderV3 : IChunkDownloader
 			}
 
 			m_NextChunkToConsumeIndex++;
-			return await chunk;
+			return await chunk.ConfigureAwait(false); //await is needed to cast from Task<IResultChunk> to Task<IResultChunk?>
 		}
 		else
 		{
-			return await Task.FromResult<IResultChunk?>(null);
+			return await Task.FromResult<IResultChunk?>(null).ConfigureAwait(false);
 		}
 	}
 

@@ -173,7 +173,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[TestCase("1900-09-03 00:00:00.0000000")]
 	public void TestGetDate(string inputTimeStr)
 	{
-		TestGetDateAndOrTime(inputTimeStr, null, SFDataType.DATE);
+		TestGetDateAndOrTime(inputTimeStr, null, SFDataType.Date);
 	}
 
 	[Test]
@@ -189,7 +189,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[TestCase("1900-09-03 12:12:12.1212121", 1)]
 	public void TestGetTime(string inputTimeStr, int? precision)
 	{
-		TestGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIME);
+		TestGetDateAndOrTime(inputTimeStr, precision, SFDataType.Time);
 	}
 
 	[Test]
@@ -335,7 +335,7 @@ class SFDbDataReaderIT : SFBaseTest
 		DateTime inputTime;
 		if (inputTimeStr == null)
 		{
-			inputTime = dataType == SFDataType.DATE ? DateTime.Today : DateTime.Now;
+			inputTime = dataType == SFDataType.Date ? DateTime.Today : DateTime.Now;
 		}
 		else
 		{
@@ -360,17 +360,17 @@ class SFDbDataReaderIT : SFBaseTest
 			p1.Value = inputTime;
 			switch (dataType)
 			{
-				case SFDataType.TIME:
+				case SFDataType.Time:
 					p1.DbType = DbType.Time;
 					break;
 
-				case SFDataType.DATE:
+				case SFDataType.Date:
 					p1.DbType = DbType.Date;
 					break;
 
-				case SFDataType.TIMESTAMP_LTZ:
-				case SFDataType.TIMESTAMP_TZ:
-				case SFDataType.TIMESTAMP_NTZ:
+				case SFDataType.TimestampLtz:
+				case SFDataType.TimestampTz:
+				case SFDataType.TimestampNtz:
 					p1.DbType = DbType.DateTime;
 					break;
 			}
@@ -388,19 +388,19 @@ class SFDbDataReaderIT : SFBaseTest
 			// For time, we getDateTime on the column and ignore date part
 			var actualTime = reader.GetDateTime(0);
 
-			if (dataType == SFDataType.DATE)
+			if (dataType == SFDataType.Date)
 			{
 				Assert.AreEqual(inputTime.Date, reader.GetDateTime(0));
 				Assert.AreEqual(inputTime.Date.ToString("yyyy-MM-dd"), reader.GetString(0));
 			}
-			if (dataType != SFDataType.DATE)
+			if (dataType != SFDataType.Date)
 			{
 				var inputTimeTicksOfTheDay = inputTime.Ticks - inputTime.Date.Ticks;
 				var actualTimeTicksOfTheDay = actualTime.Ticks - actualTime.Date.Ticks;
 				var allowedPrecisionLossInTicks = precision < 7 ? Math.Pow(10, (double)(7 - precision)) - 1 : 0d;
 				Assert.AreEqual(inputTimeTicksOfTheDay, actualTimeTicksOfTheDay, allowedPrecisionLossInTicks);
 			}
-			if (dataType == SFDataType.TIMESTAMP_NTZ)
+			if (dataType == SFDataType.TimestampNtz)
 			{
 				if (precision == 9)
 				{
@@ -439,7 +439,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[TestCase("1900-09-03 12:12:12.0000000", 1)]
 	public void TestGetTimestampNTZ(string inputTimeStr, int? precision)
 	{
-		TestGetDateAndOrTime(inputTimeStr, precision, SFDataType.TIMESTAMP_NTZ);
+		TestGetDateAndOrTime(inputTimeStr, precision, SFDataType.TimestampNtz);
 	}
 
 	[Test]
@@ -508,7 +508,7 @@ class SFDbDataReaderIT : SFBaseTest
 			p1.ParameterName = "1";
 			p1.Value = now;
 			p1.DbType = DbType.DateTimeOffset;
-			p1.SFDataType = SFDataType.TIMESTAMP_LTZ;
+			p1.SFDataType = SFDataType.TimestampLtz;
 			cmd.Parameters.Add(p1);
 
 			count = cmd.ExecuteNonQuery();
@@ -1259,20 +1259,20 @@ class SFDbDataReaderIT : SFBaseTest
 				Assert.AreEqual(0, row[SchemaTableColumn.ColumnOrdinal]);
 				Assert.AreEqual(20, row[SchemaTableColumn.NumericPrecision]);
 				Assert.AreEqual(4, row[SchemaTableColumn.NumericScale]);
-				Assert.AreEqual(SFDataType.FIXED, (SFDataType)row[SchemaTableColumn.ProviderType]);
+				Assert.AreEqual(SFDataType.Fixed, (SFDataType)row[SchemaTableColumn.ProviderType]);
 				Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
 
 				row = dataTable.Rows[1];
 				Assert.AreEqual("C2", row[SchemaTableColumn.ColumnName]);
 				Assert.AreEqual(1, row[SchemaTableColumn.ColumnOrdinal]);
 				Assert.AreEqual(100, row[SchemaTableColumn.ColumnSize]);
-				Assert.AreEqual(SFDataType.TEXT, (SFDataType)row[SchemaTableColumn.ProviderType]);
+				Assert.AreEqual(SFDataType.Text, (SFDataType)row[SchemaTableColumn.ProviderType]);
 				Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
 
 				row = dataTable.Rows[2];
 				Assert.AreEqual("C3", row[SchemaTableColumn.ColumnName]);
 				Assert.AreEqual(2, row[SchemaTableColumn.ColumnOrdinal]);
-				Assert.AreEqual(SFDataType.REAL, (SFDataType)row[SchemaTableColumn.ProviderType]);
+				Assert.AreEqual(SFDataType.Real, (SFDataType)row[SchemaTableColumn.ProviderType]);
 				Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
 
 				row = dataTable.Rows[3];
@@ -1280,19 +1280,19 @@ class SFDbDataReaderIT : SFBaseTest
 				Assert.AreEqual(3, row[SchemaTableColumn.ColumnOrdinal]);
 				Assert.AreEqual(0, row[SchemaTableColumn.NumericPrecision]);
 				Assert.AreEqual(9, row[SchemaTableColumn.NumericScale]);
-				Assert.AreEqual(SFDataType.TIMESTAMP_NTZ, (SFDataType)row[SchemaTableColumn.ProviderType]);
+				Assert.AreEqual(SFDataType.TimestampNtz, (SFDataType)row[SchemaTableColumn.ProviderType]);
 				Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
 
 				row = dataTable.Rows[4];
 				Assert.AreEqual("C5", row[SchemaTableColumn.ColumnName]);
 				Assert.AreEqual(4, row[SchemaTableColumn.ColumnOrdinal]);
-				Assert.AreEqual(SFDataType.VARIANT, (SFDataType)row[SchemaTableColumn.ProviderType]);
+				Assert.AreEqual(SFDataType.Variant, (SFDataType)row[SchemaTableColumn.ProviderType]);
 				Assert.AreEqual(false, row[SchemaTableColumn.AllowDBNull]);
 
 				row = dataTable.Rows[5];
 				Assert.AreEqual("C6", row[SchemaTableColumn.ColumnName]);
 				Assert.AreEqual(5, row[SchemaTableColumn.ColumnOrdinal]);
-				Assert.AreEqual(SFDataType.BOOLEAN, (SFDataType)row[SchemaTableColumn.ProviderType]);
+				Assert.AreEqual(SFDataType.Boolean, (SFDataType)row[SchemaTableColumn.ProviderType]);
 				Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
 			}
 

@@ -69,13 +69,19 @@ public class SnowflakeDbCommandBuilder : DbCommandBuilder
 	/// <summary>
 	/// Applies the parameter information.
 	/// </summary>
-	/// <param name="p">The parameter.</param>
+	/// <param name="parameter">The parameter.</param>
 	/// <param name="row">The row.</param>
 	/// <param name="statementType">Type of the statement.</param>
 	/// <param name="whereClause">if set to <c>true</c> [where clause].</param>
-	protected override void ApplyParameterInfo(DbParameter p, DataRow row, StatementType statementType, bool whereClause)
+	protected override void ApplyParameterInfo(DbParameter parameter, DataRow row, StatementType statementType, bool whereClause)
 	{
-		var param = (SnowflakeDbParameter)p;
+		if (parameter == null)
+			throw new ArgumentNullException(nameof(parameter), $"{nameof(parameter)} is null.");
+
+		if (row == null)
+			throw new ArgumentNullException(nameof(row), $"{nameof(row)} is null.");
+
+		var param = (SnowflakeDbParameter)parameter;
 		param.DbType = (DbType)row[SchemaTableColumn.ProviderType];
 	}
 

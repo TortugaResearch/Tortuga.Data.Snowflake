@@ -60,7 +60,7 @@ class SFBindTestIT : SFBaseTest
 			dbConnection.Open();
 			try
 			{
-				using (IDbCommand command = dbConnection.CreateCommand())
+				using (var command = dbConnection.CreateCommand())
 				{
 					command.CommandText = "create or replace table TEST_TBL (" +
 						"intData NUMBER," +
@@ -78,9 +78,9 @@ class SFBindTestIT : SFBaseTest
 
 				foreach (DbType type in Enum.GetValues(typeof(DbType)))
 				{
-					bool isTypeSupported = true;
+					var isTypeSupported = true;
 					string colName = null;
-					using (IDbCommand command = dbConnection.CreateCommand())
+					using (var command = dbConnection.CreateCommand())
 					{
 						var param = command.CreateParameter();
 						param.ParameterName = "p0";
@@ -173,7 +173,7 @@ class SFBindTestIT : SFBaseTest
 
 					if (isTypeSupported)
 					{
-						using (IDbCommand command = dbConnection.CreateCommand())
+						using (var command = dbConnection.CreateCommand())
 						{
 							command.CommandText = $"select {colName} from TEST_TBL;";
 							using (IDataReader reader = command.ExecuteReader())
@@ -186,7 +186,7 @@ class SFBindTestIT : SFBaseTest
 					}
 
 					// Clean up between each case
-					using (IDbCommand command = dbConnection.CreateCommand())
+					using (var command = dbConnection.CreateCommand())
 					{
 						command.CommandText = "DELETE FROM TEST_TBL";
 						command.ExecuteNonQuery();
@@ -195,7 +195,7 @@ class SFBindTestIT : SFBaseTest
 			}
 			finally
 			{
-				using (IDbCommand command = dbConnection.CreateCommand())
+				using (var command = dbConnection.CreateCommand())
 				{
 					command.CommandText = "drop table if exists TEST_TBL";
 					command.ExecuteNonQuery();
@@ -213,7 +213,7 @@ class SFBindTestIT : SFBaseTest
 			dbConnection.Open();
 			try
 			{
-				using (IDbCommand command = dbConnection.CreateCommand())
+				using (var command = dbConnection.CreateCommand())
 				{
 					command.CommandText = "create or replace table TEST_TBL (" +
 						"intData NUMBER," +
@@ -233,7 +233,7 @@ class SFBindTestIT : SFBaseTest
 				{
 					bool isTypeSupported = true;
 					string colName = null;
-					using (IDbCommand command = dbConnection.CreateCommand())
+					using (var command = dbConnection.CreateCommand())
 					{
 						var param = command.CreateParameter();
 						param.ParameterName = "p0";
@@ -339,7 +339,7 @@ class SFBindTestIT : SFBaseTest
 
 					if (isTypeSupported)
 					{
-						using (IDbCommand command = dbConnection.CreateCommand())
+						using (var command = dbConnection.CreateCommand())
 						{
 							command.CommandText = $"select {colName} from TEST_TBL;";
 							using (IDataReader reader = command.ExecuteReader())
@@ -352,7 +352,7 @@ class SFBindTestIT : SFBaseTest
 					}
 
 					// Clean up between each case
-					using (IDbCommand command = dbConnection.CreateCommand())
+					using (var command = dbConnection.CreateCommand())
 					{
 						command.CommandText = "DELETE FROM TEST_TBL";
 						command.ExecuteNonQuery();
@@ -361,7 +361,7 @@ class SFBindTestIT : SFBaseTest
 			}
 			finally
 			{
-				using (IDbCommand command = dbConnection.CreateCommand())
+				using (var command = dbConnection.CreateCommand())
 				{
 					command.CommandText = "drop table if exists TEST_TBL";
 					command.ExecuteNonQuery();
@@ -384,9 +384,9 @@ class SFBindTestIT : SFBaseTest
 					if (!type.Equals(SFDataType.None))
 					{
 						bool isTypeSupported = true;
-						using (IDbCommand command = dbConnection.CreateCommand())
+						using (var command = dbConnection.CreateCommand())
 						{
-							if (!type.Equals(SFDataType.FIXED))
+							if (!type.Equals(SFDataType.Fixed))
 							{
 								command.CommandText = $"create or replace table TEST_TBL (data {type}, unsupportedType VARCHAR)";
 							}
@@ -397,50 +397,50 @@ class SFBindTestIT : SFBaseTest
 							command.ExecuteNonQuery();
 						}
 
-						using (IDbCommand command = dbConnection.CreateCommand())
+						using (var command = dbConnection.CreateCommand())
 						{
 							SnowflakeDbParameter param = (SnowflakeDbParameter)command.CreateParameter();
 							param.ParameterName = "p0";
 							param.SFDataType = type;
 							switch (type)
 							{
-								case SFDataType.BINARY:
+								case SFDataType.Binary:
 									param.Value = Encoding.UTF8.GetBytes("BinaryData");
 									break;
 
-								case SFDataType.FIXED:
+								case SFDataType.Fixed:
 									param.Value = 10;
 									break;
 
-								case SFDataType.BOOLEAN:
+								case SFDataType.Boolean:
 									param.Value = true;
 									break;
 
-								case SFDataType.DATE:
+								case SFDataType.Date:
 									param.Value = DateTime.Now;
 									break;
 
-								case SFDataType.TEXT:
+								case SFDataType.Text:
 									param.Value = "thisIsAString";
 									break;
 
-								case SFDataType.TIMESTAMP_LTZ:
+								case SFDataType.TimestampLtz:
 									param.Value = DateTimeOffset.Now;
 									break;
 
-								case SFDataType.TIMESTAMP_NTZ:
+								case SFDataType.TimestampNtz:
 									param.Value = DateTime.Now;
 									break;
 
-								case SFDataType.TIMESTAMP_TZ:
+								case SFDataType.TimestampTz:
 									param.Value = DateTimeOffset.Now;
 									break;
 
-								case SFDataType.TIME:
+								case SFDataType.Time:
 									param.Value = DateTime.Now;
 									break;
 
-								case SFDataType.REAL:
+								case SFDataType.Real:
 									param.Value = 25.3;
 									break;
 
@@ -460,9 +460,9 @@ class SFBindTestIT : SFBaseTest
 								Assert.AreEqual(1, rowsInserted);
 							}
 							// DB rejects query if param type is VARIANT, OBJECT or ARRAY
-							else if (!type.Equals(SFDataType.VARIANT) &&
-									 !type.Equals(SFDataType.OBJECT) &&
-									 !type.Equals(SFDataType.ARRAY))
+							else if (!type.Equals(SFDataType.Variant) &&
+									 !type.Equals(SFDataType.Object) &&
+									 !type.Equals(SFDataType.Array))
 							{
 								try
 								{
@@ -480,7 +480,7 @@ class SFBindTestIT : SFBaseTest
 
 						if (isTypeSupported)
 						{
-							using (IDbCommand command = dbConnection.CreateCommand())
+							using (var command = dbConnection.CreateCommand())
 							{
 								command.CommandText = $"select data from TEST_TBL;";
 								using (IDataReader reader = command.ExecuteReader())
@@ -496,7 +496,7 @@ class SFBindTestIT : SFBaseTest
 			}
 			finally
 			{
-				using (IDbCommand command = dbConnection.CreateCommand())
+				using (var command = dbConnection.CreateCommand())
 				{
 					command.CommandText = "drop table if exists TEST_TBL";
 					command.ExecuteNonQuery();

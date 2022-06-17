@@ -53,7 +53,7 @@ abstract class SFBaseResultSet
 		var type = SFResultSetMetaData.GetColumnTypeByIndex(columnIndex);
 		switch (type)
 		{
-			case SFDataType.DATE:
+			case SFDataType.Date:
 				var val = GetValue(columnIndex);
 				if (val == DBNull.Value)
 					return null;

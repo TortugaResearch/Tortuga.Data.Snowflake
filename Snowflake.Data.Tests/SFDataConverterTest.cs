@@ -37,7 +37,7 @@ class SFDataConverterTest
 	[TestCase("anything else", false)]
 	public void TestConvertBoolean(string inputBooleanString, bool expected)
 	{
-		var actual = SFDataConverter.ConvertToCSharpVal(inputBooleanString, SFDataType.BOOLEAN, typeof(bool));
+		var actual = SFDataConverter.ConvertToCSharpVal(inputBooleanString, SFDataType.Boolean, typeof(bool));
 		Assert.AreEqual(expected, actual);
 	}
 
@@ -62,7 +62,7 @@ class SFDataConverterTest
 		var unixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 		var tickDiff = inputTime.Ticks - unixEpoch.Ticks;
 		var inputStringAsItWasFromDatabase = (tickDiff / 10000000.0m).ToString(CultureInfo.InvariantCulture);
-		var result = SFDataConverter.ConvertToCSharpVal(inputStringAsItWasFromDatabase, SFDataType.TIMESTAMP_NTZ, typeof(DateTime));
+		var result = SFDataConverter.ConvertToCSharpVal(inputStringAsItWasFromDatabase, SFDataType.TimestampNtz, typeof(DateTime));
 		Assert.AreEqual(inputTime, result);
 	}
 
@@ -94,7 +94,7 @@ class SFDataConverterTest
 		inputStringAsItComesBackFromDatabase += inputTimeStr.Substring(8, inputTimeStr.Length - 8);
 
 		// Run the conversion
-		var result = SFDataConverter.ConvertToCSharpVal(inputStringAsItComesBackFromDatabase, SFDataType.TIME, typeof(TimeSpan));
+		var result = SFDataConverter.ConvertToCSharpVal(inputStringAsItComesBackFromDatabase, SFDataType.Time, typeof(TimeSpan));
 
 		// Verify the result
 		Assert.AreEqual(expected, result);
@@ -145,7 +145,7 @@ class SFDataConverterTest
 	[TestCase("999999999999999999")]
 	public void TestConvertToInt64(string s)
 	{
-		var actual = (Int64)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int64));
+		var actual = (Int64)SFDataConverter.ConvertToCSharpVal(s, SFDataType.Fixed, typeof(Int64));
 		var expected = Convert.ToInt64(s);
 		Assert.AreEqual(expected, actual);
 	}
@@ -157,7 +157,7 @@ class SFDataConverterTest
 	[TestCase("0")]
 	public void TestConvertToInt32(string s)
 	{
-		var actual = (Int32)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int32));
+		var actual = (Int32)SFDataConverter.ConvertToCSharpVal(s, SFDataType.Fixed, typeof(Int32));
 		var expected = Convert.ToInt32(s);
 		Assert.AreEqual(expected, actual);
 	}
@@ -169,7 +169,7 @@ class SFDataConverterTest
 	[TestCase("0")]
 	public void TestConvertToInt16(string s)
 	{
-		var actual = (Int16)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int16));
+		var actual = (Int16)SFDataConverter.ConvertToCSharpVal(s, SFDataType.Fixed, typeof(Int16));
 		var expected = Convert.ToInt16(s);
 		Assert.AreEqual(expected, actual);
 	}
@@ -179,7 +179,7 @@ class SFDataConverterTest
 	[TestCase("0")]
 	public void TestConvertToByte(string s)
 	{
-		var actual = (byte)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(byte));
+		var actual = (byte)SFDataConverter.ConvertToCSharpVal(s, SFDataType.Fixed, typeof(byte));
 		var expected = Convert.ToByte(s);
 		Assert.AreEqual(expected, actual);
 	}
@@ -189,7 +189,7 @@ class SFDataConverterTest
 	[TestCase("-1")]
 	public void TestOverflowByte(string s)
 	{
-		Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(byte)));
+		Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.Fixed, typeof(byte)));
 	}
 
 	[Test]
@@ -197,7 +197,7 @@ class SFDataConverterTest
 	[TestCase("-32769")]
 	public void TestOverflowInt16(string s)
 	{
-		Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int16)));
+		Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.Fixed, typeof(Int16)));
 	}
 
 	[Test]
@@ -205,7 +205,7 @@ class SFDataConverterTest
 	[TestCase("-2147483649")]
 	public void TestOverflowInt32(string s)
 	{
-		Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int32)));
+		Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.Fixed, typeof(Int32)));
 	}
 
 	[Test]
@@ -213,7 +213,7 @@ class SFDataConverterTest
 	[TestCase("-9223372036854775809")]
 	public void TestOverflowInt64(string s)
 	{
-		Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int64)));
+		Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.Fixed, typeof(Int64)));
 	}
 
 	[Test]
@@ -231,7 +231,7 @@ class SFDataConverterTest
 	[TestCase("79228162514264337593543950334.9999999999999999999999999999")] //A Decimal object has 29 digits of precision. If s represents a number that has more than 29 digits, but has a fractional part and is within the range of MaxValue and MinValue, the number is rounded
 	public void TestConvertToDecimal(string s)
 	{
-		var actual = (decimal)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(decimal));
+		var actual = (decimal)SFDataConverter.ConvertToCSharpVal(s, SFDataType.Fixed, typeof(decimal));
 		var expected = Convert.ToDecimal(s, CultureInfo.InvariantCulture);
 
 		Assert.AreEqual(expected, actual);
@@ -243,7 +243,7 @@ class SFDataConverterTest
 	[TestCase("79228162514264337593543950335.9999999999999999999999999999")] // The scaling factor range is 0 to 28. Scaling factor = 29 and fractional part > MaxValue
 	public void TestOverflowDecimal(string s)
 	{
-		Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(decimal)));
+		Assert.Throws<OverflowException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.Fixed, typeof(decimal)));
 	}
 
 	[Test]
@@ -260,12 +260,12 @@ class SFDataConverterTest
 	[TestCase("NaN")]
 	public void TestConvertToFloat(string s)
 	{
-		var actualDouble = (double)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(double));
+		var actualDouble = (double)SFDataConverter.ConvertToCSharpVal(s, SFDataType.Fixed, typeof(double));
 		var expectedDoulbe = Convert.ToDouble(s, CultureInfo.InvariantCulture);
 
 		Assert.AreEqual(actualDouble, expectedDoulbe);
 
-		var actualFloat = (float)SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(float));
+		var actualFloat = (float)SFDataConverter.ConvertToCSharpVal(s, SFDataType.Fixed, typeof(float));
 		var expectedFloat = Convert.ToSingle(s, CultureInfo.InvariantCulture);
 
 		Assert.AreEqual(expectedFloat, actualFloat);
@@ -283,18 +283,18 @@ class SFDataConverterTest
 	[TestCase("NaN")]
 	public void TestInvalidConversionInvalidInt(string s)
 	{
-		Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int32)));
-		Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int64)));
-		Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(Int16)));
-		Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(byte)));
+		Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.Fixed, typeof(Int32)));
+		Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.Fixed, typeof(Int64)));
+		Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.Fixed, typeof(Int16)));
+		Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.Fixed, typeof(byte)));
 	}
 
 	[Test]
 	[TestCase("thisIsNotAValidValue")]
 	public void TestInvalidConversionInvalidFloat(string s)
 	{
-		Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(float)));
-		Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(double)));
+		Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.Fixed, typeof(float)));
+		Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.Fixed, typeof(double)));
 	}
 
 	[Test]
@@ -306,6 +306,6 @@ class SFDataConverterTest
 	[TestCase("NaN")]
 	public void TestInvalidConversionInvalidDecimal(string s)
 	{
-		Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.FIXED, typeof(decimal)));
+		Assert.Throws<FormatException>(() => SFDataConverter.ConvertToCSharpVal(s, SFDataType.Fixed, typeof(decimal)));
 	}
 }

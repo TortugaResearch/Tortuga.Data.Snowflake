@@ -90,6 +90,6 @@ class ReusableChunkParser : ChunkParser
 
 	public override async Task ParseChunkAsync(IResultChunk chunk)
 	{
-		await Task.Run(() => ParseChunk(chunk));
+		await Task.Run(() => ParseChunk(chunk)).ConfigureAwait(false);
 	}
 }

@@ -3,14 +3,17 @@
  */
 
 using System.Diagnostics;
+using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
 using Tortuga.Data.Snowflake.Core.Sessions;
+using Tortuga.Data.Snowflake.Legacy;
 
 #if !NETFRAMEWORK
 using System.Runtime.InteropServices;
+using System;
 #endif
 
 namespace Tortuga.Data.Snowflake.Core.Authenticators;
@@ -75,7 +78,11 @@ class ExternalBrowserAuthenticator : Authenticator
 			{
 				using (var output = response.OutputStream)
 				{
+#if NETCOREAPP3_1_OR_GREATER
+					await output.WriteAsync(s_successResponse, cancellationToken).ConfigureAwait(false);
+#else
 					await output.WriteAsync(s_successResponse, 0, s_successResponse.Length, cancellationToken).ConfigureAwait(false);
+#endif
 				}
 			}
 			catch
@@ -156,7 +163,7 @@ class ExternalBrowserAuthenticator : Authenticator
 		// hack because of this: https://github.com/dotnet/corefx/issues/10361
 		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 		{
-			url = url.Replace("&", "^&");
+			url = url.Replace("&", "^&", StringComparison.Ordinal);
 			Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { CreateNoWindow = true });
 		}
 		else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -181,7 +188,7 @@ class ExternalBrowserAuthenticator : Authenticator
 			throw new SnowflakeDbException(SnowflakeError.BrowserResponseWrongMethod, request.HttpMethod);
 		}
 
-		if (request.Url?.Query == null || !request.Url.Query.StartsWith(TokenRequestPrefix))
+		if (request.Url?.Query == null || !request.Url.Query.StartsWith(TokenRequestPrefix, StringComparison.Ordinal))
 		{
 			throw new SnowflakeDbException(SnowflakeError.BrowserResponseInvalidPrefix, request.Url?.Query);
 		}
@@ -196,7 +203,7 @@ class ExternalBrowserAuthenticator : Authenticator
 		{
 			AccountName = Session.m_Properties[SFSessionProperty.ACCOUNT],
 			Authenticator = AUTH_NAME,
-			BrowserModeRedirectPort = port.ToString(),
+			BrowserModeRedirectPort = port.ToString(CultureInfo.InvariantCulture),
 		};
 
 		return Session.BuildTimeoutRestRequest(fedUrl, new AuthenticatorRequest() { Data = data });

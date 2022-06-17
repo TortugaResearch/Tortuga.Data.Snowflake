@@ -190,7 +190,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 	}
 
 	[Test]
-	public void TestCloseAsyncFailure()
+	public async Task TestCloseAsyncFailure()
 	{
 		using (var conn = new MockSnowflakeDbConnection(new MockCloseSessionException()))
 		{
@@ -204,18 +204,16 @@ class SFConnectionITAsync : SFBaseTestAsync
 			Assert.AreEqual(conn.State, ConnectionState.Open);
 
 			// Close the opened connection
-			task = conn.CloseAsync(new CancellationTokenSource().Token);
 			try
 			{
-				task.Wait();
+				await conn.CloseAsync(new CancellationTokenSource().Token);
 				Assert.Fail();
 			}
-			catch (AggregateException e)
+			catch (SnowflakeDbException e)
 			{
-				Assert.AreEqual(MockCloseSessionException.SESSION_CLOSE_ERROR,
-					((SnowflakeDbException)(e.InnerException)).ErrorCode);
+				Assert.AreEqual(MockCloseSessionException.SESSION_CLOSE_ERROR, e.ErrorCode);
 			}
-			Assert.AreEqual(conn.State, ConnectionState.Open);
+			Assert.AreEqual(ConnectionState.Open, conn.State);
 		}
 	}
 }

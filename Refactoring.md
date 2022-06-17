@@ -1905,3 +1905,135 @@ Looking further, it is only used by `SFSession` and is specially designed for th
 So this should have been moved into `SFSession` in the previous round of refactoring, leaving just `GetOptionOrDefault` and `SetOption` on their own.
 
 Once in `SFSession`, the `GetHttpClient` method can be inlined. We'll leave its helper function, `SetupCustomHttpHandler`, alone as it is quite long and complex.
+
+## Round 41 - Wave 5 Compiler Warnings
+
+The C# compiler has several "waves" of compiler warnings that are disabled by default. These should be enabled incrementally to avoid overwhelming the developer.
+
+### Globalization
+
+In order to avoid unexpected runtime errors when running on non-English systems, any code that deals with string comparisons should indicate the type of comparison to be made. Usually this means `Ordinal`, `OrdinalIgnoreCase`, or `InvariantCulture`. 
+
+When given the option, the C# compiler prefers ordinal over invariant.
+
+
+### Avoid unsealed attributes
+
+According to [CA1813](https://docs.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/ca1813), performance can be improved by marking attributes as `sealed`.
+
+
+### Exceptions
+
+Several warnings deal with exceptions.
+
+
+* CA2237 Add `[Serializable]` to `SnowflakeDbException` as this type implements `ISerializable`
+* CA1032 Add the following constructor to `SnowflakeDbException`: `public SnowflakeDbException()`
+* CA1032 Add the following constructor to `SnowflakeDbException`: `public SnowflakeDbException(string message)	`
+* CA1032 Add the following constructor to `SnowflakeDbException`: `public SnowflakeDbException(string message, Exception innerException)`
+
+We can ignore the first one because we don't intend to support the depricated .NET 1 style of serialization. It only implements `ISerializable` via a base class.
+
+For the others, that's trickier. We really do want someone to always provide a `SnowflakeError` value, so we're going to have to ignore this advice. 
+
+### Task Factory
+
+To avoid unexpected runtime behavior, `TaskScheduler.Default` needs to be explicitly specified. Otherwise, it will use the current `TaskScheduler`, which may not be appropriate for the situation.
+
+### NullReferenceException
+
+The exception `NullReferenceException` should not be explicitly thrown. Instead, we should use `ArgumentNullException` or `InvalidOperationException` as appropriate.
+
+### None and Enums
+
+By convention, all enums should have a `None` value.
+
+### Using and IDisposable
+
+In many locations, `IDisposable.Dispose` was not being invoked.
+
+In some cases this is a false positive because the type doesn't really need to be disposed. In other cases, the holder for the object needs to be marked as `IDisposable` itself.
+
+### ConfigureAwait(false)
+
+Some `await` calls are missing `.ConfigureAwait(false)`. This is important because there are times when not having it can lead to deadlocks.
+
+### Implement IDisposable Correctly
+
+Ensure `protected override void Dispose(bool disposing)` always calls the base class's dispose method.
+
+
+### Cancellation Tokens
+
+When calling an async method, and we have a `CancellationToken`, we should provide said token to the method.
+
+However, many legacy .NET methods don't accept a `CancellationToken`. Which means we need to polyfill those methods. For example,
+
+```csharp
+#if !NET6_0_OR_GREATER
+	public static Task CopyToAsync(this HttpContent content, Stream stream, TransportContext? context, CancellationToken cancellationToken)
+	{
+		cancellationToken.ThrowIfCancellationRequested();
+		return content.CopyToAsync(stream, context);
+	}
+```
+
+This won't really work right for legacy frameworks, but if the user upgrades to .NET 6 or later then the functionality will "light up".
+
+### Null Argument Checks
+
+Even though we are using Nullable Reference Types, the user of our library may not. So public methods should still check for null arguments.
+
+### Default Initialized Fields
+
+Fields shouldn't be explicitly initialized to their default values. This has a (incredibly minor) performance cost and is redundant.
+
+```csharp
+int m_Next = 0;
+```
+
+### Secure Random Numbers
+
+For encryption, use `System.Security.Cryptography.RandomNumberGenerator` to generate random numbers.
+
+### `ICollection<T>` and `IEnumerable<T>`
+
+Classes that implement ICollection and/or IEnumerable should also implement `ICollection<T>` and `IEnumerable<T>`. The type-safe versions of the interfaces will be more useful to consumers.
+
+### Avoid Simple Get Methods
+
+If a Get method is simple such as the one below, it should be a property instead.
+
+```csharp
+public string? GetQueryId() => m_ResultSet.m_QueryId;
+```
+
+### Prefer const over readonly
+
+Where possible, use `const` instead of `readonly`. This makes the intention clearer as a `const` cannot be override in a constructor.
+
+### Enum Naming Conventions
+
+While working through this, the naming conventions for the `SFDataType` enum was corrected.
+
+This was a little tricky, as it did require adding a two-way map between the C# names and the names needed for SQL generation. The way it had been implemented was to assume that the C# name would be the SQL name. For example, `SFDataType.TIMESTAMP_LTZ` translates to `TIMESTAMP_LTZ` in SQL. 
+
+Rather than fighting with every future developer who wants to 'fix' it, we made these changes:
+
+* Renamed the enum values to use the .NET naming convention such as `SFDataType.TimestampLtz`.
+* Removed any calls to `SFDataType.ToString()` or `Enum.Parse<SFDataType>`.
+* Added `FromSql` and `ToSql` functions.
+
+
+### Don't Catch System.Exception
+
+There is a general rule that in libraries, you shouldn't catch `System.Exception`. The idea is that if you are actually handling the error properly, you must know the specific exception up-front.
+
+In the real world, that doesn't work. Some of the reasons why we may want to catch the generic exception include...
+
+* Wrapping the exception with additional details. 
+* Returning the error state in a way other than by using exceptions
+* Discarding the exception because we don't care why the operation failed, only that it did. (This was very common before TryParse methods were created.)
+* Discarding the exception because it is unsafe to report it. For example, a `Dispose` call, which may be invoked inside a `finally` block.
+
+Due to the high number of false positives, this warning was disabled completely.

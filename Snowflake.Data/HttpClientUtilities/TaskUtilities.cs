@@ -21,7 +21,7 @@ static class TaskUtilities
 			Thread.CurrentThread.CurrentCulture = culture;
 			Thread.CurrentThread.CurrentUICulture = cultureUi;
 			return func();
-		}).Unwrap().GetAwaiter().GetResult();
+		}, default, default, TaskScheduler.Default).Unwrap().GetAwaiter().GetResult();
 	}
 
 	public static void RunSynchronously(this Func<Task> func)
@@ -33,7 +33,7 @@ static class TaskUtilities
 			Thread.CurrentThread.CurrentCulture = culture;
 			Thread.CurrentThread.CurrentUICulture = cultureUi;
 			return func();
-		}).Unwrap().GetAwaiter().GetResult();
+		}, default, default, TaskScheduler.Default).Unwrap().GetAwaiter().GetResult();
 	}
 
 	public static TResult RunSynchronously<TResult>(this Func<Task<TResult>> func, CancellationToken cancellationToken)
@@ -45,7 +45,7 @@ static class TaskUtilities
 			Thread.CurrentThread.CurrentCulture = culture;
 			Thread.CurrentThread.CurrentUICulture = cultureUi;
 			return func();
-		}, cancellationToken).Unwrap().GetAwaiter().GetResult();
+		}, cancellationToken, default, TaskScheduler.Default).Unwrap().GetAwaiter().GetResult();
 	}
 
 	public static void RunSynchronously(this Func<Task> func, CancellationToken cancellationToken)
@@ -57,6 +57,6 @@ static class TaskUtilities
 			Thread.CurrentThread.CurrentCulture = culture;
 			Thread.CurrentThread.CurrentUICulture = cultureUi;
 			return func();
-		}, cancellationToken).Unwrap().GetAwaiter().GetResult();
+		}, cancellationToken, default, TaskScheduler.Default).Unwrap().GetAwaiter().GetResult();
 	}
 }

@@ -5,6 +5,7 @@
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 
 namespace Tortuga.Data.Snowflake;
 
@@ -27,7 +28,7 @@ public class SnowflakeDbParameter : DbParameter
 
 	public SnowflakeDbParameter(int parameterIndex, SFDataType sfDataType)
 	{
-		ParameterName = parameterIndex.ToString();
+		ParameterName = parameterIndex.ToString(CultureInfo.InvariantCulture);
 		SFDataType = sfDataType;
 	}
 

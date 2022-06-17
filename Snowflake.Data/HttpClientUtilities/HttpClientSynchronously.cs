@@ -1,5 +1,7 @@
 ﻿namespace Tortuga.HttpClientUtilities;
 
+#pragma warning disable CA2234 // Pass system uri objects instead of strings
+
 static class HttpClientSynchronously
 {
 	//
@@ -27,7 +29,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Delete(this HttpClient client, string? requestUri)
 	{
-		return client.Send(new HttpRequestMessage(HttpMethod.Delete, requestUri));
+		using var request = new HttpRequestMessage(HttpMethod.Delete, requestUri);
+		return client.Send(request);
 	}
 
 	//
@@ -60,7 +63,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Delete(this HttpClient client, string? requestUri, CancellationToken cancellationToken)
 	{
-		return client.Send(new HttpRequestMessage(HttpMethod.Delete, requestUri), cancellationToken);
+		using var request = new HttpRequestMessage(HttpMethod.Delete, requestUri);
+		return client.Send(request, cancellationToken);
 	}
 
 	//
@@ -88,10 +92,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Delete(this HttpClient client, Uri? requestUri)
 	{
-		if (requestUri == null)
-			return client.Send(new HttpRequestMessage() { Method = HttpMethod.Delete });
-		else
-			return client.Send(new HttpRequestMessage(HttpMethod.Delete, requestUri));
+		using var request = new HttpRequestMessage(HttpMethod.Delete, requestUri);
+		return client.Send(request);
 	}
 
 	//
@@ -124,10 +126,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Delete(this HttpClient client, Uri? requestUri, CancellationToken cancellationToken)
 	{
-		if (requestUri == null)
-			return client.Send(new HttpRequestMessage() { Method = HttpMethod.Delete }, cancellationToken);
-		else
-			return client.Send(new HttpRequestMessage(HttpMethod.Delete, requestUri), cancellationToken);
+		using var request = new HttpRequestMessage(HttpMethod.Delete, requestUri);
+		return client.Send(request, cancellationToken);
 	}
 
 	//
@@ -154,7 +154,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Get(this HttpClient client, string? requestUri)
 	{
-		return client.Send(new HttpRequestMessage(HttpMethod.Get, requestUri));
+		using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+		return client.Send(request);
 	}
 
 	//
@@ -186,7 +187,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Get(this HttpClient client, string? requestUri, HttpCompletionOption completionOption)
 	{
-		return client.Send(new HttpRequestMessage(HttpMethod.Get, requestUri), completionOption);
+		using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+		return client.Send(request, completionOption);
 	}
 
 	//
@@ -222,7 +224,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Get(this HttpClient client, string? requestUri, HttpCompletionOption completionOption, CancellationToken cancellationToken)
 	{
-		return client.Send(new HttpRequestMessage(HttpMethod.Get, requestUri), completionOption, cancellationToken);
+		using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+		return client.Send(request, completionOption, cancellationToken);
 	}
 
 	//
@@ -254,7 +257,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Get(this HttpClient client, string? requestUri, CancellationToken cancellationToken)
 	{
-		return client.Send(new HttpRequestMessage(HttpMethod.Get, requestUri), cancellationToken);
+		using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+		return client.Send(request, cancellationToken);
 	}
 
 	//
@@ -281,10 +285,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Get(this HttpClient client, Uri? requestUri)
 	{
-		if (requestUri == null)
-			return client.Send(new HttpRequestMessage() { Method = HttpMethod.Get });
-		else
-			return client.Send(new HttpRequestMessage(HttpMethod.Get, requestUri));
+		using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+		return client.Send(request);
 	}
 
 	//
@@ -316,10 +318,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Get(this HttpClient client, Uri? requestUri, HttpCompletionOption completionOption)
 	{
-		if (requestUri == null)
-			return client.Send(new HttpRequestMessage() { Method = HttpMethod.Get }, completionOption);
-		else
-			return client.Send(new HttpRequestMessage(HttpMethod.Get, requestUri), completionOption);
+		using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+		return client.Send(request, completionOption);
 	}
 
 	//
@@ -355,10 +355,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Get(this HttpClient client, Uri? requestUri, HttpCompletionOption completionOption, CancellationToken cancellationToken)
 	{
-		if (requestUri == null)
-			return client.Send(new HttpRequestMessage() { Method = HttpMethod.Get }, completionOption, cancellationToken);
-		else
-			return client.Send(new HttpRequestMessage(HttpMethod.Get, requestUri), completionOption, cancellationToken);
+		using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+		return client.Send(request, completionOption, cancellationToken);
 	}
 
 	//
@@ -390,10 +388,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Get(this HttpClient client, Uri? requestUri, CancellationToken cancellationToken)
 	{
-		if (requestUri == null)
-			return client.Send(new HttpRequestMessage() { Method = HttpMethod.Get }, cancellationToken);
-		else
-			return client.Send(new HttpRequestMessage(HttpMethod.Get, requestUri), cancellationToken);
+		using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+		return client.Send(request, cancellationToken);
 	}
 
 	//
@@ -728,7 +724,7 @@ static class HttpClientSynchronously
 	}
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
-    static readonly HttpMethod PatchMethod = HttpMethod.Patch;
+	static readonly HttpMethod PatchMethod = HttpMethod.Patch;
 #else
 	static readonly HttpMethod PatchMethod = new("PATCH");
 #endif
@@ -748,7 +744,8 @@ static class HttpClientSynchronously
 	//     The task object representing the asynchronous operation.
 	public static HttpResponseMessage Patch(this HttpClient client, string? requestUri, HttpContent content)
 	{
-		return client.Send(new HttpRequestMessage(PatchMethod, requestUri) { Content = content });
+		using var request = new HttpRequestMessage(PatchMethod, requestUri) { Content = content };
+		return client.Send(request);
 	}
 
 	//
@@ -771,7 +768,8 @@ static class HttpClientSynchronously
 	//     The task object representing the asynchronous operation.
 	public static HttpResponseMessage Patch(this HttpClient client, string? requestUri, HttpContent content, CancellationToken cancellationToken)
 	{
-		return client.Send(new HttpRequestMessage(PatchMethod, requestUri) { Content = content }, cancellationToken);
+		using var request = new HttpRequestMessage(PatchMethod, requestUri) { Content = content };
+		return client.Send(request, cancellationToken);
 	}
 
 	//
@@ -789,7 +787,8 @@ static class HttpClientSynchronously
 	//     The task object representing the asynchronous operation.
 	public static HttpResponseMessage Patch(this HttpClient client, Uri? requestUri, HttpContent content)
 	{
-		return client.Send(new HttpRequestMessage(PatchMethod, requestUri) { Content = content });
+		using var request = new HttpRequestMessage(PatchMethod, requestUri) { Content = content };
+		return client.Send(request);
 	}
 
 	//
@@ -811,7 +810,8 @@ static class HttpClientSynchronously
 	//     The task object representing the asynchronous operation.
 	public static HttpResponseMessage Patch(this HttpClient client, Uri? requestUri, HttpContent content, CancellationToken cancellationToken)
 	{
-		return client.Send(new HttpRequestMessage(PatchMethod, requestUri) { Content = content }, cancellationToken);
+		using var request = new HttpRequestMessage(PatchMethod, requestUri) { Content = content };
+		return client.Send(request, cancellationToken);
 	}
 
 	//
@@ -841,7 +841,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Post(this HttpClient client, string? requestUri, HttpContent content)
 	{
-		return client.Send(new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content });
+		using var request = new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content };
+		return client.Send(request);
 	}
 
 	//
@@ -875,7 +876,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Post(this HttpClient client, string? requestUri, HttpContent content, CancellationToken cancellationToken)
 	{
-		return client.Send(new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content }, cancellationToken);
+		using var request = new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content };
+		return client.Send(request, cancellationToken);
 	}
 
 	//
@@ -905,7 +907,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Post(this HttpClient client, Uri? requestUri, HttpContent content)
 	{
-		return client.Send(new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content });
+		using var request = new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content };
+		return client.Send(request);
 	}
 
 	//
@@ -939,7 +942,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Post(this HttpClient client, Uri? requestUri, HttpContent content, CancellationToken cancellationToken)
 	{
-		return client.Send(new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content }, cancellationToken);
+		using var request = new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content };
+		return client.Send(request, cancellationToken);
 	}
 
 	//
@@ -969,7 +973,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Put(this HttpClient client, string? requestUri, HttpContent content)
 	{
-		return client.Send(new HttpRequestMessage(HttpMethod.Put, requestUri) { Content = content });
+		using var request = new HttpRequestMessage(HttpMethod.Put, requestUri) { Content = content };
+		return client.Send(request);
 	}
 
 	//
@@ -1003,7 +1008,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Put(this HttpClient client, string? requestUri, HttpContent content, CancellationToken cancellationToken)
 	{
-		return client.Send(new HttpRequestMessage(HttpMethod.Put, requestUri) { Content = content }, cancellationToken);
+		using var request = new HttpRequestMessage(HttpMethod.Put, requestUri) { Content = content };
+		return client.Send(request, cancellationToken);
 	}
 
 	//
@@ -1033,7 +1039,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Put(this HttpClient client, Uri? requestUri, HttpContent content)
 	{
-		return client.Send(new HttpRequestMessage(HttpMethod.Put, requestUri) { Content = content });
+		using var request = new HttpRequestMessage(HttpMethod.Put, requestUri) { Content = content };
+		return client.Send(request);
 	}
 
 	//
@@ -1067,7 +1074,8 @@ static class HttpClientSynchronously
 	//     .NET Core and .NET 5.0 and later only: The request failed due to timeout.
 	public static HttpResponseMessage Put(this HttpClient client, Uri? requestUri, HttpContent content, CancellationToken cancellationToken)
 	{
-		return client.Send(new HttpRequestMessage(HttpMethod.Put, requestUri) { Content = content }, cancellationToken);
+		using var request = new HttpRequestMessage(HttpMethod.Put, requestUri) { Content = content };
+		return client.Send(request, cancellationToken);
 	}
 
 #if !NET5_0_OR_GREATER

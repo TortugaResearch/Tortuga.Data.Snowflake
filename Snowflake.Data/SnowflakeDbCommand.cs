@@ -197,7 +197,7 @@ public class SnowflakeDbCommand : DbCommand
 						}
 						else
 						{
-							bindingType = parameter.SFDataType.ToString();
+							bindingType = parameter.SFDataType.ToSql();
 							vals.Add(SFDataConverter.csharpValToSfVal(parameter.SFDataType, val));
 						}
 					}
@@ -213,7 +213,7 @@ public class SnowflakeDbCommand : DbCommand
 					}
 					else
 					{
-						bindingType = parameter.SFDataType.ToString();
+						bindingType = parameter.SFDataType.ToSql();
 						bindingVal = SFDataConverter.csharpValToSfVal(parameter.SFDataType, parameter.Value);
 					}
 				}

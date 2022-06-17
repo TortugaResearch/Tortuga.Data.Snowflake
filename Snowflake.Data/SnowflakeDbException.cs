@@ -3,8 +3,12 @@
  */
 
 using System.Data.Common;
+using System.Globalization;
 
 namespace Tortuga.Data.Snowflake;
+
+#pragma warning disable CA2237 // Mark ISerializable types with serializable
+#pragma warning disable CA1032 // Implement standard exception constructors
 
 /// <summary>
 ///     Wraps the exception.
@@ -12,6 +16,7 @@ namespace Tortuga.Data.Snowflake;
 ///     270000 to 279999 will be used. Otherwise, server side error code
 ///     will be used.
 /// </summary>
+
 public sealed class SnowflakeDbException : DbException
 {
 	// Sql states not coming directly from the server.
@@ -30,13 +35,13 @@ public sealed class SnowflakeDbException : DbException
 	}
 
 	public SnowflakeDbException(SnowflakeError error, params object?[] args) :
-		base(string.Format(GetFormatString(error), args))
+		base(string.Format(CultureInfo.InvariantCulture, GetFormatString(error), args))
 	{
 		_errorCode = error;
 	}
 
 	public SnowflakeDbException(string sqlState, SnowflakeError error, params object[] args) :
-		base(string.Format(GetFormatString(error), args))
+		base(string.Format(CultureInfo.InvariantCulture, GetFormatString(error), args))
 	{
 		_errorCode = error;
 		_sqlState = sqlState;
@@ -54,13 +59,13 @@ public sealed class SnowflakeDbException : DbException
 	}
 
 	public SnowflakeDbException(Exception innerException, SnowflakeError error, params object[] args)
-		: base(string.Format(GetFormatString(error), args), innerException)
+		: base(string.Format(CultureInfo.InvariantCulture, GetFormatString(error), args), innerException)
 	{
 		_errorCode = error;
 	}
 
 	public SnowflakeDbException(Exception innerException, string sqlState, SnowflakeError error, params object[] args)
-		: base(string.Format(GetFormatString(error), args), innerException)
+		: base(string.Format(CultureInfo.InvariantCulture, GetFormatString(error), args), innerException)
 	{
 		_errorCode = error;
 		_sqlState = sqlState;

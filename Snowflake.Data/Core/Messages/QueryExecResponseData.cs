@@ -16,7 +16,10 @@ class QueryExecResponseData
 	internal List<ExecResponseRowType>? RowType { get; set; }
 
 	[JsonProperty(PropertyName = "rowset", NullValueHandling = NullValueHandling.Ignore)]
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 	internal string?[,]? RowSet { get; set; }
+
+#pragma warning restore CA1814 // Prefer jagged arrays over multidimensional
 
 	[JsonProperty(PropertyName = "total", NullValueHandling = NullValueHandling.Ignore)]
 	internal long Total { get; set; }

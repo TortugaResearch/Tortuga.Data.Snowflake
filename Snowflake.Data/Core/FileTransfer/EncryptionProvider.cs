@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Globalization;
+using System.Security.Cryptography;
 using Tortuga.Data.Snowflake.Core.Messages;
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer;
@@ -26,15 +27,13 @@ static class EncryptionProvider
 		var masterKeySize = decodedMasterKey.Length;
 
 		// Generate file key
-		var ivData = new byte[blockSize];
 		var keyData = new byte[blockSize];
 
-		var random = new Random();
-		random.NextBytes(ivData);
-		random.NextBytes(keyData);
+		using var random = RandomNumberGenerator.Create();
+		random.GetBytes(keyData);
 
 		// Byte[] to encrypt data into
-		var encryptedBytes = CreateEncryptedBytes(inFile, keyData, ivData);
+		var encryptedBytes = CreateEncryptedBytes(inFile, keyData, out var ivData);
 
 		// Encrypt file key
 		var encryptedFileKey = EncryptFileKey(decodedMasterKey, keyData);
@@ -42,9 +41,9 @@ static class EncryptionProvider
 		// Store encryption metadata information
 		var matDesc = new MaterialDescriptor
 		{
-			SmkId = encryptionMaterial.smkId.ToString(),
+			SmkId = encryptionMaterial.smkId.ToString(CultureInfo.InvariantCulture),
 			QueryId = encryptionMaterial.queryId,
-			KeySize = (masterKeySize * 8).ToString()
+			KeySize = (masterKeySize * 8).ToString(CultureInfo.InvariantCulture)
 		};
 
 		encryptionMetadata.iv = Convert.ToBase64String(ivData);
@@ -62,18 +61,22 @@ static class EncryptionProvider
 	/// <returns>The encrypted key.</returns>
 	static byte[] EncryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
 	{
-		var aes = Aes.Create();
-		aes.Key = masterKey;
-		aes.Mode = CipherMode.ECB;
-		aes.Padding = PaddingMode.PKCS7;
-
-		using (var cipherStream = new MemoryStream())
-		using (var cryptoStream = new CryptoStream(cipherStream, aes.CreateEncryptor(), CryptoStreamMode.Write))
+		using (var aes = Aes.Create())
 		{
-			cryptoStream.Write(unencryptedFileKey, 0, unencryptedFileKey.Length);
-			cryptoStream.FlushFinalBlock();
+			aes.Key = masterKey;
+#pragma warning disable CA5358 // Review cipher mode usage with cryptography experts
+			aes.Mode = CipherMode.ECB;
+#pragma warning restore CA5358 // Review cipher mode usage with cryptography experts
+			aes.Padding = PaddingMode.PKCS7;
 
-			return cipherStream.ToArray();
+			using (var cipherStream = new MemoryStream())
+			using (var cryptoStream = new CryptoStream(cipherStream, aes.CreateEncryptor(), CryptoStreamMode.Write))
+			{
+				cryptoStream.Write(unencryptedFileKey, 0, unencryptedFileKey.Length);
+				cryptoStream.FlushFinalBlock();
+
+				return cipherStream.ToArray();
+			}
 		}
 	}
 
@@ -84,13 +87,13 @@ static class EncryptionProvider
 	/// <param name="key">The encryption key.</param>
 	/// <param name="iv">The encryption IV or null if it needs to be generated.</param>
 	/// <returns>The encrypted bytes.</returns>
-	static byte[] CreateEncryptedBytes(string inFile, byte[] key, byte[] iv)
+	static byte[] CreateEncryptedBytes(string inFile, byte[] key, out byte[] iv)
 	{
-		var aes = Aes.Create();
+		using var aes = Aes.Create();
 		aes.Key = key;
 		aes.Mode = CipherMode.CBC;
 		aes.Padding = PaddingMode.PKCS7;
-		aes.IV = iv;
+		iv = aes.IV;
 
 		using (var targetStream = new MemoryStream())
 		using (var cryptoStream = new CryptoStream(targetStream, aes.CreateEncryptor(), CryptoStreamMode.Write))
@@ -145,9 +148,11 @@ static class EncryptionProvider
 	/// <returns>The encrypted key.</returns>
 	static byte[] DecryptFileKey(byte[] masterKey, byte[] unencryptedFileKey)
 	{
-		var aes = Aes.Create();
+		using var aes = Aes.Create();
 		aes.Key = masterKey;
+#pragma warning disable CA5358 // Review cipher mode usage with cryptography experts
 		aes.Mode = CipherMode.ECB;
+#pragma warning restore CA5358 // Review cipher mode usage with cryptography experts
 		aes.Padding = PaddingMode.PKCS7;
 
 		using (var cipherStream = new MemoryStream())
@@ -169,7 +174,7 @@ static class EncryptionProvider
 	/// <returns>The encrypted bytes.</returns>
 	static byte[] CreateDecryptedBytes(string inFile, byte[] key, byte[] iv)
 	{
-		var aes = Aes.Create();
+		using var aes = Aes.Create();
 		aes.Key = key;
 		aes.Mode = CipherMode.CBC;
 		aes.Padding = PaddingMode.PKCS7;

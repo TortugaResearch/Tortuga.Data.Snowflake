@@ -3,6 +3,7 @@
  */
 
 using Microsoft.Extensions.Primitives;
+using System.Globalization;
 
 namespace Tortuga.Data.Snowflake.Core.Sessions;
 
@@ -21,9 +22,9 @@ class RetryCountRule : IRule
 	public void Apply(Dictionary<string, StringValues> queryParams)
 	{
 		if (m_RetryCount == 1)
-			queryParams.Add(RestParams.SF_QUERY_RETRY_COUNT, m_RetryCount.ToString());
+			queryParams.Add(RestParams.SF_QUERY_RETRY_COUNT, m_RetryCount.ToString(CultureInfo.InvariantCulture));
 		else
-			queryParams[RestParams.SF_QUERY_RETRY_COUNT] = m_RetryCount.ToString();
+			queryParams[RestParams.SF_QUERY_RETRY_COUNT] = m_RetryCount.ToString(CultureInfo.InvariantCulture);
 
 		m_RetryCount++;
 	}

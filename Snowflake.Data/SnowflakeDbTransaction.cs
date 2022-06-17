@@ -19,7 +19,7 @@ public class SnowflakeDbTransaction : DbTransaction
 			throw new ArgumentOutOfRangeException(nameof(isolationLevel), isolationLevel, "Only IsolationLevel.ReadCommitted is supported.");
 
 		m_IsolationLevel = isolationLevel;
-		m_Connection = connection;
+		m_Connection = connection ?? throw new ArgumentNullException(nameof(connection), $"{nameof(connection)} is null.");
 
 		using (var command = connection.CreateCommand())
 		{

@@ -3,6 +3,7 @@
  */
 
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.IO.Compression;
 using System.Text;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
@@ -13,7 +14,7 @@ namespace Tortuga.Data.Snowflake.Core.ResponseProcessing.Chunks;
 /// <summary>
 ///     Downloader implementation that will be blocked if main thread consume falls behind
 /// </summary>
-class SFBlockingChunkDownloader : IChunkDownloader
+class SFBlockingChunkDownloader : IChunkDownloader, IDisposable
 {
 	readonly List<SFResultChunk> m_Chunks;
 	readonly string m_Qrmk;
@@ -58,13 +59,14 @@ class SFBlockingChunkDownloader : IChunkDownloader
 
 		var sessionParameters = resultSet.SFStatement.SFSession.ParameterMap;
 		var val = (string)sessionParameters[SFSessionParameter.CLIENT_PREFETCH_THREADS]!;
-		return int.Parse(val);
+		return int.Parse(val, CultureInfo.InvariantCulture);
 	}
 
 	BlockingCollection<Task<IResultChunk>>? m_DownloadTasks;
 
 	void FillDownloads()
 	{
+		m_DownloadTasks?.Dispose();
 		m_DownloadTasks = new BlockingCollection<Task<IResultChunk>>(m_PrefetchThreads);
 
 		Task.Run(() =>
@@ -116,18 +118,19 @@ class SFBlockingChunkDownloader : IChunkDownloader
 		};
 
 		var httpResponse = await m_RestRequester.GetAsync(downloadRequest, downloadContext.CancellationToken).ConfigureAwait(false);
-		var stream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false);
+		using var stream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false);
 
 		//TODO this shouldn't be required.
-		if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out var encoding))
+		if (httpResponse.Content.Headers.TryGetValues("Content-Encoding", out var encoding)
+			&& string.Equals(encoding.First(), "gzip", StringComparison.OrdinalIgnoreCase))
 		{
-			if (string.Compare(encoding.First(), "gzip", true) == 0)
-			{
-				stream = new GZipStream(stream, CompressionMode.Decompress);
-			}
+			using var stream2 = new GZipStream(stream, CompressionMode.Decompress);
+			ParseStreamIntoChunk(stream2, chunk);
 		}
-
-		ParseStreamIntoChunk(stream, chunk);
+		else
+		{
+			ParseStreamIntoChunk(stream, chunk);
+		}
 
 		chunk.DownloadState = DownloadState.SUCCESS;
 
@@ -152,5 +155,10 @@ class SFBlockingChunkDownloader : IChunkDownloader
 
 		var parser = ChunkParser.GetParser(m_ResultSet.Configuration, concatStream);
 		parser.ParseChunk(resultChunk);
+	}
+
+	public void Dispose()
+	{
+		m_DownloadTasks?.Dispose();
 	}
 }

@@ -2,6 +2,7 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
+using System.Globalization;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -10,6 +11,7 @@ using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
 using Tortuga.Data.Snowflake.Core.ResponseProcessing;
 using Tortuga.Data.Snowflake.Core.Sessions;
+using Tortuga.Data.Snowflake.Legacy;
 
 namespace Tortuga.Data.Snowflake.Core.FileTransfer;
 
@@ -21,7 +23,7 @@ class SFFileTransferAgent
 	/// <summary>
 	/// Auto-detect keyword for source compression type auto detection.
 	/// </summary>
-	static readonly string COMPRESSION_AUTO_DETECT = "auto_detect";
+	const string COMPRESSION_AUTO_DETECT = "auto_detect";
 
 	/// <summary>
 	/// The Snowflake query
@@ -148,15 +150,17 @@ class SFFileTransferAgent
 	public SFBaseResultSet Result()
 	{
 		// Set the row count using the number of metadata in the result metas
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 		m_TransferMetadata.RowSet = new string[m_ResultsMetas.Count, 8];
+#pragma warning restore CA1814 // Prefer jagged arrays over multidimensional
 
 		// For each file metadata, set the result set variables
 		for (var index = 0; index < m_ResultsMetas.Count; index++)
 		{
 			m_TransferMetadata.RowSet[index, 0] = m_ResultsMetas[index].SrcFileName;
 			m_TransferMetadata.RowSet[index, 1] = m_ResultsMetas[index].DestFileName;
-			m_TransferMetadata.RowSet[index, 2] = m_ResultsMetas[index].SrcFileSize.ToString();
-			m_TransferMetadata.RowSet[index, 3] = m_ResultsMetas[index].DestFileSize.ToString();
+			m_TransferMetadata.RowSet[index, 2] = m_ResultsMetas[index].SrcFileSize.ToString(CultureInfo.InvariantCulture);
+			m_TransferMetadata.RowSet[index, 3] = m_ResultsMetas[index].DestFileSize.ToString(CultureInfo.InvariantCulture);
 			m_TransferMetadata.RowSet[index, 4] = m_ResultsMetas[index].ResultStatus;
 
 			if (m_ResultsMetas[index].LastError != null)
@@ -228,7 +232,7 @@ class SFFileTransferAgent
 					var filePathToReplace = GetFilePathFromPutCommand(m_Query);
 					var fileNameToReplaceWith = fileMeta.DestFileName;
 					var queryWithSingleFile = m_Query;
-					queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith);
+					queryWithSingleFile = queryWithSingleFile.Replace(filePathToReplace, fileNameToReplaceWith, StringComparison.Ordinal);
 
 					var sfStatement = new SFStatement(m_Session) { m_IsPutGetQuery = true };
 
@@ -255,8 +259,8 @@ class SFFileTransferAgent
 	{
 		// Extract file path from PUT command:
 		// E.g. "PUT file://C:<path-to-file> @DB.SCHEMA.%TABLE;"
-		var startIndex = query.IndexOf("file://") + "file://".Length;
-		var endIndex = query.Substring(startIndex).IndexOf(' ');
+		var startIndex = query.IndexOf("file://", StringComparison.Ordinal) + "file://".Length;
+		var endIndex = query.Substring(startIndex).IndexOf(' ', StringComparison.Ordinal);
 		var filePath = query.Substring(startIndex, endIndex);
 		return filePath;
 	}
@@ -286,7 +290,7 @@ class SFFileTransferAgent
 				var fileName = fileInfo.Name;
 				SFFileCompressionTypes.SFFileCompressionType compressionType;
 
-				if (m_TransferMetadata.AutoCompress && m_TransferMetadata.SourceCompression!.Equals(COMPRESSION_AUTO_DETECT))
+				if (m_TransferMetadata.AutoCompress && m_TransferMetadata.SourceCompression!.Equals(COMPRESSION_AUTO_DETECT, StringComparison.Ordinal))
 				{
 					// Auto-detect source compression type
 					// Will return NONE if no matching type is found
@@ -374,14 +378,14 @@ class SFFileTransferAgent
 	static List<string> ExpandFileNames(string location)
 	{
 		// Replace ~ with the user home directory path
-		if (location.Contains('~'))
+		if (location.Contains('~', StringComparison.Ordinal))
 		{
 			var homePath = (Environment.OSVersion.Platform == PlatformID.Unix ||
 			Environment.OSVersion.Platform == PlatformID.MacOSX)
 			? Environment.GetEnvironmentVariable("HOME")
 			: Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
 
-			location = location.Replace("~", homePath);
+			location = location.Replace("~", homePath, StringComparison.Ordinal);
 		}
 
 		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -392,7 +396,7 @@ class SFFileTransferAgent
 
 		var filePaths = new List<string>();
 		//filePaths.Add(""); //Start with an empty string to build upon
-		if (directoryName.Contains('?') || directoryName.Contains('*'))
+		if (directoryName.Contains('?', StringComparison.Ordinal) || directoryName.Contains('*', StringComparison.Ordinal))
 		{
 			// If there is a wildcard in at least one of the directory name in the file path
 			var pathParts = location.Split(Path.DirectorySeparatorChar);
@@ -405,7 +409,7 @@ class SFFileTransferAgent
 				{
 					currPart = pathParts[i];
 
-					if (currPart.Contains('?') || currPart.Contains('*'))
+					if (currPart.Contains('?', StringComparison.Ordinal) || currPart.Contains('*', StringComparison.Ordinal))
 					{
 						if (i < pathParts.Length - 1)
 						{
@@ -429,10 +433,10 @@ class SFFileTransferAgent
 				filePaths = tempPaths;
 			}
 		}
-		else if (fileName.Contains('?') || fileName.Contains('*'))
+		else if (fileName.Contains('?', StringComparison.Ordinal) || fileName.Contains('*', StringComparison.Ordinal))
 		{
 			var ext = Path.GetExtension(fileName);
-			if ((4 == ext.Length) && fileName.Contains('*'))
+			if ((4 == ext.Length) && fileName.Contains('*', StringComparison.Ordinal))
 			{
 				/*
 					* When you use the asterisk wildcard character in a searchPattern such as
@@ -447,7 +451,7 @@ class SFFileTransferAgent
 				var potentialMatches = Directory.GetFiles(directoryName, fileName, SearchOption.TopDirectoryOnly);
 				foreach (var potentialMatch in potentialMatches)
 				{
-					if (potentialMatch.EndsWith(ext))
+					if (potentialMatch.EndsWith(ext, StringComparison.Ordinal))
 						filePaths.Add(potentialMatch);
 				}
 			}
