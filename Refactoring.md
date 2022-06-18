@@ -1906,9 +1906,9 @@ So this should have been moved into `SFSession` in the previous round of refacto
 
 Once in `SFSession`, the `GetHttpClient` method can be inlined. We'll leave its helper function, `SetupCustomHttpHandler`, alone as it is quite long and complex.
 
-## Round 41 - Wave 5 Compiler Warnings
+## Round 41 - Wave Compiler Warnings
 
-The C# compiler has several "waves" of compiler warnings that are disabled by default. These should be enabled incrementally to avoid overwhelming the developer.
+The C# compiler has several "waves" of compiler warnings that are disabled by default. These should be enabled incrementally to avoid overwhelming the developer. Once caught up, you can use `<AnalysisLevel>latest-all</AnalysisLevel>` to ensure new warnings are seen.
 
 ### Globalization
 
@@ -2037,3 +2037,4 @@ In the real world, that doesn't work. Some of the reasons why we may want to cat
 * Discarding the exception because it is unsafe to report it. For example, a `Dispose` call, which may be invoked inside a `finally` block.
 
 Due to the high number of false positives, this warning was disabled completely.
+

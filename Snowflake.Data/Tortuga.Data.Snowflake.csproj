@@ -17,7 +17,7 @@
 		<ImplicitUsings>true</ImplicitUsings>
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 		<Nullable>enable</Nullable>
-		<AnalysisLevel>5.0-all</AnalysisLevel>
+		<AnalysisLevel>latest-all</AnalysisLevel>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(TargetFramework)' == 'net472'">
