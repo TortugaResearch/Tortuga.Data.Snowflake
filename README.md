@@ -2,7 +2,8 @@
 Snowflake Connector for .NET
 ============================
 
-[![NuGet](https://img.shields.io/nuget/v/Snowflake.Data.svg)](https://www.nuget.org/packages/Snowflake.Data/)
+`Tortuga.Data.Snowflake` is a fork of `Snowflake.Data`. It has undergone a massive refactoring effort, the details of which are available in the [refactoring log](Refactoring.md).
+
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 The Snowflake .NET connector supports the the following .NET framework and libraries versions:
@@ -63,14 +64,14 @@ Before running tests, create a parameters.json file under Snowflake.Data.Tests\ 
 ````json
 {
   "testconnection": {
-    "SNOWFLAKE_TEST_USER": "snowman",
-    "SNOWFLAKE_TEST_PASSWORD": "XXXXXXX",
-    "SNOWFLAKE_TEST_ACCOUNT": "TESTACCOUNT",
-    "SNOWFLAKE_TEST_WAREHOUSE": "TESTWH",
-    "SNOWFLAKE_TEST_DATABASE": "TESTDB",
-    "SNOWFLAKE_TEST_SCHEMA": "TESTSCHEMA",
-    "SNOWFLAKE_TEST_ROLE": "TESTROLE",
-    "SNOWFLAKE_TEST_HOST": "testaccount.snowflakecomputing.com"
+	"SNOWFLAKE_TEST_USER": "snowman",
+	"SNOWFLAKE_TEST_PASSWORD": "XXXXXXX",
+	"SNOWFLAKE_TEST_ACCOUNT": "TESTACCOUNT",
+	//"SNOWFLAKE_TEST_WAREHOUSE": "TESTWH",
+	"SNOWFLAKE_TEST_DATABASE": "TESTDB",
+	"SNOWFLAKE_TEST_SCHEMA": "TESTSCHEMA",
+	//"SNOWFLAKE_TEST_ROLE": "TESTROLE",
+	"SNOWFLAKE_TEST_HOST": "testaccount.snowflakecomputing.com"
   }
 }
 ````
@@ -144,11 +145,11 @@ The following example demonstrates how to open a connection to Snowflake. This e
 ````csharp
 using (IDbConnection conn = new SnowflakeDbConnection())
 {
-    conn.ConnectionString = "account=testaccount;user=testuser;password=XXXXX;db=testdb;schema=testschema";
+	conn.ConnectionString = "account=testaccount;user=testuser;password=XXXXX;db=testdb;schema=testschema";
 
-    conn.Open();
-    
-    conn.Close();
+	conn.Open();
+	
+	conn.Close();
 }
 ````
 
@@ -172,9 +173,9 @@ If you are using a different method for authentication, see the examples below:
     }
     ````
 
-    where:
+	where:
 
-    * `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
+	* `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
 
   * Specify the file containing an encrypted private key:
 
@@ -189,10 +190,10 @@ If you are using a different method for authentication, see the examples below:
     }
     ````
 
-    where:
+	where:
 
-    * `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
-    * `{passwordForDecryptingThePrivateKey}` is the password for decrypting the private key.
+	* `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
+	* `{passwordForDecryptingThePrivateKey}` is the password for decrypting the private key.
 
   * Specify an unencrypted private key (read from a file):
 
@@ -201,7 +202,7 @@ If you are using a different method for authentication, see the examples below:
     {
         string privateKeyContent = File.ReadAllText({pathToThePrivateKeyFile}).Replace("=", "==");
 
-        conn.ConnectionString = String.Format("account=testaccount;authenticator=snowflake_jwt;user=testuser;private_key={0};db=testdb;schema=testschema", privateKeyContent);
+		conn.ConnectionString = String.Format("account=testaccount;authenticator=snowflake_jwt;user=testuser;private_key={0};db=testdb;schema=testschema", privateKeyContent);
 
         conn.Open();
     
@@ -209,9 +210,9 @@ If you are using a different method for authentication, see the examples below:
     }
     ````
 
-    where:
+	where:
 
-    * `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
+	* `{pathToThePrivateKeyFile}` is the path to the file containing the unencrypted private key.
 
 * **OAuth**
 
@@ -221,11 +222,11 @@ If you are using a different method for authentication, see the examples below:
   ````csharp
   using (IDbConnection conn = new SnowflakeDbConnection())
   {
-      conn.ConnectionString = "account=testaccount;user=testuser;authenticator=oauth;token={oauthTokenValue};db=testdb;schema=testschema";
+	  conn.ConnectionString = "account=testaccount;user=testuser;authenticator=oauth;token={oauthTokenValue};db=testdb;schema=testschema";
 
-      conn.Open();
-    
-      conn.Close();
+	  conn.Open();
+	
+	  conn.Close();
   }
   ````
 
@@ -240,11 +241,11 @@ If you are using a different method for authentication, see the examples below:
   ````csharp
   using (IDbConnection conn = new SnowflakeDbConnection())
   {
-      conn.ConnectionString = "account=testaccount;authenticator=externalbrowser;user={login_name_for_IdP};db=testdb;schema=testschema";
+	  conn.ConnectionString = "account=testaccount;authenticator=externalbrowser;user={login_name_for_IdP};db=testdb;schema=testschema";
 
-      conn.Open();
+	  conn.Open();
 
-      conn.Close();
+	  conn.Close();
   }
   ````
 
@@ -262,11 +263,11 @@ If you are using a different method for authentication, see the examples below:
 ````csharp
   using (IDbConnection conn = new SnowflakeDbConnection())
   {
-      conn.ConnectionString = "account=testaccount;authenticator={okta_url_endpoint};user={login_name_for_IdP};db=testdb;schema=testschema";
+	  conn.ConnectionString = "account=testaccount;authenticator={okta_url_endpoint};user={login_name_for_IdP};db=testdb;schema=testschema";
 
-      conn.Open();
+	  conn.Open();
 
-      conn.Close();
+	  conn.Close();
   }
   ````
 
@@ -282,11 +283,11 @@ user `test` with the password `test`:
 ````csharp
 using (IDbConnection conn = new SnowflakeDbConnection())
 {
-    conn.ConnectionString = "account=testaccount;user=testuser;password=XXXXX;db=testdb;schema=testschema;useProxy=true;proxyHost=myproxyserver;proxyPort=8888;proxyUser=test;proxyPassword=test";
+	conn.ConnectionString = "account=testaccount;user=testuser;password=XXXXX;db=testdb;schema=testschema;useProxy=true;proxyHost=myproxyserver;proxyPort=8888;proxyUser=test;proxyPassword=test";
 
-    conn.Open();
-    
-    conn.Close();
+	conn.Open();
+	
+	conn.Close();
 }
 ````
 
@@ -313,19 +314,19 @@ Run a Query and Read Data
 ````csharp
 using (IDbConnection conn = new SnowflakeDbConnection())
 {
-    conn.ConnectionString = connectionString;
-    conn.Open();
+	conn.ConnectionString = connectionString;
+	conn.Open();
 
-    IDbCommand cmd = conn.CreateCommand();
-    cmd.CommandText = "select * from t";
-    IDataReader reader = cmd.ExecuteReader();
+	IDbCommand cmd = conn.CreateCommand();
+	cmd.CommandText = "select * from t";
+	IDataReader reader = cmd.ExecuteReader();
 
-    while(reader.Read())
-    {
-        Console.WriteLine(reader.GetString(0));
-    }
+	while(reader.Read())
+	{
+		Console.WriteLine(reader.GetString(0));
+	}
 
-    conn.Close();
+	conn.Close();
 }
 ````
 
@@ -351,43 +352,43 @@ This example inserts 3 rows into a table with one column.
 ````csharp
 using (IDbConnection conn = new SnowflakeDbConnection())
 {
-    conn.ConnectionString = connectionString;
-    conn.Open();
+	conn.ConnectionString = connectionString;
+	conn.Open();
 
-    IDbCommand cmd = conn.CreateCommand();
-    cmd.CommandText = "create or replace table T(cola int)";
-    int count = cmd.ExecuteNonQuery();
-    Assert.AreEqual(0, count);
+	IDbCommand cmd = conn.CreateCommand();
+	cmd.CommandText = "create or replace table T(cola int)";
+	int count = cmd.ExecuteNonQuery();
+	Assert.AreEqual(0, count);
 
-    IDbCommand cmd = conn.CreateCommand();
-    cmd.CommandText = "insert into t values (?), (?), (?)";
+	IDbCommand cmd = conn.CreateCommand();
+	cmd.CommandText = "insert into t values (?), (?), (?)";
 
-    var p1 = cmd.CreateParameter();
-    p1.ParameterName = "1";
-    p1.Value = 10;
-    p1.DbType = DbType.Int32;
-    cmd.Parameters.Add(p1);
+	var p1 = cmd.CreateParameter();
+	p1.ParameterName = "1";
+	p1.Value = 10;
+	p1.DbType = DbType.Int32;
+	cmd.Parameters.Add(p1);
 
-    var p2 = cmd.CreateParameter();
-    p2.ParameterName = "2";
-    p2.Value = 10000L;
-    p2.DbType = DbType.Int32;
-    cmd.Parameters.Add(p2);
+	var p2 = cmd.CreateParameter();
+	p2.ParameterName = "2";
+	p2.Value = 10000L;
+	p2.DbType = DbType.Int32;
+	cmd.Parameters.Add(p2);
 
-    var p3 = cmd.CreateParameter();
-    p3.ParameterName = "3";
-    p3.Value = (short)1;
-    p3.DbType = DbType.Int16;
-    cmd.Parameters.Add(p3);
+	var p3 = cmd.CreateParameter();
+	p3.ParameterName = "3";
+	p3.Value = (short)1;
+	p3.DbType = DbType.Int16;
+	cmd.Parameters.Add(p3);
 
-    var count = cmd.ExecuteNonQuery();
-    Assert.AreEqual(3, count);
+	var count = cmd.ExecuteNonQuery();
+	Assert.AreEqual(3, count);
 
-    cmd.CommandText = "drop table if exists T";
-    count = cmd.ExecuteNonQuery();
-    Assert.AreEqual(0, count);
+	cmd.CommandText = "drop table if exists T";
+	count = cmd.ExecuteNonQuery();
+	Assert.AreEqual(0, count);
 
-    conn.Close();
+	conn.Close();
 }
 ````
 
@@ -416,27 +417,27 @@ Here is a sample app.config file that uses [log4net](http://logging.apache.org/l
 
 ````xml
   <configSections>
-    <section name="log4net" type="log4net.Config.Log4NetConfigurationSectionHandler, log4net"/>
+	<section name="log4net" type="log4net.Config.Log4NetConfigurationSectionHandler, log4net"/>
   </configSections>
 
   <log4net>
-    <appender name="MyRollingFileAppender" type="log4net.Appender.RollingFileAppender">
-      <file value="snowflake_dotnet.log" />
-      <appendToFile value="true"/>
-      <rollingStyle value="Size" />
-      <maximumFileSize value="10MB" />
-      <staticLogFileName value="true" />
-      <maxSizeRollBackups value="10" />
-      <layout type="log4net.Layout.PatternLayout">
-        <!-- <header value="[DateTime]  [Thread]  [Level]  [ClassName] Message&#13;&#10;" /> -->
-        <conversionPattern value="[%date] [%t] [%-5level] [%logger] %message%newline" />
-      </layout>
-    </appender>
+	<appender name="MyRollingFileAppender" type="log4net.Appender.RollingFileAppender">
+	  <file value="snowflake_dotnet.log" />
+	  <appendToFile value="true"/>
+	  <rollingStyle value="Size" />
+	  <maximumFileSize value="10MB" />
+	  <staticLogFileName value="true" />
+	  <maxSizeRollBackups value="10" />
+	  <layout type="log4net.Layout.PatternLayout">
+		<!-- <header value="[DateTime]  [Thread]  [Level]  [ClassName] Message&#13;&#10;" /> -->
+		<conversionPattern value="[%date] [%t] [%-5level] [%logger] %message%newline" />
+	  </layout>
+	</appender>
 
-    <root>
-      <level value="ALL" />
-      <appender-ref ref="MyRollingFileAppender" />
-    </root>
+	<root>
+	  <level value="ALL" />
+	  <appender-ref ref="MyRollingFileAppender" />
+	</root>
   </log4net>
 ````
 

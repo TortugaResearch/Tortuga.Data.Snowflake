@@ -2,361 +2,348 @@
  * Copyright (c) 2021 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading.Tasks;
 using Google.Apis.Auth.OAuth2;
 using Newtonsoft.Json;
-using Snowflake.Data.Log;
-using System.Linq;
-using Newtonsoft.Json.Linq;
+using System.Globalization;
+using System.Net.Http.Headers;
+using Tortuga.Data.Snowflake.Legacy;
+using Tortuga.HttpClientUtilities;
 
-namespace Snowflake.Data.Core.FileTransfer.StorageClient
+namespace Tortuga.Data.Snowflake.Core.FileTransfer.StorageClient;
+
+/// <summary>
+/// The GCS client used to transfer files to the remote Google Cloud Storage.
+/// </summary>
+class SFGCSClient : ISFRemoteStorageClient, IDisposable
 {
-    /// <summary>
-    /// The GCS client used to transfer files to the remote Google Cloud Storage.
-    /// </summary>
-    class SFGCSClient : ISFRemoteStorageClient
-    {
-        /// <summary>
-        /// GCS header values.
-        /// </summary>
-        private const string GCS_METADATA_PREFIX = "x-goog-meta-";
-        private const string GCS_METADATA_SFC_DIGEST = GCS_METADATA_PREFIX + "sfc-digest";
-        private const string GCS_METADATA_MATDESC_KEY = GCS_METADATA_PREFIX + "matdesc";
-        private const string GCS_METADATA_ENCRYPTIONDATAPROP = GCS_METADATA_PREFIX + "encryptiondata";
-        private const string GCS_FILE_HEADER_CONTENT_LENGTH = "x-goog-stored-content-length";
+	/// <summary>
+	/// GCS header values.
+	/// </summary>
+	const string GCS_METADATA_PREFIX = "x-goog-meta-";
 
-        /// <summary>
-        /// The attribute in the credential map containing the access token.
-        /// </summary>
-        private static readonly string GCS_ACCESS_TOKEN = "GCS_ACCESS_TOKEN";
+	const string GCS_METADATA_SFC_DIGEST = GCS_METADATA_PREFIX + "sfc-digest";
+	const string GCS_METADATA_MATDESC_KEY = GCS_METADATA_PREFIX + "matdesc";
+	const string GCS_METADATA_ENCRYPTIONDATAPROP = GCS_METADATA_PREFIX + "encryptiondata";
+	const string GCS_FILE_HEADER_CONTENT_LENGTH = "x-goog-stored-content-length";
 
-        /// <summary>
-        /// The logger.
-        /// </summary>
-        private static readonly SFLogger Logger = SFLoggerFactory.GetLogger<SFGCSClient>();
+	/// <summary>
+	/// The attribute in the credential map containing the access token.
+	/// </summary>
+	const string GCS_ACCESS_TOKEN = "GCS_ACCESS_TOKEN";
 
-        /// <summary>
-        /// The storage client.
-        /// </summary>
-        private Google.Cloud.Storage.V1.StorageClient StorageClient;
+	/// <summary>
+	/// The storage client.
+	/// </summary>
+	readonly Google.Cloud.Storage.V1.StorageClient m_StorageClient;
 
-        /// <summary>
-        /// The HTTP client to make requests.
-        /// </summary>
-        private readonly HttpClient HttpClient;
+	/// <summary>
+	/// The HTTP client to make requests.
+	/// </summary>
+	readonly HttpClient m_HttpClient;
 
-        /// <summary>
-        /// GCS client with access token.
-        /// </summary>
-        /// <param name="stageInfo">The command stage info.</param>
-        public SFGCSClient(PutGetStageInfo stageInfo)
-        {
-            Logger.Debug("Setting up a new GCS client ");
+	/// <summary>
+	/// GCS client with access token.
+	/// </summary>
+	/// <param name="stageInfo">The command stage info.</param>
+	public SFGCSClient(PutGetStageInfo stageInfo)
+	{
+		if (stageInfo.StageCredentials == null)
+			throw new ArgumentException("stageInfo.stageCredentials is null", nameof(stageInfo));
 
-            if (stageInfo.stageCredentials.TryGetValue(GCS_ACCESS_TOKEN, out string accessToken))
-            {
-                Logger.Debug("Constructing client using access token");
+		if (stageInfo.StageCredentials.TryGetValue(GCS_ACCESS_TOKEN, out var accessToken))
+		{
+			var creds = GoogleCredential.FromAccessToken(accessToken, null);
+			m_StorageClient = Google.Cloud.Storage.V1.StorageClient.Create(creds);
+		}
+		else
+		{
+			m_StorageClient = Google.Cloud.Storage.V1.StorageClient.CreateUnauthenticated();
+		}
 
-                GoogleCredential creds = GoogleCredential.FromAccessToken(accessToken, null);
-                StorageClient = Google.Cloud.Storage.V1.StorageClient.Create(creds);
-            }
-            else
-            {
-                Logger.Info("No access token received from GS, constructing anonymous client with no encryption support");
-                StorageClient = Google.Cloud.Storage.V1.StorageClient.CreateUnauthenticated();
-            }
+		m_HttpClient = new HttpClient();
+	}
 
-            HttpClient = new HttpClient();
-        }
+	RemoteLocation ISFRemoteStorageClient.ExtractBucketNameAndPath(string stageLocation) => ExtractBucketNameAndPath(stageLocation);
 
-        /// <summary>
-        /// Extract the bucket name and path from the stage location.
-        /// </summary>
-        /// <param name="stageLocation">The command stage location.</param>
-        /// <returns>The remote location of the GCS file.</returns>
-        public RemoteLocation ExtractBucketNameAndPath(string stageLocation)
-        {
-            string containerName = stageLocation;
-            string gcsPath = "";
+	/// <summary>
+	/// Extract the bucket name and path from the stage location.
+	/// </summary>
+	/// <param name="stageLocation">The command stage location.</param>
+	/// <returns>The remote location of the GCS file.</returns>
+	static public RemoteLocation ExtractBucketNameAndPath(string stageLocation)
+	{
+		var containerName = stageLocation;
+		var gcsPath = "";
 
-            // Split stage location as bucket name and path
-            if (stageLocation.Contains("/"))
-            {
-                containerName = stageLocation.Substring(0, stageLocation.IndexOf('/'));
+		// Split stage location as bucket name and path
+		if (stageLocation.Contains('/', StringComparison.Ordinal))
+		{
+			containerName = stageLocation.Substring(0, stageLocation.IndexOf('/', StringComparison.Ordinal));
 
-                gcsPath = stageLocation.Substring(stageLocation.IndexOf('/') + 1,
-                    stageLocation.Length - stageLocation.IndexOf('/') - 1);
-                if (gcsPath != null && !gcsPath.EndsWith("/"))
-                {
-                    gcsPath += '/';
-                }
-            }
+			gcsPath = stageLocation.Substring(stageLocation.IndexOf('/', StringComparison.Ordinal) + 1,
+				stageLocation.Length - stageLocation.IndexOf('/', StringComparison.Ordinal) - 1);
+			if (gcsPath != null && !gcsPath.EndsWith("/", StringComparison.Ordinal))
+			{
+				gcsPath += '/';
+			}
+		}
 
-            return new RemoteLocation()
-            {
-                bucket = containerName,
-                key = gcsPath
-            };
-        }
+		return new RemoteLocation()
+		{
+			Bucket = containerName,
+			Key = gcsPath
+		};
+	}
 
-        /// <summary>
-        /// Get the file header.
-        /// </summary>
-        /// <param name="fileMetadata">The GCS file metadata.</param>
-        /// <returns>The file header of the GCS file.</returns>
-        public FileHeader GetFileHeader(SFFileMetadata fileMetadata)
-        {
-            // If file already exists, return
-            if (fileMetadata.resultStatus == ResultStatus.UPLOADED.ToString() ||
-                fileMetadata.resultStatus == ResultStatus.DOWNLOADED.ToString())
-            {
-                return new FileHeader{
-                    digest = fileMetadata.sha256Digest,
-                    contentLength = fileMetadata.srcFileSize,
-                    encryptionMetadata = fileMetadata.encryptionMetadata
-                };
-            }
+	/// <summary>
+	/// Get the file header.
+	/// </summary>
+	/// <param name="fileMetadata">The GCS file metadata.</param>
+	/// <returns>The file header of the GCS file.</returns>
+	public FileHeader? GetFileHeader(SFFileMetadata fileMetadata)
+	{
+		// If file already exists, return
+		if (fileMetadata.ResultStatus == ResultStatus.UPLOADED.ToString() ||
+			fileMetadata.ResultStatus == ResultStatus.DOWNLOADED.ToString())
+		{
+			return new FileHeader
+			{
+				digest = fileMetadata.Sha256Digest,
+				contentLength = fileMetadata.SrcFileSize,
+				encryptionMetadata = fileMetadata.EncryptionMetadata
+			};
+		}
 
-            if (fileMetadata.presignedUrl != null)
-            {
-                // Issue GET request to GCS file URL
-                try
-                {
-                    Task<Stream> response = HttpClient.GetStreamAsync(fileMetadata.presignedUrl);
-                    response.Wait();
-                }
-                catch (Exception ex)
-                {
-                    HttpRequestException err = (HttpRequestException)ex.InnerException;
-                    if (err.Message.Contains("401") ||
-                        err.Message.Contains("403") ||
-                        err.Message.Contains("404"))
-                    {
-                        fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
-                        return new FileHeader();
-                    }
-                }
-            }
-            else
-            {
-                // Generate the file URL based on GCS location
-                string url = generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName);
-                try
-                {
-                    // Issue a GET response
-                    HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer ${accessToken}");
-                    Task<HttpResponseMessage> response = HttpClient.GetAsync(fileMetadata.presignedUrl);
-                    response.Wait();
+		if (fileMetadata.PresignedUrl != null)
+		{
+			// Issue GET request to GCS file URL
+			try
+			{
+				var response = m_HttpClient.GetStream(fileMetadata.PresignedUrl);
+			}
+			catch (HttpRequestException err)
+			{
+				if (err.Message.Contains("401", StringComparison.Ordinal) ||
+					err.Message.Contains("403", StringComparison.Ordinal) ||
+					err.Message.Contains("404", StringComparison.Ordinal))
+				{
+					fileMetadata.ResultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
+					return new FileHeader();
+				}
+			}
+		}
+		else
+		{
+			// Generate the file URL based on GCS location
+			//var url = generateFileURL(fileMetadata.stageInfo.location, fileMetadata.destFileName);
+			try
+			{
+				// Issue a GET response
+				m_HttpClient.DefaultRequestHeaders.Add("Authorization", "Bearer ${accessToken}");
+				var response = m_HttpClient.Get(fileMetadata.PresignedUrl);
 
-                    var digest = response.Result.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
-                    var contentLength = response.Result.Headers.GetValues("content-length");
+				var digest = response.Headers.GetValues(GCS_METADATA_SFC_DIGEST);
+				var contentLength = response.Headers.GetValues("content-length");
 
-                    fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
+				fileMetadata.ResultStatus = ResultStatus.UPLOADED.ToString();
 
-                    return new FileHeader
-                    {
-                        digest = digest.ToString(),
-                        contentLength = Convert.ToInt64(contentLength)
-                    };
-                }
-                catch (Exception ex)
-                {
-                    // If file doesn't exist, GET request fails
-                    HttpRequestException err = (HttpRequestException)ex.InnerException;
-                    fileMetadata.lastError = err;
-                    if (err.Message.Contains("401"))
-                    {
-                        fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
-                    }
-                    else if (err.Message.Contains("403") ||
-                        err.Message.Contains("500") ||
-                        err.Message.Contains("503"))
-                    {
-                        fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
-                    }
-                    else if (err.Message.Contains("404"))
-                    {
-                        fileMetadata.resultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
-                    }
-                    else
-                    {
-                        fileMetadata.resultStatus = ResultStatus.ERROR.ToString();
-                    }
-                }
-            }
-            return null;
-        }
+				return new FileHeader
+				{
+					digest = digest.ToString(),
+					contentLength = Convert.ToInt64(contentLength, CultureInfo.InvariantCulture)
+				};
+			}
+			catch (HttpRequestException err)
+			{
+				// If file doesn't exist, GET request fails
+				fileMetadata.LastError = err;
+				if (err.Message.Contains("401", StringComparison.Ordinal))
+				{
+					fileMetadata.ResultStatus = ResultStatus.RENEW_TOKEN.ToString();
+				}
+				else if (err.Message.Contains("403", StringComparison.Ordinal) ||
+					err.Message.Contains("500", StringComparison.Ordinal) ||
+					err.Message.Contains("503", StringComparison.Ordinal))
+				{
+					fileMetadata.ResultStatus = ResultStatus.NEED_RETRY.ToString();
+				}
+				else if (err.Message.Contains("404", StringComparison.Ordinal))
+				{
+					fileMetadata.ResultStatus = ResultStatus.NOT_FOUND_FILE.ToString();
+				}
+				else
+				{
+					fileMetadata.ResultStatus = ResultStatus.ERROR.ToString();
+				}
+			}
+		}
+		return null;
+	}
 
-        /// <summary>
-        /// Generate the file URL.
-        /// </summary>
-        /// <param name="stageLocation">The GCS file metadata.</param>
-        /// <param name="fileName">The GCS file metadata.</param>
-        internal string generateFileURL(string stageLocation, string fileName)
-        {
-            var gcsLocation = ExtractBucketNameAndPath(stageLocation);
-            var fullFilePath = gcsLocation.key + fileName;
-            var link = "https://storage.googleapis.com/" + gcsLocation.bucket + "/" + fullFilePath;
-            return link;
-        }
+	/// <summary>
+	/// Generate the file URL.
+	/// </summary>
+	/// <param name="stageLocation">The GCS file metadata.</param>
+	/// <param name="fileName">The GCS file metadata.</param>
+	static string GenerateFileURL(string stageLocation, string fileName)
+	{
+		var gcsLocation = ExtractBucketNameAndPath(stageLocation);
+		var fullFilePath = gcsLocation.Key + fileName;
+		var link = "https://storage.googleapis.com/" + gcsLocation.Bucket + "/" + fullFilePath;
+		return link;
+	}
 
-        /// <summary>
-        /// Upload the file to the GCS location.
-        /// </summary>
-        /// <param name="fileMetadata">The GCS file metadata.</param>
-        /// <param name="fileBytes">The file bytes to upload.</param>
-        /// <param name="encryptionMetadata">The encryption metadata for the header.</param>
-        public void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
-        {
-            // Create the encryption header value
-            string encryptionData = JsonConvert.SerializeObject(new EncryptionData
-            {
-                EncryptionMode = "FullBlob",
-                WrappedContentKey = new WrappedContentInfo
-                {
-                    KeyId = "symmKey1",
-                    EncryptedKey = encryptionMetadata.key,
-                    Algorithm = "AES_CBC_256"
-                },
-                EncryptionAgent = new EncryptionAgentInfo
-                {
-                    Protocol = "1.0",
-                    EncryptionAlgorithm = "AES_CBC_256"
-                },
-                ContentEncryptionIV = encryptionMetadata.iv,
-                KeyWrappingMetadata = new KeyWrappingMetadataInfo
-                {
-                    EncryptionLibrary = "Java 5.3.0"
-                }
-            });
+	/// <summary>
+	/// Upload the file to the GCS location.
+	/// </summary>
+	/// <param name="fileMetadata">The GCS file metadata.</param>
+	/// <param name="fileBytes">The file bytes to upload.</param>
+	/// <param name="encryptionMetadata">The encryption metadata for the header.</param>
+	public void UploadFile(SFFileMetadata fileMetadata, byte[] fileBytes, SFEncryptionMetadata encryptionMetadata)
+	{
+		// Create the encryption header value
+		var encryptionData = JsonConvert.SerializeObject(new EncryptionData
+		{
+			EncryptionMode = "FullBlob",
+			WrappedContentKey = new WrappedContentInfo
+			{
+				KeyId = "symmKey1",
+				EncryptedKey = encryptionMetadata.key,
+				Algorithm = "AES_CBC_256"
+			},
+			EncryptionAgent = new EncryptionAgentInfo
+			{
+				Protocol = "1.0",
+				EncryptionAlgorithm = "AES_CBC_256"
+			},
+			ContentEncryptionIV = encryptionMetadata.iv,
+			KeyWrappingMetadata = new KeyWrappingMetadataInfo
+			{
+				EncryptionLibrary = "Java 5.3.0"
+			}
+		});
 
-            // Set the meta header values
-            HttpClient.DefaultRequestHeaders.Add("x-goog-meta-sfc-digest", fileMetadata.sha256Digest);
-            HttpClient.DefaultRequestHeaders.Add("x-goog-meta-matdesc", encryptionMetadata.matDesc);
-            HttpClient.DefaultRequestHeaders.Add("x-goog-meta-encryptiondata", encryptionData);
+		// Set the meta header values
+		m_HttpClient.DefaultRequestHeaders.Add("x-goog-meta-sfc-digest", fileMetadata.Sha256Digest);
+		m_HttpClient.DefaultRequestHeaders.Add("x-goog-meta-matdesc", encryptionMetadata.matDesc);
+		m_HttpClient.DefaultRequestHeaders.Add("x-goog-meta-encryptiondata", encryptionData);
 
-            // Convert file bytes to stream
-            StreamContent strm = new StreamContent(new MemoryStream(fileBytes));
-            // Set the stream content type
-            strm.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+		// Convert file bytes to stream
+		using var strm = new StreamContent(new MemoryStream(fileBytes));
+		// Set the stream content type
+		strm.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
-            try
-            {
-                // Issue the POST/PUT request
-                Task<HttpResponseMessage> response = HttpClient.PutAsync(fileMetadata.presignedUrl, strm);
-                response.Wait();
-            }
-            catch (Exception ex)
-            {
-                HttpRequestException err = (HttpRequestException)ex.InnerException;
-                fileMetadata.lastError = err;
-                if (err.Message.Contains("400") && GCS_ACCESS_TOKEN != null)
-                {
-                    fileMetadata.resultStatus = ResultStatus.RENEW_PRESIGNED_URL.ToString();
-                }
-                else if (err.Message.Contains("401"))
-                {
-                    fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
-                }
-                else if (err.Message.Contains("403") ||
-                    err.Message.Contains("500") ||
-                    err.Message.Contains("503"))
-                {
-                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
-                }
-                return;
-            }
+		try
+		{
+			// Issue the POST/PUT request
+			var response = m_HttpClient.Put(fileMetadata.PresignedUrl, strm);
+		}
+		catch (HttpRequestException err)
+		{
+			fileMetadata.LastError = err;
+			if (err.Message.Contains("400", StringComparison.Ordinal))
+			{
+				fileMetadata.ResultStatus = ResultStatus.RENEW_PRESIGNED_URL.ToString();
+			}
+			else if (err.Message.Contains("401", StringComparison.Ordinal))
+			{
+				fileMetadata.ResultStatus = ResultStatus.RENEW_TOKEN.ToString();
+			}
+			else if (err.Message.Contains("403", StringComparison.Ordinal) ||
+				err.Message.Contains("500", StringComparison.Ordinal) ||
+				err.Message.Contains("503", StringComparison.Ordinal))
+			{
+				fileMetadata.ResultStatus = ResultStatus.NEED_RETRY.ToString();
+			}
+			return;
+		}
 
-            fileMetadata.destFileSize = fileMetadata.uploadSize;
-            fileMetadata.resultStatus = ResultStatus.UPLOADED.ToString();
-        }
+		fileMetadata.DestFileSize = fileMetadata.UploadSize;
+		fileMetadata.ResultStatus = ResultStatus.UPLOADED.ToString();
+	}
 
-        /// <summary>
-        /// Download the file to the local location.
-        /// </summary>
-        /// <param name="fileMetadata">The GCS file metadata.</param>
-        /// <param name="fullDstPath">The local location to store downloaded file into.</param>
-        /// <param name="maxConcurrency">Number of max concurrency.</param>
-        public void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency)
-        {
-            try
-            {
-                // Issue the POST/PUT request
-                var task = HttpClient.GetAsync(fileMetadata.presignedUrl);
-                task.Wait();
+	/// <summary>
+	/// Download the file to the local location.
+	/// </summary>
+	/// <param name="fileMetadata">The GCS file metadata.</param>
+	/// <param name="fullDstPath">The local location to store downloaded file into.</param>
+	/// <param name="maxConcurrency">Number of max concurrency.</param>
+	public void DownloadFile(SFFileMetadata fileMetadata, string fullDstPath, int maxConcurrency)
+	{
+		try
+		{
+			// Issue the POST/PUT request
+			var response = m_HttpClient.Get(fileMetadata.PresignedUrl);
 
-                HttpResponseMessage response = task.Result;
-                // Write to file
-                using (var fileStream = File.Create(fullDstPath))
-                {
-                    var responseTask = response.Content.ReadAsStreamAsync();
-                    responseTask.Wait();
+			// Write to file
+			using (var fileStream = File.Create(fullDstPath))
+			{
+				var responseTask = response.Content.ReadAsStreamAsync();
+				responseTask.Wait();
 
-                    responseTask.Result.CopyTo(fileStream);
-                }
+				responseTask.Result.CopyTo(fileStream);
+			}
 
-                HttpResponseHeaders headers = response.Headers;
-                IEnumerable<string> values;
+			var headers = response.Headers;
 
-                // Get header values
-                dynamic encryptionData = null;
-                if (headers.TryGetValues(GCS_METADATA_ENCRYPTIONDATAPROP, out values))
-                {
-                    encryptionData = JsonConvert.DeserializeObject(values.First());
-                }
+			// Get header values
+			dynamic? encryptionData = null;
+			if (headers.TryGetValues(GCS_METADATA_ENCRYPTIONDATAPROP, out var values1))
+			{
+				encryptionData = JsonConvert.DeserializeObject(values1.First());
+			}
 
-                string matDesc = null;
-                if (headers.TryGetValues(GCS_METADATA_MATDESC_KEY, out values))
-                {
-                    matDesc = values.First();
-                }
+			string? matDesc = null;
+			if (headers.TryGetValues(GCS_METADATA_MATDESC_KEY, out var values2))
+			{
+				matDesc = values2.First();
+			}
 
-                // Get encryption metadata from encryption data header value
-                SFEncryptionMetadata encryptionMetadata = null;
-                if (encryptionData != null)
-                {
-                    encryptionMetadata = new SFEncryptionMetadata
-                    {
-                        iv = encryptionData["ContentEncryptionIV"],
-                        key = encryptionData["WrappedContentKey"]["EncryptedKey"],
-                        matDesc = matDesc
-                    };
-                    fileMetadata.encryptionMetadata = encryptionMetadata;
-                }
+			// Get encryption metadata from encryption data header value
+			SFEncryptionMetadata? encryptionMetadata = null;
+			if (encryptionData != null)
+			{
+				encryptionMetadata = new SFEncryptionMetadata
+				{
+					iv = encryptionData["ContentEncryptionIV"],
+					key = encryptionData["WrappedContentKey"]["EncryptedKey"],
+					matDesc = matDesc
+				};
+				fileMetadata.EncryptionMetadata = encryptionMetadata;
+			}
 
-                if (headers.TryGetValues(GCS_METADATA_SFC_DIGEST, out values))
-                {
-                    fileMetadata.sha256Digest = values.First();
-                }
+			if (headers.TryGetValues(GCS_METADATA_SFC_DIGEST, out var values3))
+			{
+				fileMetadata.Sha256Digest = values3.First();
+			}
 
-                if (headers.TryGetValues(GCS_FILE_HEADER_CONTENT_LENGTH, out values))
-                {
-                    fileMetadata.srcFileSize = (long)Convert.ToDouble(values.First());
-                }
-            }
-            catch (Exception ex)
-            {
-                HttpRequestException err = (HttpRequestException)ex.InnerException;
-                fileMetadata.lastError = err;
-                if (err.Message.Contains("401"))
-                {
-                    fileMetadata.resultStatus = ResultStatus.RENEW_TOKEN.ToString();
-                }
-                else if (err.Message.Contains("403") ||
-                    err.Message.Contains("500") ||
-                    err.Message.Contains("503"))
-                {
-                    fileMetadata.resultStatus = ResultStatus.NEED_RETRY.ToString();
-                }
-                return;
-            }
+			if (headers.TryGetValues(GCS_FILE_HEADER_CONTENT_LENGTH, out var values4))
+			{
+				fileMetadata.SrcFileSize = (long)Convert.ToDouble(values4.First(), CultureInfo.InvariantCulture);
+			}
+		}
+		catch (HttpRequestException err)
+		{
+			fileMetadata.LastError = err;
+			if (err.Message.Contains("401", StringComparison.Ordinal))
+			{
+				fileMetadata.ResultStatus = ResultStatus.RENEW_TOKEN.ToString();
+			}
+			else if (err.Message.Contains("403", StringComparison.Ordinal) ||
+				err.Message.Contains("500", StringComparison.Ordinal) ||
+				err.Message.Contains("503", StringComparison.Ordinal))
+			{
+				fileMetadata.ResultStatus = ResultStatus.NEED_RETRY.ToString();
+			}
+			return;
+		}
 
-            fileMetadata.resultStatus = ResultStatus.DOWNLOADED.ToString();
-        }
-    }
+		fileMetadata.ResultStatus = ResultStatus.DOWNLOADED.ToString();
+	}
+
+	public void Dispose()
+	{
+		m_StorageClient.Dispose();
+		m_HttpClient.Dispose();
+	}
 }

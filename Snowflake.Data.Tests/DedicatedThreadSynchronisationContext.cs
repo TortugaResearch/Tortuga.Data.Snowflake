@@ -1,128 +1,91 @@
-﻿using NUnit.Framework;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
+﻿using System.Collections.Concurrent;
 
-namespace Snowflake.Data.Tests
+namespace Tortuga.Data.Snowflake.Tests;
+/*
+ * This can be used to test what happens when a library metod is called from a SyncronizationContext.
+ * If there are any deadlocks in the code, this will trigger the deadlock.
+ *
+ * Usage:
+ *      DedicatedThreadSynchronisationContext.RunInContext(_ => TestSimpleLargeResultSet());
+ *
+ */
+
+public sealed class DedicatedThreadSynchronisationContext : SynchronizationContext, IDisposable
 {
-    /*
-     * This class will not deadlock, but it will cause tests to fail if the Send or Post methods have been called during a test
-     */
-    public sealed class MockSynchronizationContext : SynchronizationContext
-    {
-        int callCount = 0;
+	public DedicatedThreadSynchronisationContext()
+	{
+		m_thread = new Thread(ThreadWorkerDelegate);
+		m_thread.Start(this);
+	}
 
-        public override void Post(SendOrPostCallback d, object state)
-        {
-            callCount++;
-            base.Post(d, state);
-        }
+	public void Dispose()
+	{
+		m_queue.CompleteAdding();
+	}
 
-        public override void Send(SendOrPostCallback d, object state)
-        {
-            callCount++;
-            base.Send(d, state);
-        }
+	/// <summary>Dispatches an asynchronous message to the synchronization context.</summary>
+	/// <param name="d">The System.Threading.SendOrPostCallback delegate to call.</param>
+	/// <param name="state">The object passed to the delegate.</param>
+	public override void Post(SendOrPostCallback d, object state)
+	{
+		if (d == null)
+			throw new ArgumentNullException(nameof(d));
 
-        public static void SetupContext()
-        {
-            SynchronizationContext.SetSynchronizationContext(new MockSynchronizationContext());
-        }
+		m_queue.Add(new KeyValuePair<SendOrPostCallback, object>(d, state));
+	}
 
-        public static void Verify()
-        {
-            MockSynchronizationContext ctx = (MockSynchronizationContext)SynchronizationContext.Current;
-            Assert.Zero(ctx.callCount, "MockSynchronizationContext was called - this can cause deadlock. Make sure ConfigureAwait(false) is used in every await point in the library");
-            SynchronizationContext.SetSynchronizationContext(null);
-        }
-    }
+	/// <summary> As
+	public override void Send(SendOrPostCallback d, object state)
+	{
+		using (var handledEvent = new ManualResetEvent(false))
+		{
+			Post(SendOrPostCallback_BlockingWrapper, Tuple.Create(d, state, handledEvent));
+			handledEvent.WaitOne();
+		}
+	}
 
-    /*
-     * This can be used to test what happens when a library metod is called from a SyncronizationContext.
-     * If there are any deadlocks in the code, this will trigger the deadlock.
-     * 
-     * Usage: 
-     *      DedicatedThreadSynchronisationContext.RunInContext(_ => TestSimpleLargeResultSet());
-     * 
-     */
-    public sealed class DedicatedThreadSynchronisationContext : SynchronizationContext, IDisposable
-    {
-        public DedicatedThreadSynchronisationContext()
-        {
-            m_thread = new Thread(ThreadWorkerDelegate);
-            m_thread.Start(this);
-        }
+	public int WorkerThreadId { get { return m_thread.ManagedThreadId; } }
 
-        public void Dispose()
-        {
-            m_queue.CompleteAdding();
-        }
+	// This will run the callback in a synchronizationContext that is equivalent to a GUI or ASP.Net program
+	// If there are any async problems in the method, this code will provoke the deadlock.
+	public static void RunInContext(SendOrPostCallback d)
+	{
+		using (var ctx = new DedicatedThreadSynchronisationContext())
+		{
+			ctx.Send(d, null);
+		}
+	}
 
-        /// <summary>Dispatches an asynchronous message to the synchronization context.</summary>
-        /// <param name="d">The System.Threading.SendOrPostCallback delegate to call.</param>
-        /// <param name="state">The object passed to the delegate.</param>
-        public override void Post(SendOrPostCallback d, object state)
-        {
-            if (d == null) throw new ArgumentNullException("d");
-            m_queue.Add(new KeyValuePair<SendOrPostCallback, object>(d, state));
-        }
+	//=========================================================================================
 
-        /// <summary> As 
-        public override void Send(SendOrPostCallback d, object state)
-        {
-            using (var handledEvent = new ManualResetEvent(false))
-            {
-                Post(SendOrPostCallback_BlockingWrapper, Tuple.Create(d, state, handledEvent));
-                handledEvent.WaitOne();
-            }
-        }
+	private static void SendOrPostCallback_BlockingWrapper(object state)
+	{
+		var innerCallback = (state as Tuple<SendOrPostCallback, object, ManualResetEvent>);
+		try
+		{
+			innerCallback.Item1(innerCallback.Item2);
+		}
+		finally
+		{
+			innerCallback.Item3.Set();
+		}
+	}
 
-        public int WorkerThreadId { get { return m_thread.ManagedThreadId; } }
+	/// <summary>The queue of work items.</summary>
+	private readonly BlockingCollection<KeyValuePair<SendOrPostCallback, object>> m_queue = new();
 
-        // This will run the callback in a synchronizationContext that is equivalent to a GUI or ASP.Net program 
-        // If there are any async problems in the method, this code will provoke the deadlock.
-        public static void RunInContext(SendOrPostCallback d)
-        {
-            using (var ctx = new DedicatedThreadSynchronisationContext())
-            {
-                ctx.Send(d, null);
-            }
-        }
+	private readonly Thread m_thread = null;
 
-        //=========================================================================================
+	/// <summary>Runs a loop to process all queued work items.</summary>
+	private void ThreadWorkerDelegate(object obj)
+	{
+		SynchronizationContext.SetSynchronizationContext(obj as SynchronizationContext);
 
-        private static void SendOrPostCallback_BlockingWrapper(object state)
-        {
-            var innerCallback = (state as Tuple<SendOrPostCallback, object, ManualResetEvent>);
-            try
-            {
-                innerCallback.Item1(innerCallback.Item2);
-            }
-            finally
-            {
-                innerCallback.Item3.Set();
-            }
-        }
-
-        /// <summary>The queue of work items.</summary>
-        private readonly BlockingCollection<KeyValuePair<SendOrPostCallback, object>> m_queue =
-            new BlockingCollection<KeyValuePair<SendOrPostCallback, object>>();
-
-        private readonly Thread m_thread = null;
-
-        /// <summary>Runs a loop to process all queued work items.</summary>
-        private void ThreadWorkerDelegate(object obj)
-        {
-            SynchronizationContext.SetSynchronizationContext(obj as SynchronizationContext);
-
-            try
-            {
-                foreach (var workItem in m_queue.GetConsumingEnumerable())
-                    workItem.Key(workItem.Value);
-            }
-            catch (ObjectDisposedException) { }
-        }
-    }
+		try
+		{
+			foreach (var workItem in m_queue.GetConsumingEnumerable())
+				workItem.Key(workItem.Value);
+		}
+		catch (ObjectDisposedException) { }
+	}
 }

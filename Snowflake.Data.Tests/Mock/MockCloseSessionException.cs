@@ -1,74 +1,69 @@
 ﻿/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
-using System.Collections.Generic;
 
-namespace Snowflake.Data.Tests.Mock
+using Tortuga.Data.Snowflake.Core.Messages;
+using Tortuga.Data.Snowflake.Core.RequestProcessing;
+
+namespace Tortuga.Data.Snowflake.Tests.Mock;
+
+class MockCloseSessionException : IMockRestRequester
 {
-    using System.Net.Http;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Snowflake.Data.Client;
-    using Snowflake.Data.Core;
+	static internal readonly int SESSION_CLOSE_ERROR = 390111;
 
-    class MockCloseSessionException : IMockRestRequester
-    {
-        static internal readonly int SESSION_CLOSE_ERROR = 390111;
+	public T Get<T>(RestRequest request)
+	{
+		return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None)).Result;
+	}
 
-        public T Get<T>(IRestRequest request)
-        {
-            return Task.Run(async () => await GetAsync<T>(request, CancellationToken.None)).Result;
-        }
+	public Task<T> GetAsync<T>(RestRequest request, CancellationToken cancellationToken)
+	{
+		return Task.FromResult<T>((T)(object)null);
+	}
 
-        public Task<T> GetAsync<T>(IRestRequest request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<T>((T)(object)null);
-        }
+	public Task<HttpResponseMessage> GetAsync(RestRequest request, CancellationToken cancellationToken)
+	{
+		return Task.FromResult<HttpResponseMessage>(null);
+	}
 
-        public Task<HttpResponseMessage> GetAsync(IRestRequest request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<HttpResponseMessage>(null);
-        }
+	public HttpResponseMessage Get(RestRequest request)
+	{
+		return null;
+	}
 
-        public HttpResponseMessage Get(IRestRequest request)
-        {
-            return null;
-        }
+	public T Post<T>(RestRequest postRequest)
+	{
+		return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None)).Result;
+	}
 
-        public T Post<T>(IRestRequest postRequest)
-        {
-            return Task.Run(async () => await PostAsync<T>(postRequest, CancellationToken.None)).Result;
-        }
+	public Task<T> PostAsync<T>(RestRequest postRequest, CancellationToken cancellationToken)
+	{
+		SFRestRequest sfRequest = (SFRestRequest)postRequest;
+		if (sfRequest.JsonBody is LoginRequest)
+		{
+			LoginResponse authnResponse = new LoginResponse
+			{
+				Data = new LoginResponseData()
+				{
+					Token = "session_token",
+					MasterToken = "master_token",
+					AuthResponseSessionInfo = new SessionInfo(),
+					NameValueParameter = new List<NameValueParameter>()
+				},
+				Success = true
+			};
 
-        public Task<T> PostAsync<T>(IRestRequest postRequest, CancellationToken cancellationToken)
-        {
-            SFRestRequest sfRequest = (SFRestRequest)postRequest;
-            if (sfRequest.jsonBody is LoginRequest)
-            {
-                LoginResponse authnResponse = new LoginResponse
-                {
-                    data = new LoginResponseData()
-                    {
-                        token = "session_token",
-                        masterToken = "master_token",
-                        authResponseSessionInfo = new SessionInfo(),
-                        nameValueParameter = new List<NameValueParameter>()
-                    },
-                    success = true
-                };
+			// login request return success
+			return Task.FromResult<T>((T)(object)authnResponse);
+		}
+		else
+		{
+			throw new SFException("", SESSION_CLOSE_ERROR, "Mock generated error", null);
+		}
+	}
 
-                // login request return success
-                return Task.FromResult<T>((T)(object)authnResponse);
-            }
-            else
-            {
-                throw new SnowflakeDbException("", SESSION_CLOSE_ERROR, "Mock generated error", null);
-            }
-        }
-
-        public void setHttpClient(HttpClient httpClient)
-        {
-            // Nothing to do
-        }
-    }
+	public void setHttpClient(HttpClient httpClient)
+	{
+		// Nothing to do
+	}
 }

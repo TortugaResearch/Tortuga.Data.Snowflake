@@ -2,24 +2,17 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+namespace Tortuga.Data.Snowflake.Core;
 
-namespace Snowflake.Data.Core
+class BindingDTO
 {
-    public class BindingDTO
-    {
-        public BindingDTO(string type, object value)
-        {
-            this.type = type;
-            this.value = value;
-        }
+	public BindingDTO(string type, object? value)
+	{
+		this.type = type;
+		this.value = value;
+	}
 
-        public string type { get; set;  }
+	public string type { get; set; }
 
-        public object value { get; set; }
-    }
+	public object? value { get; set; }
 }

@@ -1,0 +1,223 @@
+﻿/*
+ * Copyright (c) 2012-2021 Snowflake Computing Inc. All rights reserved.
+ */
+
+using System.ComponentModel;
+using System.Data;
+using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using System.Security;
+using Tortuga.Data.Snowflake.Core;
+using Tortuga.Data.Snowflake.Core.Sessions;
+
+namespace Tortuga.Data.Snowflake;
+
+[DesignerCategory("Code")]
+public class SFConnection : DbConnection
+{
+	internal ConnectionState m_ConnectionState;
+	internal int m_ConnectionTimeout;
+
+	string m_ConnectionString = "";
+
+	public SFConnection()
+	{
+		m_ConnectionState = ConnectionState.Closed;
+		m_ConnectionTimeout = int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttribute>()?.DefaultValue ?? "0", CultureInfo.InvariantCulture);
+	}
+
+	[AllowNull]
+	public override string ConnectionString
+	{
+		get => m_ConnectionString;
+		set => m_ConnectionString = value ?? "";
+	}
+
+	public override int ConnectionTimeout => this.m_ConnectionTimeout;
+
+	public override string Database => SfSession?.m_Database ?? "";
+
+	/// <summary>
+	///     If the connection to the database is closed, the DataSource returns whatever is contained
+	///     in the ConnectionString for the DataSource keyword. If the connection is open and the
+	///     ConnectionString data source keyword's value starts with "|datadirectory|", the property
+	///     returns whatever is contained in the ConnectionString for the DataSource keyword only. If
+	///     the connection to the database is open, the property returns what the native provider
+	///     returns for the DBPROP_INIT_DATASOURCE, and if that is empty, the native provider's
+	///     DBPROP_DATASOURCENAME is returned.
+	///     Note: not yet implemented
+	/// </summary>
+	public override string DataSource => "";
+
+	public SecureString? Password { get; set; }
+
+	public override string ServerVersion => SfSession?.m_ServerVersion ?? "";
+	public override ConnectionState State => m_ConnectionState;
+	internal SFSession? SfSession { get; set; }
+
+	SFConfiguration m_Configuration = SFConfiguration.Default;
+
+	/// <summary>
+	/// Gets or sets the configuration.
+	/// </summary>
+	/// <value>The configuration.</value>
+	/// <remarks>This defaults to SnowflakeDbConfiguration.Default.</remarks>
+	public SFConfiguration Configuration
+	{
+		get => m_Configuration;
+		set
+		{
+			if (m_Configuration == value)
+				return;
+
+			if (State != ConnectionState.Closed)
+				throw new InvalidOperationException("Cannot change configuration while the connection is open.");
+
+			m_Configuration = value;
+		}
+	}
+
+	public override void ChangeDatabase(string databaseName)
+	{
+		var alterDbCommand = $"use database {databaseName}";
+
+		using (var cmd = CreateCommand())
+		{
+			cmd.CommandText = alterDbCommand;
+			cmd.ExecuteNonQuery();
+		}
+	}
+
+	public async Task ChangeDatabaseAsync(string databaseName)
+	{
+		string alterDbCommand = $"use database {databaseName}";
+
+		using (var cmd = CreateCommand())
+		{
+			cmd.CommandText = alterDbCommand;
+			await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+		}
+	}
+
+	public override void Close()
+	{
+		if (m_ConnectionState != ConnectionState.Closed && SfSession != null)
+			SfSession.Close();
+		m_ConnectionState = ConnectionState.Closed;
+	}
+
+	public async Task CloseAsync(CancellationToken cancellationToken)
+	{
+		if (m_ConnectionState != ConnectionState.Closed && SfSession != null)
+			await SfSession.CloseAsync(cancellationToken).ConfigureAwait(false);
+		m_ConnectionState = ConnectionState.Closed;
+	}
+
+	public bool IsOpen() => m_ConnectionState == ConnectionState.Open;
+
+	public override void Open()
+	{
+		SetSession();
+		try
+		{
+			SfSession!.Open();
+		}
+		catch (SFException)
+		{
+			m_ConnectionState = ConnectionState.Closed;
+			throw;
+		}
+		catch (Exception e)
+		{
+			// Otherwise when Dispose() is called, the close request would timeout.
+			m_ConnectionState = ConnectionState.Closed;
+			throw new SFException(e, SFException.CONNECTION_FAILURE_SSTATE, SFError.InternalError, "Unable to connect. " + e.Message);
+		}
+		m_ConnectionState = ConnectionState.Open;
+	}
+
+	public override async Task OpenAsync(CancellationToken cancellationToken)
+	{
+		RegisterConnectionCancellationCallback(cancellationToken);
+		SetSession();
+		try
+		{
+			await SfSession!.OpenAsync(cancellationToken).ConfigureAwait(false);
+		}
+		catch (SFException)
+		{
+			m_ConnectionState = ConnectionState.Closed;
+			throw;
+		}
+		catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
+		{
+			m_ConnectionState = ConnectionState.Closed;
+			throw;
+		}
+		catch (Exception ex)
+		{
+			// Otherwise when Dispose() is called, the close request would timeout.
+			m_ConnectionState = ConnectionState.Closed;
+			throw new SFException(ex, SFException.CONNECTION_FAILURE_SSTATE, SFError.InternalError, "Unable to connect. " + ex.Message);
+		}
+		m_ConnectionState = ConnectionState.Open;
+	}
+
+	/// <summary>
+	///     Register cancel callback. Two factors: either external cancellation token passed down from upper
+	///     layer or timeout reached. Whichever comes first would trigger query cancellation.
+	/// </summary>
+	/// <param name="externalCancellationToken">cancellation token from upper layer</param>
+	internal void RegisterConnectionCancellationCallback(CancellationToken externalCancellationToken)
+	{
+		if (!externalCancellationToken.IsCancellationRequested)
+		{
+			externalCancellationToken.Register(() => { m_ConnectionState = ConnectionState.Closed; });
+		}
+	}
+
+	protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
+	{
+		// Parameterless BeginTransaction() method of the super class calls this method with IsolationLevel.Unspecified,
+		// Change the isolation level to ReadCommitted
+		if (isolationLevel == IsolationLevel.Unspecified)
+		{
+			isolationLevel = IsolationLevel.ReadCommitted;
+		}
+
+		return new SFTransaction(isolationLevel, this);
+	}
+
+	protected override DbCommand CreateDbCommand()
+	{
+		return new SFCommand(this);
+	}
+
+	protected override void Dispose(bool disposing)
+	{
+		try
+		{
+			Close();
+		}
+		catch
+		{
+			// Prevent an exception from being thrown when disposing of this object
+		}
+		base.Dispose(disposing);
+	}
+
+	/// <summary>
+	/// Create a new SFSession with the connection string settings.
+	/// </summary>
+	/// <exception cref="SFException">If the connection string can't be processed</exception>
+	private void SetSession()
+	{
+		if (ConnectionString == null)
+			throw new InvalidOperationException($"{nameof(ConnectionString)} is null");
+
+		SfSession = new SFSession(ConnectionString, Password, Configuration);
+		m_ConnectionTimeout = (int)SfSession.m_ConnectionTimeout.TotalSeconds;
+		m_ConnectionState = ConnectionState.Connecting;
+	}
+}

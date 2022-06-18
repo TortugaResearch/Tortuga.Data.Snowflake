@@ -2,553 +2,567 @@
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
-using System;
+using NUnit.Framework;
 using System.Data;
+using System.Text;
 
-namespace Snowflake.Data.Tests
+namespace Tortuga.Data.Snowflake.Tests;
+
+[TestFixture]
+class SFBindTestIT : SFBaseTest
 {
-    using NUnit.Framework;
-    using Snowflake.Data.Client;
-    using Snowflake.Data.Core;
-    using System.Text;
+	[Test]
+	public void TestArrayBind()
+	{
+		using (var conn = new SFConnection())
+		{
+			conn.ConnectionString = ConnectionString;
+			conn.Open();
 
-    [TestFixture]    
-    class SFBindTestIT : SFBaseTest
-    {
-        [Test]
-        public void testArrayBind()
-        {
-            using (IDbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+			using (var cmd = conn.CreateCommand())
+			{
+				cmd.CommandText = "create or replace table testArrayBind(cola integer, colb string)";
+				int count = cmd.ExecuteNonQuery();
+				Assert.AreEqual(0, count);
 
-                using (IDbCommand cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = "create or replace table testArrayBind(cola integer, colb string)";
-                    int count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(0, count);
+				string insertCommand = "insert into testArrayBind values (?, ?)";
+				cmd.CommandText = insertCommand;
 
-                    string insertCommand = "insert into testArrayBind values (?, ?)";
-                    cmd.CommandText = insertCommand;
+				var p1 = cmd.CreateParameter();
+				p1.ParameterName = "1";
+				p1.DbType = DbType.Int16;
+				p1.Value = new int[] { 1, 2, 3 };
+				cmd.Parameters.Add(p1);
 
-                    var p1 = cmd.CreateParameter();
-                    p1.ParameterName = "1";
-                    p1.DbType = DbType.Int16;
-                    p1.Value = new int[] { 1, 2, 3 };
-                    cmd.Parameters.Add(p1);
+				var p2 = cmd.CreateParameter();
+				p2.ParameterName = "2";
+				p2.DbType = DbType.String;
+				p2.Value = new string[] { "str1", "str2", "str3" };
+				cmd.Parameters.Add(p2);
 
-                    var p2 = cmd.CreateParameter();
-                    p2.ParameterName = "2";
-                    p2.DbType = DbType.String;
-                    p2.Value = new string[] { "str1", "str2", "str3" };
-                    cmd.Parameters.Add(p2);
+				count = cmd.ExecuteNonQuery();
+				Assert.AreEqual(3, count);
 
-                    count = cmd.ExecuteNonQuery();
-                    Assert.AreEqual(3, count);
+				cmd.CommandText = "drop table if exists testArrayBind";
+				cmd.ExecuteNonQuery();
+			}
 
-                    cmd.CommandText = "drop table if exists testArrayBind";
-                    cmd.ExecuteNonQuery();
-                }
+			conn.Close();
+		}
+	}
 
-                conn.Close();
-            }
-        }
+	[Test]
+	public void TestBindNullValue()
+	{
+		using (var dbConnection = new SFConnection())
+		{
+			dbConnection.ConnectionString = ConnectionString;
+			dbConnection.Open();
+			try
+			{
+				using (var command = dbConnection.CreateCommand())
+				{
+					command.CommandText = "create or replace table TEST_TBL (" +
+						"intData NUMBER," +
+						"fixedNumericData NUMBER(10,1), " +
+						"floatingNumData DOUBLE," +
+						"stringData VARCHAR, " +
+						"binaryData BINARY, " +
+						"boolData BOOLEAN, " +
+						"dateData DATE, " +
+						"timeData TIME, " +
+						"dateTimeData DATETIME, " +
+						"dateTimeWithTimeZone TIMESTAMP_TZ);";
+					command.ExecuteNonQuery();
+				}
 
-        [Test]
-        public void testBindNullValue()
-        {
-            using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
-            {
-                dbConnection.ConnectionString = ConnectionString;
-                dbConnection.Open();
-                try
-                {
-                    using (IDbCommand command = dbConnection.CreateCommand())
-                    {
-                        command.CommandText = "create or replace table TEST_TBL (" +
-                            "intData NUMBER," +
-                            "fixedNumericData NUMBER(10,1), " +
-                            "floatingNumData DOUBLE," +
-                            "stringData VARCHAR, " +
-                            "binaryData BINARY, " +
-                            "boolData BOOLEAN, " +
-                            "dateData DATE, " +
-                            "timeData TIME, " +
-                            "dateTimeData DATETIME, " +
-                            "dateTimeWithTimeZone TIMESTAMP_TZ);";
-                        command.ExecuteNonQuery();
-                    }
-                    
-                    foreach (DbType type in Enum.GetValues(typeof(DbType)))
-                    {
-                        bool isTypeSupported = true;
-                        string colName = null;
-                        using (IDbCommand command = dbConnection.CreateCommand())
-                        {
-                            var param = command.CreateParameter();
-                            param.ParameterName = "p0";
-                            param.DbType = type;
+				foreach (DbType type in Enum.GetValues(typeof(DbType)))
+				{
+					var isTypeSupported = true;
+					string colName = null;
+					using (var command = dbConnection.CreateCommand())
+					{
+						var param = command.CreateParameter();
+						param.ParameterName = "p0";
+						param.DbType = type;
 
-                            switch (type)
-                            {
-                                case DbType.SByte:
-                                case DbType.Int16:
-                                case DbType.Int32:
-                                case DbType.Int64:
-                                case DbType.Byte:
-                                case DbType.UInt16:
-                                case DbType.UInt32:
-                                case DbType.UInt64:
-                                    colName = "intData";
-                                    break;
-                                case DbType.Decimal:
-                                case DbType.VarNumeric:
-                                    colName = "fixedNumericData";
-                                    break;
+						switch (type)
+						{
+							case DbType.SByte:
+							case DbType.Int16:
+							case DbType.Int32:
+							case DbType.Int64:
+							case DbType.Byte:
+							case DbType.UInt16:
+							case DbType.UInt32:
+							case DbType.UInt64:
+								colName = "intData";
+								break;
 
-                                case DbType.Boolean:
-                                    colName = "boolData";
-                                    break;
+							case DbType.Decimal:
+							case DbType.VarNumeric:
+								colName = "fixedNumericData";
+								break;
 
-                                case DbType.Double:
-                                case DbType.Single:
-                                    colName = "floatingNumData";
-                                    break;
+							case DbType.Boolean:
+								colName = "boolData";
+								break;
 
-                                case DbType.Guid:
-                                case DbType.String:
-                                case DbType.StringFixedLength:
-                                    colName = "stringData";
-                                    break;
+							case DbType.Double:
+							case DbType.Single:
+								colName = "floatingNumData";
+								break;
 
-                                case DbType.Date:
-                                    colName = "dateData";
-                                    break;
+							case DbType.Guid:
+							case DbType.String:
+							case DbType.StringFixedLength:
+								colName = "stringData";
+								break;
 
-                                case DbType.Time:
-                                    colName = "timeData";
-                                    break;
+							case DbType.Date:
+								colName = "dateData";
+								break;
 
-                                case DbType.DateTime:
-                                case DbType.DateTime2:
-                                    colName = "dateTimeData";
-                                    break;
+							case DbType.Time:
+								colName = "timeData";
+								break;
 
-                                case DbType.DateTimeOffset:
-                                    colName = "dateTimeWithTimeZone";
-                                    break;
+							case DbType.DateTime:
+							case DbType.DateTime2:
+								colName = "dateTimeData";
+								break;
 
-                                case DbType.Binary:
-                                    colName = "binaryData";
-                                    break;
-                                default:
-                                    // Not supported
-                                    colName = "stringData";
-                                    isTypeSupported = false;
-                                    break;
-                            }
+							case DbType.DateTimeOffset:
+								colName = "dateTimeWithTimeZone";
+								break;
 
-                            if (isTypeSupported)
-                            {
-                                command.CommandText = $"insert into TEST_TBL({colName}) values(:p0)";
-                                param.Value = DBNull.Value;
-                                command.Parameters.Add(param);
-                                int rowsInserted = command.ExecuteNonQuery();
-                                Assert.AreEqual(1, rowsInserted);
-                            }
-                            else
-                            {
-                                try
-                                {
-                                    command.CommandText = $"insert into TEST_TBL(stringData) values(:p0)";
-                                    param.Value = DBNull.Value;
-                                    command.Parameters.Add(param);
-                                    int rowsInserted = command.ExecuteNonQuery();
-                                }
-                                catch (SnowflakeDbException e)
-                                {
-                                    Assert.AreEqual(270053, e.ErrorCode);
-                                }
-                            }
-                        }
+							case DbType.Binary:
+								colName = "binaryData";
+								break;
 
-                        if (isTypeSupported)
-                        {
-                            using (IDbCommand command = dbConnection.CreateCommand())
-                            {
-                                command.CommandText = $"select {colName} from TEST_TBL;";
-                                using (IDataReader reader = command.ExecuteReader())
-                                {
-                                    reader.Read();
-                                    Assert.IsTrue(reader.IsDBNull(0));
-                                    reader.Close();
-                                }
-                            }
-                        }
+							default:
+								// Not supported
+								colName = "stringData";
+								isTypeSupported = false;
+								break;
+						}
 
-                        // Clean up between each case
-                        using (IDbCommand command = dbConnection.CreateCommand())
-                        {
-                            command.CommandText = "DELETE FROM TEST_TBL";
-                            command.ExecuteNonQuery();
-                        }
-                    }
-                }
-                finally
-                {
-                    using (IDbCommand command = dbConnection.CreateCommand())
-                    {
-                        command.CommandText = "drop table if exists TEST_TBL";
-                        command.ExecuteNonQuery();
-                    }
-                }
-            }
-        }
+						if (isTypeSupported)
+						{
+							command.CommandText = $"insert into TEST_TBL({colName}) values(:p0)";
+							param.Value = DBNull.Value;
+							command.Parameters.Add(param);
+							int rowsInserted = command.ExecuteNonQuery();
+							Assert.AreEqual(1, rowsInserted);
+						}
+						else
+						{
+							try
+							{
+								command.CommandText = $"insert into TEST_TBL(stringData) values(:p0)";
+								param.Value = DBNull.Value;
+								command.Parameters.Add(param);
+								int rowsInserted = command.ExecuteNonQuery();
+							}
+							catch (SFException e)
+							{
+								Assert.AreEqual(SFError.UnsupportedDotnetType, e.SnowflakeError);
+							}
+						}
+					}
 
-        [Test]
-        public void testBindValue()
-        {
-            using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
-            {
-                dbConnection.ConnectionString = ConnectionString;
-                dbConnection.Open();
-                try
-                {
-                    using (IDbCommand command = dbConnection.CreateCommand())
-                    {
-                        command.CommandText = "create or replace table TEST_TBL (" +
-                            "intData NUMBER," +
-                            "fixedNumericData NUMBER(10,1), " +
-                            "floatingNumData DOUBLE," +
-                            "stringData VARCHAR, " +
-                            "binaryData BINARY, " +
-                            "boolData BOOLEAN, " +
-                            "dateData DATE, " +
-                            "timeData TIME, " +
-                            "dateTimeData DATETIME, " +
-                            "dateTimeWithTimeZone TIMESTAMP_TZ);";
-                        command.ExecuteNonQuery();
-                    }
+					if (isTypeSupported)
+					{
+						using (var command = dbConnection.CreateCommand())
+						{
+							command.CommandText = $"select {colName} from TEST_TBL;";
+							using (IDataReader reader = command.ExecuteReader())
+							{
+								reader.Read();
+								Assert.IsTrue(reader.IsDBNull(0));
+								reader.Close();
+							}
+						}
+					}
 
-                    foreach (DbType type in Enum.GetValues(typeof(DbType)))
-                    {
-                        bool isTypeSupported = true;
-                        string colName = null;
-                        using (IDbCommand command = dbConnection.CreateCommand())
-                        {
-                            var param = command.CreateParameter();
-                            param.ParameterName = "p0";
-                            param.DbType = type;
+					// Clean up between each case
+					using (var command = dbConnection.CreateCommand())
+					{
+						command.CommandText = "DELETE FROM TEST_TBL";
+						command.ExecuteNonQuery();
+					}
+				}
+			}
+			finally
+			{
+				using (var command = dbConnection.CreateCommand())
+				{
+					command.CommandText = "drop table if exists TEST_TBL";
+					command.ExecuteNonQuery();
+				}
+			}
+		}
+	}
 
-                            switch (type)
-                            {
-                                case DbType.SByte:
-                                case DbType.Byte:
-                                    colName = "intData";
-                                    param.Value = 1;
-                                    break;
-                                case DbType.Int16:
-                                case DbType.Int32:
-                                case DbType.Int64:
-                                case DbType.UInt16:
-                                case DbType.UInt32:
-                                case DbType.UInt64:
-                                    colName = "intData";
-                                    param.Value = 10;
-                                    break;
-                                case DbType.Decimal:
-                                case DbType.VarNumeric:
-                                    colName = "fixedNumericData";
-                                    param.Value = 10.1;
-                                    break;
+	[Test]
+	public void testBindValue()
+	{
+		using (SFConnection dbConnection = new SFConnection())
+		{
+			dbConnection.ConnectionString = ConnectionString;
+			dbConnection.Open();
+			try
+			{
+				using (var command = dbConnection.CreateCommand())
+				{
+					command.CommandText = "create or replace table TEST_TBL (" +
+						"intData NUMBER," +
+						"fixedNumericData NUMBER(10,1), " +
+						"floatingNumData DOUBLE," +
+						"stringData VARCHAR, " +
+						"binaryData BINARY, " +
+						"boolData BOOLEAN, " +
+						"dateData DATE, " +
+						"timeData TIME, " +
+						"dateTimeData DATETIME, " +
+						"dateTimeWithTimeZone TIMESTAMP_TZ);";
+					command.ExecuteNonQuery();
+				}
 
-                                case DbType.Boolean:
-                                    colName = "boolData";
-                                    param.Value = true;
-                                    break;
+				foreach (DbType type in Enum.GetValues(typeof(DbType)))
+				{
+					bool isTypeSupported = true;
+					string colName = null;
+					using (var command = dbConnection.CreateCommand())
+					{
+						var param = command.CreateParameter();
+						param.ParameterName = "p0";
+						param.DbType = type;
 
-                                case DbType.Double:
-                                case DbType.Single:
-                                    colName = "floatingNumData";
-                                    param.Value = 2.5;
-                                    break;
+						switch (type)
+						{
+							case DbType.SByte:
+							case DbType.Byte:
+								colName = "intData";
+								param.Value = 1;
+								break;
 
-                                case DbType.Guid:
-                                case DbType.String:
-                                case DbType.StringFixedLength:
-                                    colName = "stringData";
-                                    param.Value = "thisIsAString";
-                                    break;
+							case DbType.Int16:
+							case DbType.Int32:
+							case DbType.Int64:
+							case DbType.UInt16:
+							case DbType.UInt32:
+							case DbType.UInt64:
+								colName = "intData";
+								param.Value = 10;
+								break;
 
-                                case DbType.Date:
-                                    colName = "dateData";
-                                    param.Value = DateTime.Now;
-                                    break;
+							case DbType.Decimal:
+							case DbType.VarNumeric:
+								colName = "fixedNumericData";
+								param.Value = 10.1;
+								break;
 
-                                case DbType.Time:
-                                    colName = "timeData";
-                                    param.Value = DateTime.Now;
-                                    break;
+							case DbType.Boolean:
+								colName = "boolData";
+								param.Value = true;
+								break;
 
-                                case DbType.DateTime:
-                                case DbType.DateTime2:
-                                    colName = "dateTimeData";
-                                    param.Value = DateTime.Now;
-                                    break;
+							case DbType.Double:
+							case DbType.Single:
+								colName = "floatingNumData";
+								param.Value = 2.5;
+								break;
 
-                                case DbType.DateTimeOffset:
-                                    colName = "dateTimeWithTimeZone";
-                                    param.Value = DateTimeOffset.Now;
-                                    break;
+							case DbType.Guid:
+							case DbType.String:
+							case DbType.StringFixedLength:
+								colName = "stringData";
+								param.Value = "thisIsAString";
+								break;
 
-                                case DbType.Binary:
-                                    colName = "binaryData";
-                                    param.Value = Encoding.UTF8.GetBytes("BinaryData");
-                                    break;
-                                default:
-                                    // Not supported      
-                                    colName = "stringData";
-                                    isTypeSupported = false;
-                                    break;
-                            }
+							case DbType.Date:
+								colName = "dateData";
+								param.Value = DateTime.Now;
+								break;
 
-                            if (isTypeSupported)
-                            {
-                                command.CommandText = $"insert into TEST_TBL({colName}) values(:p0)";
-                                command.Parameters.Add(param);
-                                int rowsInserted = command.ExecuteNonQuery();
-                                Assert.AreEqual(1, rowsInserted);
-                            }
-                            else
-                            {
-                                try
-                                {
-                                    command.CommandText = $"insert into TEST_TBL(stringData) values(:p0)";
-                                    param.Value = DBNull.Value;
-                                    command.Parameters.Add(param);
-                                    int rowsInserted = command.ExecuteNonQuery();
-                                }
-                                catch (SnowflakeDbException e)
-                                {
-                                    Assert.AreEqual(270053, e.ErrorCode);
-                                }
-                            }
-                        }
+							case DbType.Time:
+								colName = "timeData";
+								param.Value = DateTime.Now;
+								break;
 
-                        if (isTypeSupported)
-                        {
-                            using (IDbCommand command = dbConnection.CreateCommand())
-                            {
-                                command.CommandText = $"select {colName} from TEST_TBL;";
-                                using (IDataReader reader = command.ExecuteReader())
-                                {
-                                    reader.Read();
-                                    Assert.IsTrue(!reader.IsDBNull(0));
-                                    reader.Close();
-                                }
-                            }
-                        }
+							case DbType.DateTime:
+							case DbType.DateTime2:
+								colName = "dateTimeData";
+								param.Value = DateTime.Now;
+								break;
 
-                        // Clean up between each case
-                        using (IDbCommand command = dbConnection.CreateCommand())
-                        {
-                            command.CommandText = "DELETE FROM TEST_TBL";
-                            command.ExecuteNonQuery();
-                        }
-                    }
-                }
-                finally
-                {
-                    using (IDbCommand command = dbConnection.CreateCommand())
-                    {
-                        command.CommandText = "drop table if exists TEST_TBL";
-                        command.ExecuteNonQuery();
-                    }
-                }
-            }
-        }
+							case DbType.DateTimeOffset:
+								colName = "dateTimeWithTimeZone";
+								param.Value = DateTimeOffset.Now;
+								break;
 
-        [Test]
-        public void testBindValueWithSFDataType()
-        {
-            using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
-            {
-                dbConnection.ConnectionString = ConnectionString;
-                dbConnection.Open();
-                try
-                {
-                    foreach (SFDataType type in Enum.GetValues(typeof(SFDataType)))
-                    {
-                        if (!type.Equals(SFDataType.None))
-                        {
-                            bool isTypeSupported = true;
-                            using (IDbCommand command = dbConnection.CreateCommand())
-                            {
-                                if (!type.Equals(SFDataType.FIXED))
-                                {
-                                    command.CommandText = $"create or replace table TEST_TBL (data {type.ToString()}, unsupportedType VARCHAR)";
-                                }
-                                else
-                                {
-                                    command.CommandText = $"create or replace table TEST_TBL (data NUMBER, unsupportedType VARCHAR)";
-                                }
-                                command.ExecuteNonQuery();
-                            }
+							case DbType.Binary:
+								colName = "binaryData";
+								param.Value = Encoding.UTF8.GetBytes("BinaryData");
+								break;
 
+							default:
+								// Not supported
+								colName = "stringData";
+								isTypeSupported = false;
+								break;
+						}
 
-                            using (IDbCommand command = dbConnection.CreateCommand())
-                            {
-                                SnowflakeDbParameter param = (SnowflakeDbParameter)command.CreateParameter();
-                                param.ParameterName = "p0";
-                                param.SFDataType = type;
-                                switch (type)
-                                {
-                                    case SFDataType.BINARY:
-                                        param.Value = Encoding.UTF8.GetBytes("BinaryData");
-                                        break;
-                                    case SFDataType.FIXED:
-                                        param.Value = 10;
-                                        break;
-                                    case SFDataType.BOOLEAN:
-                                        param.Value = true;
-                                        break;
-                                    case SFDataType.DATE:
-                                        param.Value = DateTime.Now;
-                                        break;
-                                    case SFDataType.TEXT:
-                                        param.Value = "thisIsAString";
-                                        break;
-                                    case SFDataType.TIMESTAMP_LTZ:
-                                        param.Value = DateTimeOffset.Now;
-                                        break;
-                                    case SFDataType.TIMESTAMP_NTZ:
-                                        param.Value = DateTime.Now;
-                                        break;
-                                    case SFDataType.TIMESTAMP_TZ:
-                                        param.Value = DateTimeOffset.Now;
-                                        break;
-                                    case SFDataType.TIME:
-                                        param.Value = DateTime.Now;
-                                        break;
-                                    case SFDataType.REAL:
-                                        param.Value = 25.3;
-                                        break;
-                                    default:
-                                        isTypeSupported = false;
-                                        param.Value = "InvalidSFDataType";
-                                        break;
-                                }
+						if (isTypeSupported)
+						{
+							command.CommandText = $"insert into TEST_TBL({colName}) values(:p0)";
+							command.Parameters.Add(param);
+							int rowsInserted = command.ExecuteNonQuery();
+							Assert.AreEqual(1, rowsInserted);
+						}
+						else
+						{
+							try
+							{
+								command.CommandText = $"insert into TEST_TBL(stringData) values(:p0)";
+								param.Value = DBNull.Value;
+								command.Parameters.Add(param);
+								int rowsInserted = command.ExecuteNonQuery();
+							}
+							catch (SFException e)
+							{
+								Assert.AreEqual(SFError.UnsupportedDotnetType, e.SnowflakeError);
+							}
+						}
+					}
 
-                                if (isTypeSupported)
-                                {
-                                    // Set to an unsupported DB type to check that SFDataType has precedence
-                                    param.DbType = DbType.Object;
-                                    command.CommandText = "insert into TEST_TBL(data) values(:p0)";
-                                    command.Parameters.Add(param);
-                                    int rowsInserted = command.ExecuteNonQuery();
-                                    Assert.AreEqual(1, rowsInserted);
-                                }
-                                // DB rejects query if param type is VARIANT, OBJECT or ARRAY
-                                else if (!type.Equals(SFDataType.VARIANT) && 
-                                         !type.Equals(SFDataType.OBJECT) &&
-                                         !type.Equals(SFDataType.ARRAY))
-                                {
-                                    try
-                                    {
-                                        command.CommandText = "insert into TEST_TBL(unsupportedType) values(:p0)";
-                                        param.Value = DBNull.Value;
-                                        command.Parameters.Add(param);
-                                        int rowsInserted = command.ExecuteNonQuery();
-                                    }
-                                    catch (SnowflakeDbException e)
-                                    {
-                                        Assert.AreEqual(270054, e.ErrorCode);
-                                    }
-                                }
-                            }
+					if (isTypeSupported)
+					{
+						using (var command = dbConnection.CreateCommand())
+						{
+							command.CommandText = $"select {colName} from TEST_TBL;";
+							using (IDataReader reader = command.ExecuteReader())
+							{
+								reader.Read();
+								Assert.IsTrue(!reader.IsDBNull(0));
+								reader.Close();
+							}
+						}
+					}
 
-                            if (isTypeSupported)
-                            {
-                                using (IDbCommand command = dbConnection.CreateCommand())
-                                {
-                                    command.CommandText = $"select data from TEST_TBL;";
-                                    using (IDataReader reader = command.ExecuteReader())
-                                    {
-                                        reader.Read();
-                                        Assert.IsTrue(!reader.IsDBNull(0));
-                                        reader.Close();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                finally
-                {
-                    using (IDbCommand command = dbConnection.CreateCommand())
-                    {
-                        command.CommandText = "drop table if exists TEST_TBL";
-                        command.ExecuteNonQuery();
-                    }
-                }
-            }
-        }
+					// Clean up between each case
+					using (var command = dbConnection.CreateCommand())
+					{
+						command.CommandText = "DELETE FROM TEST_TBL";
+						command.ExecuteNonQuery();
+					}
+				}
+			}
+			finally
+			{
+				using (var command = dbConnection.CreateCommand())
+				{
+					command.CommandText = "drop table if exists TEST_TBL";
+					command.ExecuteNonQuery();
+				}
+			}
+		}
+	}
 
-        [Test]
-        public void testParameterCollection()
-        {
-            using (IDbConnection conn = new SnowflakeDbConnection())
-            {
-                conn.ConnectionString = ConnectionString;
-                conn.Open();
+	[Test]
+	public void TestBindValueWithSFDataType()
+	{
+		using (SFConnection dbConnection = new SFConnection())
+		{
+			dbConnection.ConnectionString = ConnectionString;
+			dbConnection.Open();
+			try
+			{
+				foreach (SFDataType type in Enum.GetValues(typeof(SFDataType)))
+				{
+					if (!type.Equals(SFDataType.None))
+					{
+						bool isTypeSupported = true;
+						using (var command = dbConnection.CreateCommand())
+						{
+							if (!type.Equals(SFDataType.Fixed))
+							{
+								command.CommandText = $"create or replace table TEST_TBL (data {type}, unsupportedType VARCHAR)";
+							}
+							else
+							{
+								command.CommandText = $"create or replace table TEST_TBL (data NUMBER, unsupportedType VARCHAR)";
+							}
+							command.ExecuteNonQuery();
+						}
 
-                using (IDbCommand cmd = conn.CreateCommand())
-                {
-                    var p1 = cmd.CreateParameter();
-                    p1.ParameterName = "1";
-                    p1.DbType = DbType.Int16;
-                    p1.Value = 1;
+						using (var command = dbConnection.CreateCommand())
+						{
+							SFParameter param = (SFParameter)command.CreateParameter();
+							param.ParameterName = "p0";
+							param.SFDataType = type;
+							switch (type)
+							{
+								case SFDataType.Binary:
+									param.Value = Encoding.UTF8.GetBytes("BinaryData");
+									break;
 
-                    var p2 = cmd.CreateParameter();
-                    p2.ParameterName = "2";
-                    p1.DbType = DbType.Int16;
-                    p2.Value = 2;
-                    
+								case SFDataType.Fixed:
+									param.Value = 10;
+									break;
 
-                    var p3 = cmd.CreateParameter();
-                    p2.ParameterName = "2";
-                    p1.DbType = DbType.Int16;
-                    p2.Value = 2;
+								case SFDataType.Boolean:
+									param.Value = true;
+									break;
 
-                    Array parameters = Array.CreateInstance(typeof(IDbDataParameter), 3);
-                    parameters.SetValue(p1, 0);
-                    parameters.SetValue(p2, 1);
-                    parameters.SetValue(p3, 2);
+								case SFDataType.Date:
+									param.Value = DateTime.Now;
+									break;
 
-                    ((SnowflakeDbParameterCollection)cmd.Parameters).AddRange(parameters);
-                    Assert.Throws<NotImplementedException>(
-                        () => { cmd.Parameters.CopyTo(parameters, 5); });
-    
-                    Assert.AreEqual(3, cmd.Parameters.Count);
-                    Assert.IsTrue(cmd.Parameters.Contains(p2));
-                    Assert.IsTrue(cmd.Parameters.Contains("2"));
-                    Assert.AreEqual(1, cmd.Parameters.IndexOf(p2));
-                    Assert.AreEqual(1, cmd.Parameters.IndexOf("2"));
+								case SFDataType.Text:
+									param.Value = "thisIsAString";
+									break;
 
-                    cmd.Parameters.Remove(p2);
-                    Assert.AreEqual(2, cmd.Parameters.Count);
-                    Assert.AreSame(p1, cmd.Parameters[0]);
+								case SFDataType.TimestampLtz:
+									param.Value = DateTimeOffset.Now;
+									break;
 
-                    cmd.Parameters.RemoveAt(0); 
-                    Assert.AreSame(p3, cmd.Parameters[0]);
+								case SFDataType.TimestampNtz:
+									param.Value = DateTime.Now;
+									break;
 
-                    cmd.Parameters.Clear();
-                    Assert.AreEqual(0, cmd.Parameters.Count);
-                }
+								case SFDataType.TimestampTz:
+									param.Value = DateTimeOffset.Now;
+									break;
 
-                conn.Close();
-            }
-        }
-    }
+								case SFDataType.Time:
+									param.Value = DateTime.Now;
+									break;
+
+								case SFDataType.Real:
+									param.Value = 25.3;
+									break;
+
+								default:
+									isTypeSupported = false;
+									param.Value = "InvalidSFDataType";
+									break;
+							}
+
+							if (isTypeSupported)
+							{
+								// Set to an unsupported DB type to check that SFDataType has precedence
+								param.DbType = DbType.Object;
+								command.CommandText = "insert into TEST_TBL(data) values(:p0)";
+								command.Parameters.Add(param);
+								int rowsInserted = command.ExecuteNonQuery();
+								Assert.AreEqual(1, rowsInserted);
+							}
+							// DB rejects query if param type is VARIANT, OBJECT or ARRAY
+							else if (!type.Equals(SFDataType.Variant) &&
+									 !type.Equals(SFDataType.Object) &&
+									 !type.Equals(SFDataType.Array))
+							{
+								try
+								{
+									command.CommandText = "insert into TEST_TBL(unsupportedType) values(:p0)";
+									param.Value = DBNull.Value;
+									command.Parameters.Add(param);
+									int rowsInserted = command.ExecuteNonQuery();
+								}
+								catch (SFException e)
+								{
+									Assert.AreEqual(SFError.UnsupportedSnowflakeTypeForParam, e.SnowflakeError);
+								}
+							}
+						}
+
+						if (isTypeSupported)
+						{
+							using (var command = dbConnection.CreateCommand())
+							{
+								command.CommandText = $"select data from TEST_TBL;";
+								using (IDataReader reader = command.ExecuteReader())
+								{
+									reader.Read();
+									Assert.IsTrue(!reader.IsDBNull(0));
+									reader.Close();
+								}
+							}
+						}
+					}
+				}
+			}
+			finally
+			{
+				using (var command = dbConnection.CreateCommand())
+				{
+					command.CommandText = "drop table if exists TEST_TBL";
+					command.ExecuteNonQuery();
+				}
+			}
+		}
+	}
+
+	[Test]
+	public void TestParameterCollection()
+	{
+		using (var conn = new SFConnection())
+		{
+			conn.ConnectionString = ConnectionString;
+			conn.Open();
+
+			using (IDbCommand cmd = conn.CreateCommand())
+			{
+				var p1 = cmd.CreateParameter();
+				p1.ParameterName = "1";
+				p1.DbType = DbType.Int16;
+				p1.Value = 1;
+
+				var p2 = cmd.CreateParameter();
+				p2.ParameterName = "2";
+				p1.DbType = DbType.Int16;
+				p2.Value = 2;
+
+				var p3 = cmd.CreateParameter();
+				p2.ParameterName = "2";
+				p1.DbType = DbType.Int16;
+				p2.Value = 2;
+
+				var parameters = new IDbDataParameter[3];
+				parameters.SetValue(p1, 0);
+				parameters.SetValue(p2, 1);
+				parameters.SetValue(p3, 2);
+
+				((SFParameterCollection)cmd.Parameters).AddRange(parameters);
+
+				var target = new IDataParameter[15];
+
+				cmd.Parameters.CopyTo(target, 5);
+
+				var badTarget = new int[15];
+				Assert.Throws<InvalidCastException>(
+					() => { cmd.Parameters.CopyTo(badTarget, 5); });
+
+				Assert.AreEqual(3, cmd.Parameters.Count);
+				Assert.IsTrue(cmd.Parameters.Contains(p2));
+				Assert.IsTrue(cmd.Parameters.Contains("2"));
+				Assert.AreEqual(1, cmd.Parameters.IndexOf(p2));
+				Assert.AreEqual(1, cmd.Parameters.IndexOf("2"));
+
+				cmd.Parameters.Remove(p2);
+				Assert.AreEqual(2, cmd.Parameters.Count);
+				Assert.AreSame(p1, cmd.Parameters[0]);
+
+				cmd.Parameters.RemoveAt(0);
+				Assert.AreSame(p3, cmd.Parameters[0]);
+
+				cmd.Parameters.Clear();
+				Assert.AreEqual(0, cmd.Parameters.Count);
+			}
+
+			conn.Close();
+		}
+	}
 }
