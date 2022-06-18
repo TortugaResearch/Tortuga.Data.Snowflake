@@ -22,10 +22,10 @@ class SFChunkDownloaderV2 : IChunkDownloader, IDisposable
 	const int prefetchSlot = 5;
 
 	readonly IRestRequester m_RestRequester;
-	readonly SnowflakeDbConfiguration m_Configuration;
+	readonly SFConfiguration m_Configuration;
 	readonly Dictionary<string, string> m_ChunkHeaders;
 
-	public SFChunkDownloaderV2(int colCount, List<ExecResponseChunk> chunkInfos, string qrmk, Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken, IRestRequester restRequester, SnowflakeDbConfiguration configuration)
+	public SFChunkDownloaderV2(int colCount, List<ExecResponseChunk> chunkInfos, string qrmk, Dictionary<string, string> chunkHeaders, CancellationToken cancellationToken, IRestRequester restRequester, SFConfiguration configuration)
 	{
 		m_Qrmk = qrmk;
 		m_ChunkHeaders = chunkHeaders;

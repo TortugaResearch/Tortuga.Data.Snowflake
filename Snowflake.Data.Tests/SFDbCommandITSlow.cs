@@ -13,7 +13,7 @@ class SFDbCommandITSlow : SFBaseTest
 	[Test]
 	public void TestLongRunningQuery()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 
@@ -32,7 +32,7 @@ class SFDbCommandITSlow : SFBaseTest
 	[Test]
 	public void TestRowsAffectedOverflowInt()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();

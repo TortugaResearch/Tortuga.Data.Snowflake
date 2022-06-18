@@ -14,7 +14,7 @@ class SFBindTestIT : SFBaseTest
 	[Test]
 	public void TestArrayBind()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -54,7 +54,7 @@ class SFBindTestIT : SFBaseTest
 	[Test]
 	public void TestBindNullValue()
 	{
-		using (var dbConnection = new SnowflakeDbConnection())
+		using (var dbConnection = new SFConnection())
 		{
 			dbConnection.ConnectionString = ConnectionString;
 			dbConnection.Open();
@@ -164,9 +164,9 @@ class SFBindTestIT : SFBaseTest
 								command.Parameters.Add(param);
 								int rowsInserted = command.ExecuteNonQuery();
 							}
-							catch (SnowflakeDbException e)
+							catch (SFException e)
 							{
-								Assert.AreEqual(SnowflakeError.UnsupportedDotnetType, e.SnowflakeError);
+								Assert.AreEqual(SFError.UnsupportedDotnetType, e.SnowflakeError);
 							}
 						}
 					}
@@ -207,7 +207,7 @@ class SFBindTestIT : SFBaseTest
 	[Test]
 	public void testBindValue()
 	{
-		using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
+		using (SFConnection dbConnection = new SFConnection())
 		{
 			dbConnection.ConnectionString = ConnectionString;
 			dbConnection.Open();
@@ -330,9 +330,9 @@ class SFBindTestIT : SFBaseTest
 								command.Parameters.Add(param);
 								int rowsInserted = command.ExecuteNonQuery();
 							}
-							catch (SnowflakeDbException e)
+							catch (SFException e)
 							{
-								Assert.AreEqual(SnowflakeError.UnsupportedDotnetType, e.SnowflakeError);
+								Assert.AreEqual(SFError.UnsupportedDotnetType, e.SnowflakeError);
 							}
 						}
 					}
@@ -373,7 +373,7 @@ class SFBindTestIT : SFBaseTest
 	[Test]
 	public void TestBindValueWithSFDataType()
 	{
-		using (SnowflakeDbConnection dbConnection = new SnowflakeDbConnection())
+		using (SFConnection dbConnection = new SFConnection())
 		{
 			dbConnection.ConnectionString = ConnectionString;
 			dbConnection.Open();
@@ -399,7 +399,7 @@ class SFBindTestIT : SFBaseTest
 
 						using (var command = dbConnection.CreateCommand())
 						{
-							SnowflakeDbParameter param = (SnowflakeDbParameter)command.CreateParameter();
+							SFParameter param = (SFParameter)command.CreateParameter();
 							param.ParameterName = "p0";
 							param.SFDataType = type;
 							switch (type)
@@ -471,9 +471,9 @@ class SFBindTestIT : SFBaseTest
 									command.Parameters.Add(param);
 									int rowsInserted = command.ExecuteNonQuery();
 								}
-								catch (SnowflakeDbException e)
+								catch (SFException e)
 								{
-									Assert.AreEqual(SnowflakeError.UnsupportedSnowflakeTypeForParam, e.SnowflakeError);
+									Assert.AreEqual(SFError.UnsupportedSnowflakeTypeForParam, e.SnowflakeError);
 								}
 							}
 						}
@@ -508,7 +508,7 @@ class SFBindTestIT : SFBaseTest
 	[Test]
 	public void TestParameterCollection()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -535,7 +535,7 @@ class SFBindTestIT : SFBaseTest
 				parameters.SetValue(p2, 1);
 				parameters.SetValue(p3, 2);
 
-				((SnowflakeDbParameterCollection)cmd.Parameters).AddRange(parameters);
+				((SFParameterCollection)cmd.Parameters).AddRange(parameters);
 
 				var target = new IDataParameter[15];
 

@@ -156,7 +156,7 @@ class OktaAuthenticator : Authenticator
 		}
 		catch (Exception e)
 		{
-			throw new SnowflakeDbException(SnowflakeError.IdpSamlPostbackNotFound, e);
+			throw new SFException(SFError.IdpSamlPostbackNotFound, e);
 		}
 
 		var sessionHost = Session.m_Properties[SFSessionProperty.HOST];
@@ -164,7 +164,7 @@ class OktaAuthenticator : Authenticator
 		if (postBackUrl.Host != sessionHost ||
 			postBackUrl.Scheme != sessionScheme)
 		{
-			throw new SnowflakeDbException(SnowflakeError.IdpSamlPostbackInvalid, postBackUrl.ToString(), sessionScheme + ":\\\\" + sessionHost);
+			throw new SFException(SFError.IdpSamlPostbackInvalid, postBackUrl.ToString(), sessionScheme + ":\\\\" + sessionHost);
 		}
 	}
 
@@ -172,7 +172,7 @@ class OktaAuthenticator : Authenticator
 	{
 		if (tokenOrSsoUrl.Scheme != sessionUrl.Scheme || tokenOrSsoUrl.Host != sessionUrl.Host)
 		{
-			throw new SnowflakeDbException(SnowflakeError.IdpSsoTokenUrlMismatch, tokenOrSsoUrl.ToString(), m_OktaUrl.ToString());
+			throw new SFException(SFError.IdpSsoTokenUrlMismatch, tokenOrSsoUrl.ToString(), m_OktaUrl.ToString());
 		}
 	}
 }

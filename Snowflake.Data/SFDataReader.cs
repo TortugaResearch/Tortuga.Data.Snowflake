@@ -11,17 +11,17 @@ using Tortuga.Data.Snowflake.Core.ResponseProcessing;
 
 namespace Tortuga.Data.Snowflake;
 
-public class SnowflakeDbDataReader : DbDataReader, IEnumerable<SnowflakeDbDataReader>
+public class SFDataReader : DbDataReader, IEnumerable<SFDataReader>
 {
 	readonly CommandBehavior m_CommandBehavior;
-	readonly SnowflakeDbConnection m_Connection;
+	readonly SFConnection m_Connection;
 #pragma warning disable CA2213 // Disposable fields should be disposed
 	readonly DataTable m_SchemaTable;
 #pragma warning restore CA2213 // Disposable fields should be disposed
 	bool m_IsClosed;
 	readonly SFBaseResultSet m_ResultSet;
 
-	internal SnowflakeDbDataReader(SFBaseResultSet resultSet, SnowflakeDbConnection connection, CommandBehavior commandBehavior)
+	internal SFDataReader(SFBaseResultSet resultSet, SFConnection connection, CommandBehavior commandBehavior)
 	{
 		m_ResultSet = resultSet ?? throw new ArgumentNullException(nameof(resultSet), $"{nameof(resultSet)} is null."); ;
 		m_Connection = connection ?? throw new ArgumentNullException(nameof(connection), $"{nameof(connection)} is null.");
@@ -287,7 +287,7 @@ public class SnowflakeDbDataReader : DbDataReader, IEnumerable<SnowflakeDbDataRe
 		}
 	}
 
-	IEnumerator<SnowflakeDbDataReader> IEnumerable<SnowflakeDbDataReader>.GetEnumerator()
+	IEnumerator<SFDataReader> IEnumerable<SFDataReader>.GetEnumerator()
 	{
 		while (Read())
 		{

@@ -68,7 +68,7 @@ class SFPutGetTest : SFBaseTest
 		{
 			foreach (var autoCompressType in autoCompressTypes)
 			{
-				using (var conn = new SnowflakeDbConnection())
+				using (var conn = new SFConnection())
 				{
 					conn.ConnectionString = ConnectionString;
 					conn.Open();

@@ -19,13 +19,13 @@ class SFOktaTest
 				TokenUrl = "https://snowflakecomputing.okta1.com/api/v1/sessions?additionalFields=cookieToken",
 				SSOUrl = "https://snowflakecomputing.okta.com/app/snowflake_testaccountdev_1/blah/sso/saml",
 			};
-			var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://snowflake.okta.com", null, restRequester, SnowflakeDbConfiguration.Default);
+			var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://snowflake.okta.com", null, restRequester, SFConfiguration.Default);
 			sfSession.Open();
 			Assert.Fail("Should not pass");
 		}
-		catch (SnowflakeDbException e)
+		catch (SFException e)
 		{
-			Assert.AreEqual(SnowflakeError.IdpSsoTokenUrlMismatch, e.SnowflakeError);
+			Assert.AreEqual(SFError.IdpSsoTokenUrlMismatch, e.SnowflakeError);
 		}
 	}
 
@@ -40,13 +40,13 @@ class SFOktaTest
 				SSOUrl = "https://snowflakecomputing.okta.com/app/snowflake_testaccountdev_1/blah/sso/saml",
 				ResponseContent = noPostbackContent,
 			};
-			var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://snowflakecomputing.okta.com;host=test", null, restRequester, SnowflakeDbConfiguration.Default);
+			var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://snowflakecomputing.okta.com;host=test", null, restRequester, SFConfiguration.Default);
 			sfSession.Open();
 			Assert.Fail("Should not pass");
 		}
-		catch (SnowflakeDbException e)
+		catch (SFException e)
 		{
-			Assert.AreEqual(SnowflakeError.IdpSamlPostbackNotFound, e.SnowflakeError);
+			Assert.AreEqual(SFError.IdpSamlPostbackNotFound, e.SnowflakeError);
 		}
 	}
 
@@ -61,13 +61,13 @@ class SFOktaTest
 				SSOUrl = "https://snowflakecomputing.okta.com/app/snowflake_testaccountdev_1/blah/sso/saml",
 				ResponseContent = wrongPostbackContent,
 			};
-			var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://snowflakecomputing.okta.com;host=test", null, restRequester, SnowflakeDbConfiguration.Default);
+			var sfSession = new SFSession("account=test;user=test;password=test;authenticator=https://snowflakecomputing.okta.com;host=test", null, restRequester, SFConfiguration.Default);
 			sfSession.Open();
 			Assert.Fail("Should not pass");
 		}
-		catch (SnowflakeDbException e)
+		catch (SFException e)
 		{
-			Assert.AreEqual(SnowflakeError.IdpSamlPostbackInvalid, e.SnowflakeError);
+			Assert.AreEqual(SFError.IdpSamlPostbackInvalid, e.SnowflakeError);
 		}
 	}
 }

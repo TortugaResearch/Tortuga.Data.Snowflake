@@ -14,7 +14,7 @@ using Tortuga.Data.Snowflake.Core.Messages;
 using Tortuga.Data.Snowflake.Core.RequestProcessing;
 using Tortuga.Data.Snowflake.Legacy;
 using static System.StringComparison;
-using static Tortuga.Data.Snowflake.SnowflakeError;
+using static Tortuga.Data.Snowflake.SFError;
 
 namespace Tortuga.Data.Snowflake.Core.Sessions;
 
@@ -62,7 +62,7 @@ class SFSession
 		}
 		else
 		{
-			throw new SnowflakeDbException(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, authnResponse.Code, authnResponse.Message, "");
+			throw new SFException(SFException.CONNECTION_FAILURE_SSTATE, authnResponse.Code, authnResponse.Message, "");
 		}
 	}
 
@@ -88,7 +88,7 @@ class SFSession
 	///     Constructor
 	/// </summary>
 	/// <param name="connectionString">A string in the form of "key1=value1;key2=value2"</param>
-	internal SFSession(string connectionString, SecureString? password, SnowflakeDbConfiguration configuration)
+	internal SFSession(string connectionString, SecureString? password, SFConfiguration configuration)
 	{
 		Configuration = configuration;
 		m_Properties = SFSessionProperties.parseConnectionString(connectionString, password);
@@ -97,7 +97,7 @@ class SFSession
 		m_Properties.TryGetValue(SFSessionProperty.APPLICATION, out var applicationNameSetting);
 		if (!string.IsNullOrEmpty(applicationNameSetting) && !APPLICATION_REGEX.IsMatch(applicationNameSetting))
 		{
-			throw new SnowflakeDbException(SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SnowflakeError.InvalidConnectionParameterValue, applicationNameSetting, SFSessionProperty.APPLICATION.ToString());
+			throw new SFException(SFException.CONNECTION_FAILURE_SSTATE, SFError.InvalidConnectionParameterValue, applicationNameSetting, SFSessionProperty.APPLICATION.ToString());
 		}
 
 		ParameterMap = new();
@@ -140,13 +140,13 @@ class SFSession
 		}
 		catch (Exception e)
 		{
-			throw new SnowflakeDbException(e, SnowflakeDbException.CONNECTION_FAILURE_SSTATE, SnowflakeError.InvalidConnectionString, "Unable to connect");
+			throw new SFException(e, SFException.CONNECTION_FAILURE_SSTATE, SFError.InvalidConnectionString, "Unable to connect");
 		}
 
 		m_ConnectionTimeout = timeoutInSec > 0 ? TimeSpan.FromSeconds(timeoutInSec) : Timeout.InfiniteTimeSpan;
 	}
 
-	internal SFSession(String connectionString, SecureString password, IMockRestRequester restRequester, SnowflakeDbConfiguration configuration) : this(connectionString, password, configuration)
+	internal SFSession(String connectionString, SecureString password, IMockRestRequester restRequester, SFConfiguration configuration) : this(connectionString, password, configuration)
 	{
 		// Inject the HttpClient to use with the Mock requester
 		restRequester.setHttpClient(m_HttpClient);
@@ -270,7 +270,7 @@ class SFSession
 		var response = RestRequester.Post<RenewSessionResponse>(renewSessionRequest);
 		if (!response.Success)
 		{
-			throw new SnowflakeDbException("", response.Code, response.Message, "");
+			throw new SFException("", response.Code, response.Message, "");
 		}
 		else
 		{
@@ -299,14 +299,14 @@ class SFSession
 		}
 	}
 
-	internal SnowflakeDbConfiguration Configuration { get; }
+	internal SFConfiguration Configuration { get; }
 
 	/// <summary>
 	/// Generate the authenticator given the session
 	/// </summary>
 	/// <param name="session">session that requires the authentication</param>
 	/// <returns>authenticator</returns>
-	/// <exception cref="SnowflakeDbException">when authenticator is unknown</exception>
+	/// <exception cref="SFException">when authenticator is unknown</exception>
 	Authenticator GetAuthenticator()
 	{
 		var type = m_Properties[SFSessionProperty.AUTHENTICATOR];
@@ -333,7 +333,7 @@ class SFSession
 			return new OktaAuthenticator(this, type);
 		}
 
-		throw new SnowflakeDbException(UnknownAuthenticator, type);
+		throw new SFException(UnknownAuthenticator, type);
 	}
 
 	static readonly ConcurrentDictionary<string, HttpClient> s_HttpClients = new();

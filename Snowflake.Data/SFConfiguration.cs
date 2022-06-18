@@ -4,9 +4,9 @@
 
 namespace Tortuga.Data.Snowflake;
 
-public record SnowflakeDbConfiguration
+public record SFConfiguration
 {
-	public SnowflakeDbConfiguration(bool useV2JsonParser, bool useV2ChunkDownloader, int chunkDownloaderVersion)
+	public SFConfiguration(bool useV2JsonParser, bool useV2ChunkDownloader, int chunkDownloaderVersion)
 	{
 		UseV2JsonParser = useV2JsonParser;
 		UseV2ChunkDownloader = useV2ChunkDownloader;
@@ -22,6 +22,6 @@ public record SnowflakeDbConfiguration
 
 	public int ChunkDownloaderVersion { get; init; }
 
-	public static SnowflakeDbConfiguration Default { get; set; } =
+	public static SFConfiguration Default { get; set; } =
 		new(useV2JsonParser: true, useV2ChunkDownloader: false, chunkDownloaderVersion: 3);
 }

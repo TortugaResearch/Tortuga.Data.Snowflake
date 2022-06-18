@@ -58,7 +58,7 @@ static class SFDataTypeExtensions
 	/// <param name="type">The type.</param>
 	/// <returns>SFDataType.</returns>
 	/// <exception cref="System.ArgumentException">type</exception>
-	/// <exception cref="Tortuga.Data.Snowflake.SnowflakeDbException">Unknow column type: {type}</exception>
+	/// <exception cref="Tortuga.Data.Snowflake.SFException">Unknow column type: {type}</exception>
 	public static SFDataType FromSql(string type)
 	{
 		if (string.IsNullOrEmpty(type))
@@ -85,6 +85,6 @@ static class SFDataTypeExtensions
 		if (CheckName(SFDataType.Boolean)) return SFDataType.Boolean;
 		if (CheckName(SFDataType.Array)) return SFDataType.Array;
 
-		throw new SnowflakeDbException(SnowflakeError.InternalError, $"Unknow column type: {type}");
+		throw new SFException(SFError.InternalError, $"Unknow column type: {type}");
 	}
 }

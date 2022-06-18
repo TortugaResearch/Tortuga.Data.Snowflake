@@ -16,7 +16,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestRecordsAffected()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -48,7 +48,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetNumber()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -112,7 +112,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetFloat()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -209,7 +209,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[TestCase("23:59:59.123456789")]
 	public void TestGetTimeSpan(string inputTimeStr)
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -233,7 +233,7 @@ class SFDbDataReaderIT : SFBaseTest
 
 			// For time, we getDateTime on the column and ignore date part
 			var dateTimeTime = reader.GetDateTime(0);
-			var timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(0);
+			var timeSpanTime = ((SFDataReader)reader).GetTimeSpan(0);
 			reader.Close();
 
 			// The expected result. Timespan precision only goes up to 7 digits
@@ -256,7 +256,7 @@ class SFDbDataReaderIT : SFBaseTest
 	public void TestGetTimeSpanError()
 	{
 		// Only Time data can be retrieved using GetTimeSpan, other type will fail
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -295,12 +295,12 @@ class SFDbDataReaderIT : SFBaseTest
 			{
 				try
 				{
-					((SnowflakeDbDataReader)reader).GetTimeSpan(i);
+					((SFDataReader)reader).GetTimeSpan(i);
 					Assert.Fail("Data should not be converted to TIME");
 				}
-				catch (SnowflakeDbException e)
+				catch (SFException e)
 				{
-					Assert.AreEqual(SnowflakeError.InvalidDataConversion, e.SnowflakeError);
+					Assert.AreEqual(SFError.InvalidDataConversion, e.SnowflakeError);
 				}
 			}
 
@@ -309,7 +309,7 @@ class SFDbDataReaderIT : SFBaseTest
 
 			try
 			{
-				((SnowflakeDbDataReader)reader).GetTimeSpan(12);
+				((SFDataReader)reader).GetTimeSpan(12);
 				Assert.Fail("TimeSpan is not nullable");
 			}
 			catch (InvalidCastException)
@@ -318,7 +318,7 @@ class SFDbDataReaderIT : SFBaseTest
 			}
 
 			// Valid time column
-			var timeSpanTime = ((SnowflakeDbDataReader)reader).GetTimeSpan(13);
+			var timeSpanTime = ((SFDataReader)reader).GetTimeSpan(13);
 
 			reader.Close();
 
@@ -342,7 +342,7 @@ class SFDbDataReaderIT : SFBaseTest
 			inputTime = DateTime.ParseExact(inputTimeStr, "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
 		}
 
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -445,7 +445,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetTimestampTZ()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -489,7 +489,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetTimestampLTZ()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -504,7 +504,7 @@ class SFDbDataReaderIT : SFBaseTest
 			var insertCommand = "insert into testgettimestampltz values (?)";
 			cmd.CommandText = insertCommand;
 
-			var p1 = (SnowflakeDbParameter)cmd.CreateParameter();
+			var p1 = (SFParameter)cmd.CreateParameter();
 			p1.ParameterName = "1";
 			p1.Value = now;
 			p1.DbType = DbType.DateTimeOffset;
@@ -534,7 +534,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetBoolean()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -574,7 +574,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetBinary()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -718,7 +718,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetChars()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -863,7 +863,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetStream()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -937,7 +937,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetValueIndexOutOfBound()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -953,9 +953,9 @@ class SFDbDataReaderIT : SFBaseTest
 				reader.GetInt16(-1);
 				Assert.Fail();
 			}
-			catch (SnowflakeDbException e)
+			catch (SFException e)
 			{
-				Assert.AreEqual(SnowflakeError.ColumnIndexOutOfBound, e.SnowflakeError);
+				Assert.AreEqual(SFError.ColumnIndexOutOfBound, e.SnowflakeError);
 			}
 
 			try
@@ -963,9 +963,9 @@ class SFDbDataReaderIT : SFBaseTest
 				reader.GetInt16(1);
 				Assert.Fail();
 			}
-			catch (SnowflakeDbException e)
+			catch (SFException e)
 			{
-				Assert.AreEqual(SnowflakeError.ColumnIndexOutOfBound, e.SnowflakeError);
+				Assert.AreEqual(SFError.ColumnIndexOutOfBound, e.SnowflakeError);
 			}
 			reader.Close();
 
@@ -976,7 +976,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestBasicDataReader()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -988,7 +988,7 @@ class SFDbDataReaderIT : SFBaseTest
 				{
 					Assert.AreEqual(2, reader.FieldCount);
 					Assert.AreEqual(0, reader.Depth);
-					Assert.IsTrue(((SnowflakeDbDataReader)reader).HasRows);
+					Assert.IsTrue(((SFDataReader)reader).HasRows);
 					Assert.IsFalse(reader.IsClosed);
 					Assert.AreEqual("COLONE", reader.GetName(0));
 					Assert.AreEqual("COLTWO", reader.GetName(1));
@@ -1014,9 +1014,9 @@ class SFDbDataReaderIT : SFBaseTest
 						reader.Read();
 						Assert.Fail();
 					}
-					catch (SnowflakeDbException e)
+					catch (SFException e)
 					{
-						Assert.AreEqual(SnowflakeError.DataReaderAlreadyClosed, e.SnowflakeError);
+						Assert.AreEqual(SFError.DataReaderAlreadyClosed, e.SnowflakeError);
 					}
 
 					try
@@ -1024,9 +1024,9 @@ class SFDbDataReaderIT : SFBaseTest
 						reader.GetInt16(0);
 						Assert.Fail();
 					}
-					catch (SnowflakeDbException e)
+					catch (SFException e)
 					{
-						Assert.AreEqual(SnowflakeError.DataReaderAlreadyClosed, e.SnowflakeError);
+						Assert.AreEqual(SFError.DataReaderAlreadyClosed, e.SnowflakeError);
 					}
 				}
 			}
@@ -1038,7 +1038,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestReadOutNullVal()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -1074,7 +1074,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetGuid()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -1125,7 +1125,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestCopyCmdUpdateCount()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -1163,7 +1163,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestCopyCmdResultSet()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -1211,7 +1211,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestRetrieveSemiStructuredData()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -1237,7 +1237,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestResultSetMetadata()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();

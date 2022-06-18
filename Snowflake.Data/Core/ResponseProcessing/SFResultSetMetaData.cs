@@ -111,7 +111,7 @@ class SFResultSetMetaData
 	internal SFDataType GetColumnTypeByIndex(int targetIndex)
 	{
 		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
-			throw new SnowflakeDbException(SnowflakeError.ColumnIndexOutOfBound, targetIndex);
+			throw new SFException(SFError.ColumnIndexOutOfBound, targetIndex);
 
 		return m_ColumnTypes[targetIndex].Item1;
 	}
@@ -119,7 +119,7 @@ class SFResultSetMetaData
 	internal Tuple<SFDataType, Type> GetTypesByIndex(int targetIndex)
 	{
 		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
-			throw new SnowflakeDbException(SnowflakeError.ColumnIndexOutOfBound, targetIndex);
+			throw new SFException(SFError.ColumnIndexOutOfBound, targetIndex);
 
 		return m_ColumnTypes[targetIndex];
 	}
@@ -156,7 +156,7 @@ class SFResultSetMetaData
 				return typeof(bool);
 
 			default:
-				throw new SnowflakeDbException(SnowflakeError.InternalError,
+				throw new SFException(SFError.InternalError,
 					$"Unknow column type: {sfType}");
 		}
 	}
@@ -164,7 +164,7 @@ class SFResultSetMetaData
 	internal Type GetCSharpTypeByIndex(int targetIndex)
 	{
 		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
-			throw new SnowflakeDbException(SnowflakeError.ColumnIndexOutOfBound, targetIndex);
+			throw new SFException(SFError.ColumnIndexOutOfBound, targetIndex);
 
 		var sfType = GetColumnTypeByIndex(targetIndex);
 		return GetNativeTypeForColumn(sfType, m_RowTypes[targetIndex]);
@@ -173,7 +173,7 @@ class SFResultSetMetaData
 	internal string? getColumnNameByIndex(int targetIndex)
 	{
 		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
-			throw new SnowflakeDbException(SnowflakeError.ColumnIndexOutOfBound, targetIndex);
+			throw new SFException(SFError.ColumnIndexOutOfBound, targetIndex);
 
 		return m_RowTypes[targetIndex].Name;
 	}

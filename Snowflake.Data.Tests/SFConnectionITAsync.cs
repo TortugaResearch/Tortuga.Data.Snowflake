@@ -78,7 +78,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 				}
 				catch (AggregateException e)
 				{
-					Assert.AreEqual(SnowflakeError.RequestTimeout, ((SnowflakeDbException)e.InnerException).SnowflakeError);
+					Assert.AreEqual(SFError.RequestTimeout, ((SFException)e.InnerException).SnowflakeError);
 				}
 				stopwatch.Stop();
 
@@ -111,7 +111,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 			}
 			catch (AggregateException e)
 			{
-				Assert.AreEqual(SnowflakeError.RequestTimeout, ((SnowflakeDbException)e.InnerException).SnowflakeError);
+				Assert.AreEqual(SFError.RequestTimeout, ((SFException)e.InnerException).SnowflakeError);
 			}
 			stopwatch.Stop();
 
@@ -128,7 +128,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 	[Test]
 	public void TestAsyncConnectionFailFast()
 	{
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			// Just a way to get a 404 on the login request and make sure there are no retry
 			var invalidConnectionString = "host=docs.microsoft.com;connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;";
@@ -146,7 +146,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 			}
 			catch (AggregateException e)
 			{
-				Assert.AreEqual(SnowflakeError.InternalError, ((SnowflakeDbException)e.InnerException).SnowflakeError);
+				Assert.AreEqual(SFError.InternalError, ((SFException)e.InnerException).SnowflakeError);
 			}
 
 			Assert.AreEqual(ConnectionState.Closed, conn.State);
@@ -161,7 +161,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 		// https://docs.microsoft.com/en-us/dotnet/api/system.data.common.dbconnection.closeasync
 		// An application can call Close or CloseAsync more than one time.
 		// No exception is generated.
-		using (var conn = new SnowflakeDbConnection())
+		using (var conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			Assert.AreEqual(conn.State, ConnectionState.Closed);
@@ -209,7 +209,7 @@ class SFConnectionITAsync : SFBaseTestAsync
 				await conn.CloseAsync(new CancellationTokenSource().Token);
 				Assert.Fail();
 			}
-			catch (SnowflakeDbException e)
+			catch (SFException e)
 			{
 				Assert.AreEqual(MockCloseSessionException.SESSION_CLOSE_ERROR, e.ErrorCode);
 			}

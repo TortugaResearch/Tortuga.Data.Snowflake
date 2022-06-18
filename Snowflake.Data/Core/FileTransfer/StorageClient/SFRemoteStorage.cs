@@ -155,7 +155,7 @@ class SFRemoteStorage : SFStorage
 		else
 		{
 			var msg = "Unknown Error in uploading a file: " + fileMetadata.DestFileName;
-			throw new SnowflakeDbException(SnowflakeError.InternalError, msg);
+			throw new SFException(SFError.InternalError, msg);
 		}
 	}
 
@@ -311,7 +311,7 @@ class SFRemoteStorage : SFStorage
 		else
 		{
 			var msg = "Unknown Error in downloading a file: " + fileMetadata.DestFileName;
-			throw new SnowflakeDbException(SnowflakeError.InternalError, msg);
+			throw new SFException(SFError.InternalError, msg);
 		}
 	}
 }

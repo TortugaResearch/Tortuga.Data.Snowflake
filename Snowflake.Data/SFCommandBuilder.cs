@@ -9,23 +9,23 @@ using System.Globalization;
 
 namespace Tortuga.Data.Snowflake;
 
-public class SnowflakeDbCommandBuilder : DbCommandBuilder
+public class SFCommandBuilder : DbCommandBuilder
 {
 	const string QuoteCharacter = "\"";
 
 	/// <summary>
-	/// Initializes a new instance of the <see cref="SnowflakeDbCommandBuilder"/> class.
+	/// Initializes a new instance of the <see cref="SFCommandBuilder"/> class.
 	/// </summary>
-	public SnowflakeDbCommandBuilder()
+	public SFCommandBuilder()
 		: this(null)
 	{
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the <see cref="SnowflakeDbCommandBuilder"/> class.
+	/// Initializes a new instance of the <see cref="SFCommandBuilder"/> class.
 	/// </summary>
 	/// <param name="adapter">The adapter.</param>
-	public SnowflakeDbCommandBuilder(SnowflakeDbDataAdapter? adapter)
+	public SFCommandBuilder(SFDataAdapter? adapter)
 	{
 		DataAdapter = adapter;
 		QuotePrefix = QuoteCharacter;
@@ -81,7 +81,7 @@ public class SnowflakeDbCommandBuilder : DbCommandBuilder
 		if (row == null)
 			throw new ArgumentNullException(nameof(row), $"{nameof(row)} is null.");
 
-		var param = (SnowflakeDbParameter)parameter;
+		var param = (SFParameter)parameter;
 		param.DbType = (DbType)row[SchemaTableColumn.ProviderType];
 	}
 

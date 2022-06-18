@@ -13,18 +13,18 @@ using Tortuga.Data.Snowflake.Core.ResponseProcessing;
 namespace Tortuga.Data.Snowflake;
 
 [System.ComponentModel.DesignerCategory("Code")]
-public class SnowflakeDbCommand : DbCommand
+public class SFCommand : DbCommand
 {
-	readonly SnowflakeDbParameterCollection m_ParameterCollection = new();
+	readonly SFParameterCollection m_ParameterCollection = new();
 	string m_CommandText = "";
-	SnowflakeDbConnection? m_Connection;
+	SFConnection? m_Connection;
 	SFStatement? m_SFStatement;
 
-	public SnowflakeDbCommand()
+	public SFCommand()
 	{
 	}
 
-	public SnowflakeDbCommand(SnowflakeDbConnection connection)
+	public SFCommand(SFConnection connection)
 	{
 		m_Connection = connection;
 	}
@@ -82,7 +82,7 @@ public class SnowflakeDbCommand : DbCommand
 					else
 						throw new InvalidOperationException("Unsetting the connection not supported.");
 
-				case SnowflakeDbConnection sfc:
+				case SFConnection sfc:
 					m_Connection = sfc;
 					return;
 
@@ -144,18 +144,18 @@ public class SnowflakeDbCommand : DbCommand
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public override void Prepare() => throw new NotSupportedException();
 
-	protected override DbParameter CreateDbParameter() => new SnowflakeDbParameter();
+	protected override DbParameter CreateDbParameter() => new SFParameter();
 
 	protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
 	{
 		var resultSet = ExecuteInternal();
-		return new SnowflakeDbDataReader(resultSet, m_Connection!, behavior);
+		return new SFDataReader(resultSet, m_Connection!, behavior);
 	}
 
 	protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
 	{
 		var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
-		return new SnowflakeDbDataReader(result, m_Connection!, behavior);
+		return new SFDataReader(result, m_Connection!, behavior);
 	}
 
 	Dictionary<string, BindingDTO> ConvertToBindList()

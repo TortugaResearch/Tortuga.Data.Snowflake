@@ -14,7 +14,7 @@ class SFDbCommandITAsync : SFBaseTestAsync
 	[Test]
 	public void TestExecAsyncAPI()
 	{
-		using (DbConnection conn = new SnowflakeDbConnection())
+		using (DbConnection conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 
@@ -55,7 +55,7 @@ class SFDbCommandITAsync : SFBaseTestAsync
 	{
 		CancellationTokenSource externalCancel = new CancellationTokenSource(TimeSpan.FromSeconds(8));
 
-		using (DbConnection conn = new SnowflakeDbConnection())
+		using (DbConnection conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 

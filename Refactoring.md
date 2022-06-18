@@ -2038,3 +2038,9 @@ In the real world, that doesn't work. Some of the reasons why we may want to cat
 
 Due to the high number of false positives, this warning was disabled completely.
 
+## Round 42 - Shorten Names
+
+The full name of the connection class is `Tortuga.Data.Snowflake.SnowflakeDbConnection`. That's a bit long and redundant. In some places, the type name is abbreviated as simply "SF". So we would have `Tortuga.Data.Snowflake.SFDbConnection`.
+
+At the same time we can drop the `Db` part, as no other ADO.Net library seems to us that pattern. This further reduces it to `Tortuga.Data.Snowflake.SFConnection`, which is a bit more reasonable for a frequently used class.
+

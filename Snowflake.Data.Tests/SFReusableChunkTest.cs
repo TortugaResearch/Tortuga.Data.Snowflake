@@ -177,9 +177,9 @@ class SFReusableChunkTest
 			await parser.ParseChunkAsync(chunk);
 			Assert.Fail();
 		}
-		catch (SnowflakeDbException e)
+		catch (SFException e)
 		{
-			Assert.AreEqual(SnowflakeError.InternalError, e.SnowflakeError);
+			Assert.AreEqual(SFError.InternalError, e.SnowflakeError);
 		}
 	}
 
@@ -207,9 +207,9 @@ class SFReusableChunkTest
 			await parser.ParseChunkAsync(chunk);
 			Assert.Fail();
 		}
-		catch (SnowflakeDbException e)
+		catch (SFException e)
 		{
-			Assert.AreEqual(SnowflakeError.InternalError, e.SnowflakeError);
+			Assert.AreEqual(SFError.InternalError, e.SnowflakeError);
 		}
 	}
 

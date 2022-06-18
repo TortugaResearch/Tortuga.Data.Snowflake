@@ -15,12 +15,12 @@ class SFDbAdaptorIT : SFBaseTest
 	public void TestSelectStatement()
 	{
 		DataSet ds = new DataSet("ds");
-		using (SnowflakeDbConnection conn = new SnowflakeDbConnection())
+		using (SFConnection conn = new SFConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 
-			IDbDataAdapter adaptor = new SnowflakeDbDataAdapter("select 1 as col1, 2 AS col2", conn);
+			IDbDataAdapter adaptor = new SFDataAdapter("select 1 as col1, 2 AS col2", conn);
 			adaptor.Fill(ds);
 			conn.Close();
 		}

@@ -30,7 +30,7 @@ abstract class SFBaseResultSet
 	/// <returns>True if it works, false otherwise.</returns>
 	internal abstract bool Rewind();
 
-	protected SFBaseResultSet(SnowflakeDbConfiguration configuration)
+	protected SFBaseResultSet(SFConfiguration configuration)
 	{
 		Configuration = configuration;
 	}
@@ -82,7 +82,7 @@ abstract class SFBaseResultSet
 
 	internal void Close() => m_IsClosed = true;
 
-	internal SnowflakeDbConfiguration Configuration { get; }
+	internal SFConfiguration Configuration { get; }
 
 	internal int CalculateUpdateCount()
 	{

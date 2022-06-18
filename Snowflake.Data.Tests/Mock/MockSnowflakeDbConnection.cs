@@ -8,7 +8,7 @@ using Tortuga.Data.Snowflake.Core.Sessions;
 
 namespace Tortuga.Data.Snowflake.Tests.Mock;
 
-class MockSnowflakeDbConnection : SnowflakeDbConnection
+class MockSnowflakeDbConnection : SFConnection
 {
 	readonly private IMockRestRequester _restRequester;
 
@@ -31,7 +31,7 @@ class MockSnowflakeDbConnection : SnowflakeDbConnection
 			SfSession.Open();
 			OnSessionEstablished();
 		}
-		catch (SnowflakeDbException)
+		catch (SFException)
 		{
 			m_ConnectionState = ConnectionState.Closed;
 			throw;
@@ -40,7 +40,7 @@ class MockSnowflakeDbConnection : SnowflakeDbConnection
 		{
 			// Otherwise when Dispose() is called, the close request would timeout.
 			m_ConnectionState = System.Data.ConnectionState.Closed;
-			throw new SnowflakeDbException(ex, SnowflakeError.InternalError, "Unable to connect");
+			throw new SFException(ex, SFError.InternalError, "Unable to connect");
 		}
 	}
 
@@ -55,7 +55,7 @@ class MockSnowflakeDbConnection : SnowflakeDbConnection
 			await SfSession.OpenAsync(cancellationToken).ConfigureAwait(false);
 			OnSessionEstablished();
 		}
-		catch (SnowflakeDbException)
+		catch (SFException)
 		{
 			m_ConnectionState = ConnectionState.Closed;
 			throw;
@@ -68,13 +68,13 @@ class MockSnowflakeDbConnection : SnowflakeDbConnection
 		catch (Exception ex) when (ex is not TaskCanceledException || !cancellationToken.IsCancellationRequested)
 		{
 			m_ConnectionState = ConnectionState.Closed;
-			throw new SnowflakeDbException(ex, SnowflakeError.InternalError, "Unable to connect");
+			throw new SFException(ex, SFError.InternalError, "Unable to connect");
 		}
 	}
 
 	private void SetMockSession()
 	{
-		SfSession = new SFSession(ConnectionString, Password, _restRequester, SnowflakeDbConfiguration.Default);
+		SfSession = new SFSession(ConnectionString, Password, _restRequester, SFConfiguration.Default);
 
 		m_ConnectionTimeout = (int)SfSession.m_ConnectionTimeout.TotalSeconds;
 

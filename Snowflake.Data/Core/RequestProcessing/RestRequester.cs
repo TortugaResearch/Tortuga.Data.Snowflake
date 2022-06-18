@@ -89,7 +89,7 @@ class RestRequester : IRestRequester
 					// Disposing of the response if not null now that we don't need it anymore
 					response?.Dispose();
 					if (restRequestTimeout.IsCancellationRequested)
-						throw new SnowflakeDbException(SnowflakeError.RequestTimeout);
+						throw new SFException(SFError.RequestTimeout);
 					else
 						throw;
 				}
@@ -117,7 +117,7 @@ class RestRequester : IRestRequester
 					// Disposing of the response if not null now that we don't need it anymore
 					response?.Dispose();
 					if (restRequestTimeout.IsCancellationRequested)
-						throw new SnowflakeDbException(SnowflakeError.RequestTimeout);
+						throw new SFException(SFError.RequestTimeout);
 					else
 						throw;
 				}
