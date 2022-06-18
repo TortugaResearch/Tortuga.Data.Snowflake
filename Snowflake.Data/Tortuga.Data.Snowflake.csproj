@@ -3,9 +3,9 @@
 		<TargetFrameworks>net472;netstandard2.0;netcoreapp3.1;net6.0</TargetFrameworks>
 		<Title>Tortuga.Data.Snowflake</Title>
 		<PackageId>Tortuga.Data.Snowflake</PackageId>
-		<PackageLicenseUrl>https://github.com/TortugaResearch/Tortuga.Data.Snowflake/blob/main/LICENSE</PackageLicenseUrl>
-		<!--<PackageProjectUrl>https://github.com/snowflakedb/snowflake-connector-net</PackageProjectUrl>-->
-		<!--<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>-->
+		<!--<PackageLicenseUrl>https://github.com/TortugaResearch/Tortuga.Data.Snowflake/blob/main/LICENSE</PackageLicenseUrl>-->
+		<PackageProjectUrl>https://github.com/TortugaResearch/Tortuga.Data.Snowflake</PackageProjectUrl>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<!--<PackageIconUrl>https://raw.githubusercontent.com/snowflakedb/snowflake-connector-net/master/Snowflake.Data/snowflake.ico</PackageIconUrl>-->
 		<Description>Snowflake Connector for .NET</Description>
 		<Company>Tortuga Research</Company>
@@ -18,24 +18,36 @@
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 		<Nullable>enable</Nullable>
 		<AnalysisLevel>latest-all</AnalysisLevel>
+		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(TargetFramework)' == 'net472'">
 		<DefineConstants>NETFRAMEWORK</DefineConstants>
 	</PropertyGroup>
 
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+		<PackageReference Include="Google.Cloud.Storage.V1" Version="3.7.0" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' != 'netstandard2.0'">
+		<PackageReference Include="Google.Cloud.Storage.V1" Version="4.0.0" />
+	</ItemGroup>
+
 	<ItemGroup>
-		<PackageReference Include="AWSSDK.S3" Version="3.7.0.4" />
-		<PackageReference Include="Google.Cloud.Storage.V1" Version="2.5.0" />
-		<PackageReference Include="Azure.Storage.Blobs" Version="12.10.0" />
-		<PackageReference Include="Azure.Storage.Common" Version="12.9.0" />
+		<PackageReference Include="AWSSDK.S3" Version="3.7.9.18" />
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.12.0" />
+		<PackageReference Include="Azure.Storage.Common" Version="12.11.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-		<PackageReference Include="Portable.BouncyCastle" Version="1.8.10" />
-		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.10.2" />
+		<PackageReference Include="Portable.BouncyCastle" Version="1.9.0" />
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.19.0" />
 		<PackageReference Include="System.Security.Cryptography.Cng" Version="5.0.0" />
 		<PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
 		<PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
 		<PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
 	</ItemGroup>
 
+	<PropertyGroup Condition="'$(Configuration)'=='Release'">
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	</PropertyGroup>
+	
 </Project>

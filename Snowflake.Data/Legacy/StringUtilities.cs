@@ -1,6 +1,6 @@
 ﻿namespace Tortuga.Data.Snowflake.Legacy;
 
-#if !NETCOREAPP3_1_OR_GREATER
+#if !NETCOREAPP3_1_OR_GREATER && !NETSTANDARD2_1_OR_GREATER
 
 static class StringUtilities
 {

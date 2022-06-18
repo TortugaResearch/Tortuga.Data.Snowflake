@@ -2044,3 +2044,12 @@ The full name of the connection class is `Tortuga.Data.Snowflake.SnowflakeDbConn
 
 At the same time we can drop the `Db` part, as no other ADO.Net library seems to us that pattern. This further reduces it to `Tortuga.Data.Snowflake.SFConnection`, which is a bit more reasonable for a frequently used class.
 
+## Round 43 - Final Steps
+
+* Update packages
+* Create new NuGet package
+* Run all tests in Release mode
+
+When updating packages, we discovered that `Google.Cloud.Storage.V1` version 4 dropped support for .NET Standard 2.0. So for that one target, we have to roll back to `Google.Cloud.Storage.V1` version 3.7.
+
+

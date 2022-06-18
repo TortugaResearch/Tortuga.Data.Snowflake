@@ -78,7 +78,7 @@ class ExternalBrowserAuthenticator : Authenticator
 			{
 				using (var output = response.OutputStream)
 				{
-#if NETCOREAPP3_1_OR_GREATER
+#if NETCOREAPP3_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 					await output.WriteAsync(s_successResponse, cancellationToken).ConfigureAwait(false);
 #else
 					await output.WriteAsync(s_successResponse, 0, s_successResponse.Length, cancellationToken).ConfigureAwait(false);
