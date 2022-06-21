@@ -18,16 +18,23 @@ class SFResultSet : SFBaseResultSet
 
 	IResultChunk m_CurrentChunk;
 
-	public SFResultSet(QueryExecResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base(sfStatement.SFSession.Configuration)
+	public SFResultSet(QueryExecResponse response, SFStatement sfStatement, CancellationToken cancellationToken) : base(sfStatement.SFSession.Configuration, SFStatement.BuildQueryStatusFromQueryResponse(response))
 	{
-		if (responseData.RowType == null)
-			throw new ArgumentException($"responseData.rowType is null", nameof(responseData));
-		if (responseData.RowSet == null)
-			throw new ArgumentException($"responseData.rowSet is null", nameof(responseData));
+		if (response.Data == null)
+			throw new ArgumentException($"response.Data is null", nameof(response));
 
-		m_ColumnCount = responseData.RowType.Count;
+		//if (response.responseData.RowType == null)
+		//	throw new ArgumentException($"responseData.rowType is null", nameof(responseData));
+		//if (response.responseData.RowSet == null)
+		//	throw new ArgumentException($"responseData.rowSet is null", nameof(responseData));
+
+		var responseData = response.Data;
+		// async result will not provide parameters, so need to set
+		responseData.Parameters = responseData.Parameters ?? new List<NameValueParameter>();
+
+		m_ColumnCount = responseData.RowType?.Count ?? 0;
 		m_CurrentChunkRowIdx = -1;
-		m_CurrentChunkRowCount = responseData.RowSet.GetLength(0);
+		m_CurrentChunkRowCount = responseData.RowSet?.GetLength(0) ?? 0;
 
 		SFStatement = sfStatement;
 		updateSessionStatus(responseData);
@@ -72,7 +79,7 @@ class SFResultSet : SFBaseResultSet
 		}
 	}
 
-	public SFResultSet(PutGetResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base(sfStatement.SFSession.Configuration)
+	public SFResultSet(PutGetResponseData responseData, SFStatement sfStatement, CancellationToken cancellationToken) : base(sfStatement.SFSession.Configuration, null)
 	{
 		if (responseData.RowSet == null)
 			throw new ArgumentException($"responseData.rowSet is null", nameof(responseData));

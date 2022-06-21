@@ -390,4 +390,61 @@ class SFSession
 		}
 		return httpHandler;
 	}
+
+	/// <summary>
+	/// Tracks asynchronous queries that were started by the session
+	/// </summary>
+	ConcurrentDictionary<string, SnowflakeDbQueryStatus> AsynchronousQueryStatuses = new ConcurrentDictionary<string, SnowflakeDbQueryStatus>();
+
+	/// <summary>
+	/// Updates the status of asynchronous query associated with the session
+	/// </summary>
+	/// <param name="queryId"></param>
+	/// <param name="status"></param>
+	internal void UpdateAsynchronousQueryStatus(string queryId, SnowflakeDbQueryStatus status)
+	{
+		if (AsynchronousQueryStatuses.ContainsKey(queryId))
+		{
+			// only track the status if the query was previously associated with this session
+			AsynchronousQueryStatuses[queryId] = status;
+		}
+	}
+
+	/// <summary>
+	/// Associates an asynchronous query with the session
+	/// </summary>
+	/// <param name="queryId"></param>
+	/// <param name="status"></param>
+	internal void AddAsynchronousQueryStatus(string queryId, SnowflakeDbQueryStatus status)
+	{
+		AsynchronousQueryStatuses[queryId] = status;
+	}
+
+	/// <summary>
+	/// Function that checks if the active session can be closed when the connection is closed. If
+	/// there are active asynchronous queries running, the session should stay open even if the
+	/// connection closes so that the queries can finish running.
+	/// </summary>
+	/// <returns>true if it is safe to close this session, false if not</returns>
+	internal bool IsSafeToClose()
+	{
+		foreach (var item in AsynchronousQueryStatuses)
+		{
+			if (!item.Value.IsQueryDone)
+			{
+				// since the last check of the query indicates it was not done, perform another check
+
+				var sfStatement = new SFStatement(this);
+				var status = sfStatement.CheckQueryStatusAsync(0, item.Key, CancellationToken.None).Result;
+				if (!status.IsQueryDone)
+				{
+					// query is still not done, so it is not safe to close the session, or else
+					// the asynchronous query will be cancelled
+					return false;
+				}
+			}
+		}
+
+		return true;
+	}
 }

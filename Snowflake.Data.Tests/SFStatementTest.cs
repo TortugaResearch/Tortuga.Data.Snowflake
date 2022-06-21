@@ -24,7 +24,7 @@ class SFStatementTest
 		SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester, SnowflakeDbConfiguration.Default);
 		sfSession.Open();
 		SFStatement statement = new SFStatement(sfSession);
-		SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false);
+		SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false, false);
 		Assert.AreEqual(true, resultSet.Next());
 		Assert.AreEqual("1", resultSet.GetString(0));
 		Assert.AreEqual("new_session_token", sfSession.m_SessionToken);
@@ -40,7 +40,7 @@ class SFStatementTest
 		SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester, SnowflakeDbConfiguration.Default);
 		sfSession.Open();
 		SFStatement statement = new SFStatement(sfSession);
-		SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false);
+		SFBaseResultSet resultSet = statement.Execute(0, "select 1", null, false, false);
 		Assert.AreEqual(true, resultSet.Next());
 		Assert.AreEqual("1", resultSet.GetString(0));
 	}
@@ -60,7 +60,7 @@ class SFStatementTest
 		for (int i = 0; i < 5; i++)
 		{
 			var statement = new SFStatement(sfSession);
-			statement.Execute(0, "SELECT 1", null, false);
+			statement.Execute(0, "SELECT 1", null, false, false);
 			expectServiceName += "a";
 			Assert.AreEqual(expectServiceName, sfSession.ParameterMap[SFSessionParameter.SERVICE_NAME]);
 		}

@@ -16,4 +16,10 @@ class QueryRequest
 
 	[JsonProperty(PropertyName = "bindings")]
 	internal Dictionary<string, BindingDTO>? ParameterBindings { get; set; }
+
+	/// <summary>
+	/// indicates whether query should be asynchronous
+	/// </summary>
+	[JsonProperty(PropertyName = "asyncExec")]
+	internal bool asyncExec { get; set; }
 }
