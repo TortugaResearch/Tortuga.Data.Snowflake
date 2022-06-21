@@ -250,6 +250,8 @@ static class SFDataConverter
 			case DbType.Guid:
 			case DbType.String:
 			case DbType.StringFixedLength:
+			case DbType.AnsiString:
+			case DbType.AnsiStringFixedLength:
 				destType = SnowflakeDbDataType.Text;
 				break;
 
