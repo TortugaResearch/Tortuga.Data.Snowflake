@@ -8,7 +8,7 @@ namespace Tortuga.Data.Snowflake;
 
 #pragma warning disable CA1710 // Identifiers should have correct suffix
 
-public class SFConnectionStringBuilder : DbConnectionStringBuilder, ICollection<KeyValuePair<string, object>>
+public class SnowflakeConnectionStringBuilder : DbConnectionStringBuilder, ICollection<KeyValuePair<string, object>>
 {
 	public void Add(KeyValuePair<string, object> item) => Add(item.Key, item.Value);
 

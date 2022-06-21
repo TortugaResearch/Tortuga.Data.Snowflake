@@ -51,7 +51,7 @@ class SFStatement
 		lock (m_RequestIdLock)
 		{
 			if (m_RequestId != null)
-				throw new SFException(SFError.StatementAlreadyRunningQuery);
+				throw new SnowflakeException(SnowflakeError.StatementAlreadyRunningQuery);
 
 			m_RequestId = Guid.NewGuid().ToString();
 		}
@@ -131,7 +131,7 @@ class SFStatement
 		if (response.Success)
 			return new SFResultSet(response.Data!, this, cancellationToken);
 
-		throw new SFException(response.Data!.sqlState!, response.Code, response.Message, response.Data!.QueryId!);
+		throw new SnowflakeException(response.Data!.sqlState!, response.Code, response.Message, response.Data!.QueryId!);
 	}
 
 	/// <summary>
@@ -368,7 +368,7 @@ class SFStatement
 			}
 
 			if (!response!.Success)
-				throw new SFException(response.Data!.SqlState!, response.Code, response.Message, response.Data!.QueryId!);
+				throw new SnowflakeException(response.Data!.SqlState!, response.Code, response.Message, response.Data!.QueryId!);
 
 			return response;
 		}

@@ -16,7 +16,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestRecordsAffected()
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -48,7 +48,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetNumber()
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -112,7 +112,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetFloat()
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -173,7 +173,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[TestCase("1900-09-03 00:00:00.0000000")]
 	public void TestGetDate(string inputTimeStr)
 	{
-		TestGetDateAndOrTime(inputTimeStr, null, SFDataType.Date);
+		TestGetDateAndOrTime(inputTimeStr, null, SnowflakeDataType.Date);
 	}
 
 	[Test]
@@ -189,7 +189,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[TestCase("1900-09-03 12:12:12.1212121", 1)]
 	public void TestGetTime(string inputTimeStr, int? precision)
 	{
-		TestGetDateAndOrTime(inputTimeStr, precision, SFDataType.Time);
+		TestGetDateAndOrTime(inputTimeStr, precision, SnowflakeDataType.Time);
 	}
 
 	[Test]
@@ -209,7 +209,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[TestCase("23:59:59.123456789")]
 	public void TestGetTimeSpan(string inputTimeStr)
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -233,7 +233,7 @@ class SFDbDataReaderIT : SFBaseTest
 
 			// For time, we getDateTime on the column and ignore date part
 			var dateTimeTime = reader.GetDateTime(0);
-			var timeSpanTime = ((SFDataReader)reader).GetTimeSpan(0);
+			var timeSpanTime = ((SnowflakeDataReader)reader).GetTimeSpan(0);
 			reader.Close();
 
 			// The expected result. Timespan precision only goes up to 7 digits
@@ -256,7 +256,7 @@ class SFDbDataReaderIT : SFBaseTest
 	public void TestGetTimeSpanError()
 	{
 		// Only Time data can be retrieved using GetTimeSpan, other type will fail
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -295,12 +295,12 @@ class SFDbDataReaderIT : SFBaseTest
 			{
 				try
 				{
-					((SFDataReader)reader).GetTimeSpan(i);
+					((SnowflakeDataReader)reader).GetTimeSpan(i);
 					Assert.Fail("Data should not be converted to TIME");
 				}
-				catch (SFException e)
+				catch (SnowflakeException e)
 				{
-					Assert.AreEqual(SFError.InvalidDataConversion, e.SnowflakeError);
+					Assert.AreEqual(SnowflakeError.InvalidDataConversion, e.SnowflakeError);
 				}
 			}
 
@@ -309,7 +309,7 @@ class SFDbDataReaderIT : SFBaseTest
 
 			try
 			{
-				((SFDataReader)reader).GetTimeSpan(12);
+				((SnowflakeDataReader)reader).GetTimeSpan(12);
 				Assert.Fail("TimeSpan is not nullable");
 			}
 			catch (InvalidCastException)
@@ -318,7 +318,7 @@ class SFDbDataReaderIT : SFBaseTest
 			}
 
 			// Valid time column
-			var timeSpanTime = ((SFDataReader)reader).GetTimeSpan(13);
+			var timeSpanTime = ((SnowflakeDataReader)reader).GetTimeSpan(13);
 
 			reader.Close();
 
@@ -329,20 +329,20 @@ class SFDbDataReaderIT : SFBaseTest
 		}
 	}
 
-	private void TestGetDateAndOrTime(string inputTimeStr, int? precision, SFDataType dataType)
+	private void TestGetDateAndOrTime(string inputTimeStr, int? precision, SnowflakeDataType dataType)
 	{
 		// Can't use DateTime object as test case, must parse.
 		DateTime inputTime;
 		if (inputTimeStr == null)
 		{
-			inputTime = dataType == SFDataType.Date ? DateTime.Today : DateTime.Now;
+			inputTime = dataType == SnowflakeDataType.Date ? DateTime.Today : DateTime.Now;
 		}
 		else
 		{
 			inputTime = DateTime.ParseExact(inputTimeStr, "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture);
 		}
 
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -360,17 +360,17 @@ class SFDbDataReaderIT : SFBaseTest
 			p1.Value = inputTime;
 			switch (dataType)
 			{
-				case SFDataType.Time:
+				case SnowflakeDataType.Time:
 					p1.DbType = DbType.Time;
 					break;
 
-				case SFDataType.Date:
+				case SnowflakeDataType.Date:
 					p1.DbType = DbType.Date;
 					break;
 
-				case SFDataType.TimestampLtz:
-				case SFDataType.TimestampTz:
-				case SFDataType.TimestampNtz:
+				case SnowflakeDataType.TimestampLtz:
+				case SnowflakeDataType.TimestampTz:
+				case SnowflakeDataType.TimestampNtz:
 					p1.DbType = DbType.DateTime;
 					break;
 			}
@@ -388,19 +388,19 @@ class SFDbDataReaderIT : SFBaseTest
 			// For time, we getDateTime on the column and ignore date part
 			var actualTime = reader.GetDateTime(0);
 
-			if (dataType == SFDataType.Date)
+			if (dataType == SnowflakeDataType.Date)
 			{
 				Assert.AreEqual(inputTime.Date, reader.GetDateTime(0));
 				Assert.AreEqual(inputTime.Date.ToString("yyyy-MM-dd"), reader.GetString(0));
 			}
-			if (dataType != SFDataType.Date)
+			if (dataType != SnowflakeDataType.Date)
 			{
 				var inputTimeTicksOfTheDay = inputTime.Ticks - inputTime.Date.Ticks;
 				var actualTimeTicksOfTheDay = actualTime.Ticks - actualTime.Date.Ticks;
 				var allowedPrecisionLossInTicks = precision < 7 ? Math.Pow(10, (double)(7 - precision)) - 1 : 0d;
 				Assert.AreEqual(inputTimeTicksOfTheDay, actualTimeTicksOfTheDay, allowedPrecisionLossInTicks);
 			}
-			if (dataType == SFDataType.TimestampNtz)
+			if (dataType == SnowflakeDataType.TimestampNtz)
 			{
 				if (precision == 9)
 				{
@@ -439,13 +439,13 @@ class SFDbDataReaderIT : SFBaseTest
 	[TestCase("1900-09-03 12:12:12.0000000", 1)]
 	public void TestGetTimestampNTZ(string inputTimeStr, int? precision)
 	{
-		TestGetDateAndOrTime(inputTimeStr, precision, SFDataType.TimestampNtz);
+		TestGetDateAndOrTime(inputTimeStr, precision, SnowflakeDataType.TimestampNtz);
 	}
 
 	[Test]
 	public void TestGetTimestampTZ()
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -489,7 +489,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetTimestampLTZ()
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -504,11 +504,11 @@ class SFDbDataReaderIT : SFBaseTest
 			var insertCommand = "insert into testgettimestampltz values (?)";
 			cmd.CommandText = insertCommand;
 
-			var p1 = (SFParameter)cmd.CreateParameter();
+			var p1 = (SnowflakeParameter)cmd.CreateParameter();
 			p1.ParameterName = "1";
 			p1.Value = now;
 			p1.DbType = DbType.DateTimeOffset;
-			p1.SFDataType = SFDataType.TimestampLtz;
+			p1.SFDataType = SnowflakeDataType.TimestampLtz;
 			cmd.Parameters.Add(p1);
 
 			count = cmd.ExecuteNonQuery();
@@ -534,7 +534,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetBoolean()
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -574,7 +574,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetBinary()
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -718,7 +718,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetChars()
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -863,7 +863,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetStream()
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -937,7 +937,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetValueIndexOutOfBound()
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -953,9 +953,9 @@ class SFDbDataReaderIT : SFBaseTest
 				reader.GetInt16(-1);
 				Assert.Fail();
 			}
-			catch (SFException e)
+			catch (SnowflakeException e)
 			{
-				Assert.AreEqual(SFError.ColumnIndexOutOfBound, e.SnowflakeError);
+				Assert.AreEqual(SnowflakeError.ColumnIndexOutOfBound, e.SnowflakeError);
 			}
 
 			try
@@ -963,9 +963,9 @@ class SFDbDataReaderIT : SFBaseTest
 				reader.GetInt16(1);
 				Assert.Fail();
 			}
-			catch (SFException e)
+			catch (SnowflakeException e)
 			{
-				Assert.AreEqual(SFError.ColumnIndexOutOfBound, e.SnowflakeError);
+				Assert.AreEqual(SnowflakeError.ColumnIndexOutOfBound, e.SnowflakeError);
 			}
 			reader.Close();
 
@@ -976,7 +976,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestBasicDataReader()
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -988,7 +988,7 @@ class SFDbDataReaderIT : SFBaseTest
 				{
 					Assert.AreEqual(2, reader.FieldCount);
 					Assert.AreEqual(0, reader.Depth);
-					Assert.IsTrue(((SFDataReader)reader).HasRows);
+					Assert.IsTrue(((SnowflakeDataReader)reader).HasRows);
 					Assert.IsFalse(reader.IsClosed);
 					Assert.AreEqual("COLONE", reader.GetName(0));
 					Assert.AreEqual("COLTWO", reader.GetName(1));
@@ -1014,9 +1014,9 @@ class SFDbDataReaderIT : SFBaseTest
 						reader.Read();
 						Assert.Fail();
 					}
-					catch (SFException e)
+					catch (SnowflakeException e)
 					{
-						Assert.AreEqual(SFError.DataReaderAlreadyClosed, e.SnowflakeError);
+						Assert.AreEqual(SnowflakeError.DataReaderAlreadyClosed, e.SnowflakeError);
 					}
 
 					try
@@ -1024,9 +1024,9 @@ class SFDbDataReaderIT : SFBaseTest
 						reader.GetInt16(0);
 						Assert.Fail();
 					}
-					catch (SFException e)
+					catch (SnowflakeException e)
 					{
-						Assert.AreEqual(SFError.DataReaderAlreadyClosed, e.SnowflakeError);
+						Assert.AreEqual(SnowflakeError.DataReaderAlreadyClosed, e.SnowflakeError);
 					}
 				}
 			}
@@ -1038,7 +1038,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestReadOutNullVal()
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -1074,7 +1074,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestGetGuid()
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -1125,7 +1125,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestCopyCmdUpdateCount()
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -1163,7 +1163,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestCopyCmdResultSet()
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -1211,7 +1211,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestRetrieveSemiStructuredData()
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -1237,7 +1237,7 @@ class SFDbDataReaderIT : SFBaseTest
 	[Test]
 	public void TestResultSetMetadata()
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -1259,20 +1259,20 @@ class SFDbDataReaderIT : SFBaseTest
 				Assert.AreEqual(0, row[SchemaTableColumn.ColumnOrdinal]);
 				Assert.AreEqual(20, row[SchemaTableColumn.NumericPrecision]);
 				Assert.AreEqual(4, row[SchemaTableColumn.NumericScale]);
-				Assert.AreEqual(SFDataType.Fixed, (SFDataType)row[SchemaTableColumn.ProviderType]);
+				Assert.AreEqual(SnowflakeDataType.Fixed, (SnowflakeDataType)row[SchemaTableColumn.ProviderType]);
 				Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
 
 				row = dataTable.Rows[1];
 				Assert.AreEqual("C2", row[SchemaTableColumn.ColumnName]);
 				Assert.AreEqual(1, row[SchemaTableColumn.ColumnOrdinal]);
 				Assert.AreEqual(100, row[SchemaTableColumn.ColumnSize]);
-				Assert.AreEqual(SFDataType.Text, (SFDataType)row[SchemaTableColumn.ProviderType]);
+				Assert.AreEqual(SnowflakeDataType.Text, (SnowflakeDataType)row[SchemaTableColumn.ProviderType]);
 				Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
 
 				row = dataTable.Rows[2];
 				Assert.AreEqual("C3", row[SchemaTableColumn.ColumnName]);
 				Assert.AreEqual(2, row[SchemaTableColumn.ColumnOrdinal]);
-				Assert.AreEqual(SFDataType.Real, (SFDataType)row[SchemaTableColumn.ProviderType]);
+				Assert.AreEqual(SnowflakeDataType.Real, (SnowflakeDataType)row[SchemaTableColumn.ProviderType]);
 				Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
 
 				row = dataTable.Rows[3];
@@ -1280,19 +1280,19 @@ class SFDbDataReaderIT : SFBaseTest
 				Assert.AreEqual(3, row[SchemaTableColumn.ColumnOrdinal]);
 				Assert.AreEqual(0, row[SchemaTableColumn.NumericPrecision]);
 				Assert.AreEqual(9, row[SchemaTableColumn.NumericScale]);
-				Assert.AreEqual(SFDataType.TimestampNtz, (SFDataType)row[SchemaTableColumn.ProviderType]);
+				Assert.AreEqual(SnowflakeDataType.TimestampNtz, (SnowflakeDataType)row[SchemaTableColumn.ProviderType]);
 				Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
 
 				row = dataTable.Rows[4];
 				Assert.AreEqual("C5", row[SchemaTableColumn.ColumnName]);
 				Assert.AreEqual(4, row[SchemaTableColumn.ColumnOrdinal]);
-				Assert.AreEqual(SFDataType.Variant, (SFDataType)row[SchemaTableColumn.ProviderType]);
+				Assert.AreEqual(SnowflakeDataType.Variant, (SnowflakeDataType)row[SchemaTableColumn.ProviderType]);
 				Assert.AreEqual(false, row[SchemaTableColumn.AllowDBNull]);
 
 				row = dataTable.Rows[5];
 				Assert.AreEqual("C6", row[SchemaTableColumn.ColumnName]);
 				Assert.AreEqual(5, row[SchemaTableColumn.ColumnOrdinal]);
-				Assert.AreEqual(SFDataType.Boolean, (SFDataType)row[SchemaTableColumn.ProviderType]);
+				Assert.AreEqual(SnowflakeDataType.Boolean, (SnowflakeDataType)row[SchemaTableColumn.ProviderType]);
 				Assert.AreEqual(true, row[SchemaTableColumn.AllowDBNull]);
 			}
 

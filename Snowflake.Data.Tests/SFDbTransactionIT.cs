@@ -14,7 +14,7 @@ class SFDbTransactionIT : SFBaseTest
 	// Test that when a transaction is disposed, rollback would be sent out
 	public void TestTransactionDispose()
 	{
-		var conn = new SFConnection();
+		var conn = new SnowflakeConnection();
 		try
 		{
 			conn.ConnectionString = ConnectionString;

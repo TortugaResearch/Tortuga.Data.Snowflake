@@ -24,7 +24,7 @@ class SFResultSetMetaData
 
 	internal readonly SFStatementType m_StatementType;
 
-	internal readonly List<Tuple<SFDataType, Type>> m_ColumnTypes;
+	internal readonly List<Tuple<SnowflakeDataType, Type>> m_ColumnTypes;
 
 	/// <summary>
 	///     This map is used to cache column name to column index. Index is 0-based.
@@ -69,13 +69,13 @@ class SFResultSetMetaData
 		m_ColumnTypes = InitColumnTypes();
 	}
 
-	List<Tuple<SFDataType, Type>> InitColumnTypes()
+	List<Tuple<SnowflakeDataType, Type>> InitColumnTypes()
 	{
-		var types = new List<Tuple<SFDataType, Type>>();
+		var types = new List<Tuple<SnowflakeDataType, Type>>();
 		for (var i = 0; i < m_ColumnCount; i++)
 		{
 			var column = m_RowTypes[i];
-			var dataType = SFDataTypeExtensions.FromSql(column.Type!);
+			var dataType = SnowflakeDataTypeExtensions.FromSql(column.Type!);
 			var nativeType = GetNativeTypeForColumn(dataType, column);
 
 			types.Add(Tuple.Create(dataType, nativeType));
@@ -108,55 +108,55 @@ class SFResultSetMetaData
 		return -1;
 	}
 
-	internal SFDataType GetColumnTypeByIndex(int targetIndex)
+	internal SnowflakeDataType GetColumnTypeByIndex(int targetIndex)
 	{
 		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
-			throw new SFException(SFError.ColumnIndexOutOfBound, targetIndex);
+			throw new SnowflakeException(SnowflakeError.ColumnIndexOutOfBound, targetIndex);
 
 		return m_ColumnTypes[targetIndex].Item1;
 	}
 
-	internal Tuple<SFDataType, Type> GetTypesByIndex(int targetIndex)
+	internal Tuple<SnowflakeDataType, Type> GetTypesByIndex(int targetIndex)
 	{
 		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
-			throw new SFException(SFError.ColumnIndexOutOfBound, targetIndex);
+			throw new SnowflakeException(SnowflakeError.ColumnIndexOutOfBound, targetIndex);
 
 		return m_ColumnTypes[targetIndex];
 	}
 
-	static Type GetNativeTypeForColumn(SFDataType sfType, ExecResponseRowType col)
+	static Type GetNativeTypeForColumn(SnowflakeDataType sfType, ExecResponseRowType col)
 	{
 		switch (sfType)
 		{
-			case SFDataType.Fixed:
+			case SnowflakeDataType.Fixed:
 				return col.Scale == 0 ? typeof(long) : typeof(decimal);
 
-			case SFDataType.Real:
+			case SnowflakeDataType.Real:
 				return typeof(double);
 
-			case SFDataType.Text:
-			case SFDataType.Variant:
-			case SFDataType.Object:
-			case SFDataType.Array:
+			case SnowflakeDataType.Text:
+			case SnowflakeDataType.Variant:
+			case SnowflakeDataType.Object:
+			case SnowflakeDataType.Array:
 				return typeof(string);
 
-			case SFDataType.Date:
-			case SFDataType.Time:
-			case SFDataType.TimestampNtz:
+			case SnowflakeDataType.Date:
+			case SnowflakeDataType.Time:
+			case SnowflakeDataType.TimestampNtz:
 				return typeof(DateTime);
 
-			case SFDataType.TimestampLtz:
-			case SFDataType.TimestampTz:
+			case SnowflakeDataType.TimestampLtz:
+			case SnowflakeDataType.TimestampTz:
 				return typeof(DateTimeOffset);
 
-			case SFDataType.Binary:
+			case SnowflakeDataType.Binary:
 				return typeof(byte[]);
 
-			case SFDataType.Boolean:
+			case SnowflakeDataType.Boolean:
 				return typeof(bool);
 
 			default:
-				throw new SFException(SFError.InternalError,
+				throw new SnowflakeException(SnowflakeError.InternalError,
 					$"Unknow column type: {sfType}");
 		}
 	}
@@ -164,7 +164,7 @@ class SFResultSetMetaData
 	internal Type GetCSharpTypeByIndex(int targetIndex)
 	{
 		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
-			throw new SFException(SFError.ColumnIndexOutOfBound, targetIndex);
+			throw new SnowflakeException(SnowflakeError.ColumnIndexOutOfBound, targetIndex);
 
 		var sfType = GetColumnTypeByIndex(targetIndex);
 		return GetNativeTypeForColumn(sfType, m_RowTypes[targetIndex]);
@@ -173,7 +173,7 @@ class SFResultSetMetaData
 	internal string? getColumnNameByIndex(int targetIndex)
 	{
 		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
-			throw new SFException(SFError.ColumnIndexOutOfBound, targetIndex);
+			throw new SnowflakeException(SnowflakeError.ColumnIndexOutOfBound, targetIndex);
 
 		return m_RowTypes[targetIndex].Name;
 	}

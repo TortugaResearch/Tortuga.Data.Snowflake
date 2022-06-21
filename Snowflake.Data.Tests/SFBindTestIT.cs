@@ -14,7 +14,7 @@ class SFBindTestIT : SFBaseTest
 	[Test]
 	public void TestArrayBind()
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -54,7 +54,7 @@ class SFBindTestIT : SFBaseTest
 	[Test]
 	public void TestBindNullValue()
 	{
-		using (var dbConnection = new SFConnection())
+		using (var dbConnection = new SnowflakeConnection())
 		{
 			dbConnection.ConnectionString = ConnectionString;
 			dbConnection.Open();
@@ -164,9 +164,9 @@ class SFBindTestIT : SFBaseTest
 								command.Parameters.Add(param);
 								int rowsInserted = command.ExecuteNonQuery();
 							}
-							catch (SFException e)
+							catch (SnowflakeException e)
 							{
-								Assert.AreEqual(SFError.UnsupportedDotnetType, e.SnowflakeError);
+								Assert.AreEqual(SnowflakeError.UnsupportedDotnetType, e.SnowflakeError);
 							}
 						}
 					}
@@ -207,7 +207,7 @@ class SFBindTestIT : SFBaseTest
 	[Test]
 	public void testBindValue()
 	{
-		using (SFConnection dbConnection = new SFConnection())
+		using (SnowflakeConnection dbConnection = new SnowflakeConnection())
 		{
 			dbConnection.ConnectionString = ConnectionString;
 			dbConnection.Open();
@@ -330,9 +330,9 @@ class SFBindTestIT : SFBaseTest
 								command.Parameters.Add(param);
 								int rowsInserted = command.ExecuteNonQuery();
 							}
-							catch (SFException e)
+							catch (SnowflakeException e)
 							{
-								Assert.AreEqual(SFError.UnsupportedDotnetType, e.SnowflakeError);
+								Assert.AreEqual(SnowflakeError.UnsupportedDotnetType, e.SnowflakeError);
 							}
 						}
 					}
@@ -373,20 +373,20 @@ class SFBindTestIT : SFBaseTest
 	[Test]
 	public void TestBindValueWithSFDataType()
 	{
-		using (SFConnection dbConnection = new SFConnection())
+		using (SnowflakeConnection dbConnection = new SnowflakeConnection())
 		{
 			dbConnection.ConnectionString = ConnectionString;
 			dbConnection.Open();
 			try
 			{
-				foreach (SFDataType type in Enum.GetValues(typeof(SFDataType)))
+				foreach (SnowflakeDataType type in Enum.GetValues(typeof(SnowflakeDataType)))
 				{
-					if (!type.Equals(SFDataType.None))
+					if (!type.Equals(SnowflakeDataType.None))
 					{
 						bool isTypeSupported = true;
 						using (var command = dbConnection.CreateCommand())
 						{
-							if (!type.Equals(SFDataType.Fixed))
+							if (!type.Equals(SnowflakeDataType.Fixed))
 							{
 								command.CommandText = $"create or replace table TEST_TBL (data {type}, unsupportedType VARCHAR)";
 							}
@@ -399,48 +399,48 @@ class SFBindTestIT : SFBaseTest
 
 						using (var command = dbConnection.CreateCommand())
 						{
-							SFParameter param = (SFParameter)command.CreateParameter();
+							SnowflakeParameter param = (SnowflakeParameter)command.CreateParameter();
 							param.ParameterName = "p0";
 							param.SFDataType = type;
 							switch (type)
 							{
-								case SFDataType.Binary:
+								case SnowflakeDataType.Binary:
 									param.Value = Encoding.UTF8.GetBytes("BinaryData");
 									break;
 
-								case SFDataType.Fixed:
+								case SnowflakeDataType.Fixed:
 									param.Value = 10;
 									break;
 
-								case SFDataType.Boolean:
+								case SnowflakeDataType.Boolean:
 									param.Value = true;
 									break;
 
-								case SFDataType.Date:
+								case SnowflakeDataType.Date:
 									param.Value = DateTime.Now;
 									break;
 
-								case SFDataType.Text:
+								case SnowflakeDataType.Text:
 									param.Value = "thisIsAString";
 									break;
 
-								case SFDataType.TimestampLtz:
+								case SnowflakeDataType.TimestampLtz:
 									param.Value = DateTimeOffset.Now;
 									break;
 
-								case SFDataType.TimestampNtz:
+								case SnowflakeDataType.TimestampNtz:
 									param.Value = DateTime.Now;
 									break;
 
-								case SFDataType.TimestampTz:
+								case SnowflakeDataType.TimestampTz:
 									param.Value = DateTimeOffset.Now;
 									break;
 
-								case SFDataType.Time:
+								case SnowflakeDataType.Time:
 									param.Value = DateTime.Now;
 									break;
 
-								case SFDataType.Real:
+								case SnowflakeDataType.Real:
 									param.Value = 25.3;
 									break;
 
@@ -460,9 +460,9 @@ class SFBindTestIT : SFBaseTest
 								Assert.AreEqual(1, rowsInserted);
 							}
 							// DB rejects query if param type is VARIANT, OBJECT or ARRAY
-							else if (!type.Equals(SFDataType.Variant) &&
-									 !type.Equals(SFDataType.Object) &&
-									 !type.Equals(SFDataType.Array))
+							else if (!type.Equals(SnowflakeDataType.Variant) &&
+									 !type.Equals(SnowflakeDataType.Object) &&
+									 !type.Equals(SnowflakeDataType.Array))
 							{
 								try
 								{
@@ -471,9 +471,9 @@ class SFBindTestIT : SFBaseTest
 									command.Parameters.Add(param);
 									int rowsInserted = command.ExecuteNonQuery();
 								}
-								catch (SFException e)
+								catch (SnowflakeException e)
 								{
-									Assert.AreEqual(SFError.UnsupportedSnowflakeTypeForParam, e.SnowflakeError);
+									Assert.AreEqual(SnowflakeError.UnsupportedSnowflakeTypeForParam, e.SnowflakeError);
 								}
 							}
 						}
@@ -508,7 +508,7 @@ class SFBindTestIT : SFBaseTest
 	[Test]
 	public void TestParameterCollection()
 	{
-		using (var conn = new SFConnection())
+		using (var conn = new SnowflakeConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -535,7 +535,7 @@ class SFBindTestIT : SFBaseTest
 				parameters.SetValue(p2, 1);
 				parameters.SetValue(p3, 2);
 
-				((SFParameterCollection)cmd.Parameters).AddRange(parameters);
+				((SnowflakeParameterCollection)cmd.Parameters).AddRange(parameters);
 
 				var target = new IDataParameter[15];
 

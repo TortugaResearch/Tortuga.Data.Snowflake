@@ -14,14 +14,14 @@ using Tortuga.Data.Snowflake.Core.Sessions;
 namespace Tortuga.Data.Snowflake;
 
 [DesignerCategory("Code")]
-public class SFConnection : DbConnection
+public class SnowflakeConnection : DbConnection
 {
 	internal ConnectionState m_ConnectionState;
 	internal int m_ConnectionTimeout;
 
 	string m_ConnectionString = "";
 
-	public SFConnection()
+	public SnowflakeConnection()
 	{
 		m_ConnectionState = ConnectionState.Closed;
 		m_ConnectionTimeout = int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttribute>()?.DefaultValue ?? "0", CultureInfo.InvariantCulture);
@@ -56,14 +56,14 @@ public class SFConnection : DbConnection
 	public override ConnectionState State => m_ConnectionState;
 	internal SFSession? SfSession { get; set; }
 
-	SFConfiguration m_Configuration = SFConfiguration.Default;
+	SnowflakeConfiguration m_Configuration = SnowflakeConfiguration.Default;
 
 	/// <summary>
 	/// Gets or sets the configuration.
 	/// </summary>
 	/// <value>The configuration.</value>
 	/// <remarks>This defaults to SnowflakeDbConfiguration.Default.</remarks>
-	public SFConfiguration Configuration
+	public SnowflakeConfiguration Configuration
 	{
 		get => m_Configuration;
 		set
@@ -123,7 +123,7 @@ public class SFConnection : DbConnection
 		{
 			SfSession!.Open();
 		}
-		catch (SFException)
+		catch (SnowflakeException)
 		{
 			m_ConnectionState = ConnectionState.Closed;
 			throw;
@@ -132,7 +132,7 @@ public class SFConnection : DbConnection
 		{
 			// Otherwise when Dispose() is called, the close request would timeout.
 			m_ConnectionState = ConnectionState.Closed;
-			throw new SFException(e, SFException.CONNECTION_FAILURE_SSTATE, SFError.InternalError, "Unable to connect. " + e.Message);
+			throw new SnowflakeException(e, SnowflakeException.CONNECTION_FAILURE_SSTATE, SnowflakeError.InternalError, "Unable to connect. " + e.Message);
 		}
 		m_ConnectionState = ConnectionState.Open;
 	}
@@ -145,7 +145,7 @@ public class SFConnection : DbConnection
 		{
 			await SfSession!.OpenAsync(cancellationToken).ConfigureAwait(false);
 		}
-		catch (SFException)
+		catch (SnowflakeException)
 		{
 			m_ConnectionState = ConnectionState.Closed;
 			throw;
@@ -159,7 +159,7 @@ public class SFConnection : DbConnection
 		{
 			// Otherwise when Dispose() is called, the close request would timeout.
 			m_ConnectionState = ConnectionState.Closed;
-			throw new SFException(ex, SFException.CONNECTION_FAILURE_SSTATE, SFError.InternalError, "Unable to connect. " + ex.Message);
+			throw new SnowflakeException(ex, SnowflakeException.CONNECTION_FAILURE_SSTATE, SnowflakeError.InternalError, "Unable to connect. " + ex.Message);
 		}
 		m_ConnectionState = ConnectionState.Open;
 	}
@@ -186,12 +186,12 @@ public class SFConnection : DbConnection
 			isolationLevel = IsolationLevel.ReadCommitted;
 		}
 
-		return new SFTransaction(isolationLevel, this);
+		return new SnowflakeTransaction(isolationLevel, this);
 	}
 
 	protected override DbCommand CreateDbCommand()
 	{
-		return new SFCommand(this);
+		return new SnowflakeCommand(this);
 	}
 
 	protected override void Dispose(bool disposing)
@@ -210,7 +210,7 @@ public class SFConnection : DbConnection
 	/// <summary>
 	/// Create a new SFSession with the connection string settings.
 	/// </summary>
-	/// <exception cref="SFException">If the connection string can't be processed</exception>
+	/// <exception cref="SnowflakeException">If the connection string can't be processed</exception>
 	private void SetSession()
 	{
 		if (ConnectionString == null)

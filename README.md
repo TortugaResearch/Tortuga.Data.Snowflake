@@ -4,6 +4,8 @@ Snowflake Connector for .NET
 
 `Tortuga.Data.Snowflake` is a fork of `Snowflake.Data`. It has undergone a massive refactoring effort, the details of which are available in the [refactoring log](Refactoring.md).
 
+The [change log](Changelog.md) starts with version 3.0. Prior to that, see the [refactoring log](Refactoring.md).
+
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 The Snowflake .NET connector supports the the following .NET framework and libraries versions:

@@ -13,7 +13,7 @@ class SFDbCommandIT : SFBaseTest
     [Test]
     public void TestSimpleCommand()
     {
-        using (var conn = new SFConnection())
+        using (var conn = new SnowflakeConnection())
         {
             conn.ConnectionString = ConnectionString;
 
@@ -52,10 +52,10 @@ class SFDbCommandIT : SFBaseTest
             {
             }
 
-            Assert.IsFalse(((SFCommand)cmd).DesignTimeVisible);
+            Assert.IsFalse(((SnowflakeCommand)cmd).DesignTimeVisible);
             try
             {
-                ((SFCommand)cmd).DesignTimeVisible = true;
+                ((SnowflakeCommand)cmd).DesignTimeVisible = true;
                 Assert.Fail();
             }
             catch (NotSupportedException)
@@ -75,7 +75,7 @@ class SFDbCommandIT : SFBaseTest
     [IgnoreOnEnvIs("snowflake_cloud_env", new string[] { "GCP" })]
     public void TestSimpleLargeResultSet()
     {
-        using (var conn = new SFConnection())
+        using (var conn = new SnowflakeConnection())
         {
             conn.ConnectionString = ConnectionString;
 
@@ -151,7 +151,7 @@ public void TestUseV2ChunkDownloader()
     [Test]
     public void TestDataSourceError()
     {
-        using (var conn = new SFConnection())
+        using (var conn = new SnowflakeConnection())
         {
             conn.ConnectionString = ConnectionString;
 
@@ -164,7 +164,7 @@ public void TestUseV2ChunkDownloader()
                 IDataReader reader = cmd.ExecuteReader();
                 Assert.Fail();
             }
-            catch (SFException e)
+            catch (SnowflakeException e)
             {
                 Assert.AreEqual(2003, e.ErrorCode);
                 Assert.AreNotEqual("", e.QueryId);
@@ -177,7 +177,7 @@ public void TestUseV2ChunkDownloader()
     [Test]
     public void TestCancelQuery()
     {
-        using (var conn = new SFConnection())
+        using (var conn = new SnowflakeConnection())
         {
             conn.ConnectionString = ConnectionString;
 
@@ -192,7 +192,7 @@ public void TestUseV2ChunkDownloader()
                     cmd.ExecuteScalar();
                     Assert.Fail();
                 }
-                catch (SFException e)
+                catch (SnowflakeException e)
                 {
                     // 604 is error code from server meaning query has been canceled
                     if (604 != e.ErrorCode)
@@ -231,7 +231,7 @@ public void TestUseV2ChunkDownloader()
     [Test]
     public void TestTransaction()
     {
-        using (var conn = new SFConnection())
+        using (var conn = new SnowflakeConnection())
         {
             conn.ConnectionString = ConnectionString;
 
@@ -298,7 +298,7 @@ public void TestUseV2ChunkDownloader()
                 0, 2, 1, 0
             };
 
-        using (var conn = new SFConnection())
+        using (var conn = new SnowflakeConnection())
         {
             conn.ConnectionString = ConnectionString;
 
@@ -322,7 +322,7 @@ public void TestUseV2ChunkDownloader()
     [Test]
     public void TestExecuteScalarNull()
     {
-        using (var conn = new SFConnection())
+        using (var conn = new SnowflakeConnection())
         {
             conn.ConnectionString = ConnectionString;
             conn.Open();
@@ -341,7 +341,7 @@ public void TestUseV2ChunkDownloader()
     [Test]
     public void TestCreateCommandBeforeOpeningConnection()
     {
-        using (var conn = new SFConnection())
+        using (var conn = new SnowflakeConnection())
         {
             conn.ConnectionString = ConnectionString;
 
@@ -357,7 +357,7 @@ public void TestUseV2ChunkDownloader()
     [Test]
     public void TestRowsAffectedUnload()
     {
-        using (var conn = new SFConnection())
+        using (var conn = new SnowflakeConnection())
         {
             conn.ConnectionString = ConnectionString;
             conn.Open();

@@ -4,7 +4,7 @@
 
 namespace Tortuga.Data.Snowflake;
 
-public enum SFError
+public enum SnowflakeError
 {
 	None = 0,
 
