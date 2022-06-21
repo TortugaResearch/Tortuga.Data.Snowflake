@@ -23,8 +23,12 @@ public class SnowflakeDbConnection : DbConnection
 
 	public SnowflakeDbConnection()
 	{
-		m_ConnectionState = ConnectionState.Closed;
 		m_ConnectionTimeout = int.Parse(SFSessionProperty.CONNECTION_TIMEOUT.GetAttribute<SFSessionPropertyAttribute>()?.DefaultValue ?? "0", CultureInfo.InvariantCulture);
+	}
+
+	public SnowflakeDbConnection(string connectionString) : this()
+	{
+		ConnectionString = connectionString;
 	}
 
 	[AllowNull]

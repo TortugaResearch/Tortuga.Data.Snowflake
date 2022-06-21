@@ -29,6 +29,11 @@ public class SnowflakeDbCommand : DbCommand
 		m_Connection = connection;
 	}
 
+	public SnowflakeDbCommand(SnowflakeDbConnection connection, string cmdText) : this(connection)
+	{
+		CommandText = cmdText;
+	}
+
 	[AllowNull]
 	public override string CommandText
 	{
