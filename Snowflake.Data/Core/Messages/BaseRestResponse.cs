@@ -20,6 +20,6 @@ abstract class BaseRestResponse
 	internal void FilterFailedResponse()
 	{
 		if (!Success)
-			throw new SnowflakeException("", Code, Message, "");
+			throw new SnowflakeDbException("", Code, Message, "");
 	}
 }

@@ -18,7 +18,7 @@ abstract class ChunkParser
 	/// <param name="chunk"></param>
 	public abstract void ParseChunk(IResultChunk chunk);
 
-	public static ChunkParser GetParser(SnowflakeConfiguration configuration, Stream stream)
+	public static ChunkParser GetParser(SnowflakeDbConfiguration configuration, Stream stream)
 	{
 		if (!configuration.UseV2JsonParser)
 			return new ChunkDeserializer(stream);

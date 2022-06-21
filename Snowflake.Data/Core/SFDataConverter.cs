@@ -16,7 +16,7 @@ static class SFDataConverter
 
 	// Method with the same signature as before the performance work
 	// Used by unit tests only
-	internal static object ConvertToCSharpVal(string srcVal, SnowflakeDataType srcType, Type destType)
+	internal static object ConvertToCSharpVal(string srcVal, SnowflakeDbDataType srcType, Type destType)
 	{
 		// Create an UTF8Buffer with an offset to get better testing
 		var b1 = Encoding.UTF8.GetBytes(srcVal);
@@ -26,7 +26,7 @@ static class SFDataConverter
 		return ConvertToCSharpVal(v, srcType, destType);
 	}
 
-	internal static object ConvertToCSharpVal(UTF8Buffer? srcVal, SnowflakeDataType srcType, Type destType)
+	internal static object ConvertToCSharpVal(UTF8Buffer? srcVal, SnowflakeDbDataType srcType, Type destType)
 	{
 		if (srcVal == null)
 			return DBNull.Value;
@@ -69,7 +69,7 @@ static class SFDataConverter
 			}
 			else if (destType == typeof(byte[]))
 			{
-				return srcType == SnowflakeDataType.Binary ?
+				return srcType == SnowflakeDbDataType.Binary ?
 					HexToBytes(srcVal.ToString()) : srcVal.GetBytes();
 			}
 			else if (destType == typeof(short))
@@ -98,12 +98,12 @@ static class SFDataConverter
 			}
 			else if (destType == typeof(char[]))
 			{
-				var data = srcType == SnowflakeDataType.Binary ? HexToBytes(srcVal.ToString()) : srcVal.GetBytes();
+				var data = srcType == SnowflakeDbDataType.Binary ? HexToBytes(srcVal.ToString()) : srcVal.GetBytes();
 				return Encoding.UTF8.GetString(data).ToCharArray();
 			}
 			else
 			{
-				throw new SnowflakeException(SnowflakeError.InternalError, "Invalid destination type.");
+				throw new SnowflakeDbException(SnowflakeDbError.InternalError, "Invalid destination type.");
 			}
 		}
 		catch (OverflowException e)
@@ -112,48 +112,48 @@ static class SFDataConverter
 		}
 	}
 
-	static object ConvertToTimeSpan(UTF8Buffer srcVal, SnowflakeDataType srcType)
+	static object ConvertToTimeSpan(UTF8Buffer srcVal, SnowflakeDbDataType srcType)
 	{
 		switch (srcType)
 		{
-			case SnowflakeDataType.Time:
+			case SnowflakeDbDataType.Time:
 				// Convert fractional seconds since midnight to TimeSpan
 				//  A single tick represents one hundred nanoseconds or one ten-millionth of a second.
 				// There are 10,000 ticks in a millisecond
 				return TimeSpan.FromTicks(GetTicksFromSecondAndNanosecond(srcVal));
 
 			default:
-				throw new SnowflakeException(SnowflakeError.InvalidDataConversion, srcVal, srcType, typeof(TimeSpan));
+				throw new SnowflakeDbException(SnowflakeDbError.InvalidDataConversion, srcVal, srcType, typeof(TimeSpan));
 		}
 	}
 
-	static DateTime ConvertToDateTime(UTF8Buffer srcVal, SnowflakeDataType srcType)
+	static DateTime ConvertToDateTime(UTF8Buffer srcVal, SnowflakeDbDataType srcType)
 	{
 		switch (srcType)
 		{
-			case SnowflakeDataType.Date:
+			case SnowflakeDbDataType.Date:
 				var srcValLong = FastParser.FastParseInt64(srcVal.Buffer, srcVal.offset, srcVal.length);
 				return UnixEpoch.AddDays(srcValLong);
 
-			case SnowflakeDataType.Time:
-			case SnowflakeDataType.TimestampNtz:
+			case SnowflakeDbDataType.Time:
+			case SnowflakeDbDataType.TimestampNtz:
 				var tickDiff = GetTicksFromSecondAndNanosecond(srcVal);
 				return UnixEpoch.AddTicks(tickDiff);
 
 			default:
-				throw new SnowflakeException(SnowflakeError.InvalidDataConversion, srcVal, srcType, typeof(DateTime));
+				throw new SnowflakeDbException(SnowflakeDbError.InvalidDataConversion, srcVal, srcType, typeof(DateTime));
 		}
 	}
 
-	static DateTimeOffset ConvertToDateTimeOffset(UTF8Buffer srcVal, SnowflakeDataType srcType)
+	static DateTimeOffset ConvertToDateTimeOffset(UTF8Buffer srcVal, SnowflakeDbDataType srcType)
 	{
 		switch (srcType)
 		{
-			case SnowflakeDataType.TimestampTz:
+			case SnowflakeDbDataType.TimestampTz:
 				var spaceIndex = Array.IndexOf(srcVal.Buffer, (byte)' ', srcVal.offset, srcVal.length); ;
 				if (spaceIndex == -1)
 				{
-					throw new SnowflakeException(SnowflakeError.InternalError,
+					throw new SnowflakeDbException(SnowflakeDbError.InternalError,
 						$"Invalid timestamp_tz value: {srcVal}");
 				}
 				else
@@ -164,11 +164,11 @@ static class SFDataConverter
 					var offSetTimespan = new TimeSpan((offset - 1440) / 60, 0, 0);
 					return new DateTimeOffset(UnixEpoch.Ticks + GetTicksFromSecondAndNanosecond(timeVal), TimeSpan.Zero).ToOffset(offSetTimespan);
 				}
-			case SnowflakeDataType.TimestampLtz:
+			case SnowflakeDbDataType.TimestampLtz:
 				return new DateTimeOffset(UnixEpoch.Ticks + GetTicksFromSecondAndNanosecond(srcVal), TimeSpan.Zero).ToLocalTime();
 
 			default:
-				throw new SnowflakeException(SnowflakeError.InvalidDataConversion, srcVal, srcType, typeof(DateTimeOffset).ToString());
+				throw new SnowflakeDbException(SnowflakeDbError.InvalidDataConversion, srcVal, srcType, typeof(DateTimeOffset).ToString());
 		}
 	}
 
@@ -220,7 +220,7 @@ static class SFDataConverter
 
 	internal static Tuple<string, string?> CSharpTypeValToSfTypeVal(DbType srcType, object? srcVal)
 	{
-		SnowflakeDataType destType;
+		SnowflakeDbDataType destType;
 		string? destVal;
 
 		switch (srcType)
@@ -235,48 +235,48 @@ static class SFDataConverter
 			case DbType.UInt32:
 			case DbType.UInt64:
 			case DbType.VarNumeric:
-				destType = SnowflakeDataType.Fixed;
+				destType = SnowflakeDbDataType.Fixed;
 				break;
 
 			case DbType.Boolean:
-				destType = SnowflakeDataType.Boolean;
+				destType = SnowflakeDbDataType.Boolean;
 				break;
 
 			case DbType.Double:
 			case DbType.Single:
-				destType = SnowflakeDataType.Real;
+				destType = SnowflakeDbDataType.Real;
 				break;
 
 			case DbType.Guid:
 			case DbType.String:
 			case DbType.StringFixedLength:
-				destType = SnowflakeDataType.Text;
+				destType = SnowflakeDbDataType.Text;
 				break;
 
 			case DbType.Date:
-				destType = SnowflakeDataType.Date;
+				destType = SnowflakeDbDataType.Date;
 				break;
 
 			case DbType.Time:
-				destType = SnowflakeDataType.Time;
+				destType = SnowflakeDbDataType.Time;
 				break;
 
 			case DbType.DateTime:
 			case DbType.DateTime2:
-				destType = SnowflakeDataType.TimestampNtz;
+				destType = SnowflakeDbDataType.TimestampNtz;
 				break;
 
 			// By default map DateTimeoffset to TIMESTAMP_TZ
 			case DbType.DateTimeOffset:
-				destType = SnowflakeDataType.TimestampTz;
+				destType = SnowflakeDbDataType.TimestampTz;
 				break;
 
 			case DbType.Binary:
-				destType = SnowflakeDataType.Binary;
+				destType = SnowflakeDbDataType.Binary;
 				break;
 
 			default:
-				throw new SnowflakeException(SnowflakeError.UnsupportedDotnetType, srcType);
+				throw new SnowflakeDbException(SnowflakeDbError.UnsupportedDotnetType, srcType);
 		}
 		destVal = csharpValToSfVal(destType, srcVal);
 		return Tuple.Create(destType.ToSql(), destVal);
@@ -301,7 +301,7 @@ static class SFDataConverter
 		return bytes;
 	}
 
-	internal static string? csharpValToSfVal(SnowflakeDataType sfDataType, object? srcVal)
+	internal static string? csharpValToSfVal(SnowflakeDbDataType sfDataType, object? srcVal)
 	{
 		if ((srcVal == DBNull.Value) || (srcVal == null))
 			return null;
@@ -310,11 +310,11 @@ static class SFDataConverter
 
 		switch (sfDataType)
 		{
-			case SnowflakeDataType.TimestampLtz:
+			case SnowflakeDbDataType.TimestampLtz:
 				if (srcVal.GetType() != typeof(DateTimeOffset))
 				{
-					throw new SnowflakeException(SnowflakeError.InvalidDataConversion, srcVal,
-						srcVal.GetType().ToString(), SnowflakeDataType.TimestampLtz.ToString());
+					throw new SnowflakeDbException(SnowflakeDbError.InvalidDataConversion, srcVal,
+						srcVal.GetType().ToString(), SnowflakeDbDataType.TimestampLtz.ToString());
 				}
 				else
 				{
@@ -322,17 +322,17 @@ static class SFDataConverter
 				}
 				break;
 
-			case SnowflakeDataType.Fixed:
-			case SnowflakeDataType.Boolean:
-			case SnowflakeDataType.Real:
-			case SnowflakeDataType.Text:
+			case SnowflakeDbDataType.Fixed:
+			case SnowflakeDbDataType.Boolean:
+			case SnowflakeDbDataType.Real:
+			case SnowflakeDbDataType.Text:
 				destVal = string.Format(CultureInfo.InvariantCulture, "{0}", srcVal);
 				break;
 
-			case SnowflakeDataType.Time:
+			case SnowflakeDbDataType.Time:
 				if (srcVal.GetType() != typeof(DateTime))
 				{
-					throw new SnowflakeException(SnowflakeError.InvalidDataConversion, srcVal, srcVal.GetType().ToString(), DbType.Time.ToString());
+					throw new SnowflakeDbException(SnowflakeDbError.InvalidDataConversion, srcVal, srcVal.GetType().ToString(), DbType.Time.ToString());
 				}
 				else
 				{
@@ -343,10 +343,10 @@ static class SFDataConverter
 				}
 				break;
 
-			case SnowflakeDataType.Date:
+			case SnowflakeDbDataType.Date:
 				if (srcVal.GetType() != typeof(DateTime))
 				{
-					throw new SnowflakeException(SnowflakeError.InvalidDataConversion, srcVal, srcVal.GetType().ToString(), DbType.Date.ToString());
+					throw new SnowflakeDbException(SnowflakeDbError.InvalidDataConversion, srcVal, srcVal.GetType().ToString(), DbType.Date.ToString());
 				}
 				else
 				{
@@ -357,10 +357,10 @@ static class SFDataConverter
 				}
 				break;
 
-			case SnowflakeDataType.TimestampNtz:
+			case SnowflakeDbDataType.TimestampNtz:
 				if (srcVal.GetType() != typeof(DateTime))
 				{
-					throw new SnowflakeException(SnowflakeError.InvalidDataConversion, srcVal,
+					throw new SnowflakeDbException(SnowflakeDbError.InvalidDataConversion, srcVal,
 						srcVal.GetType().ToString(), DbType.DateTime.ToString());
 				}
 				else
@@ -372,10 +372,10 @@ static class SFDataConverter
 				}
 				break;
 
-			case SnowflakeDataType.TimestampTz:
+			case SnowflakeDbDataType.TimestampTz:
 				if (srcVal.GetType() != typeof(DateTimeOffset))
 				{
-					throw new SnowflakeException(SnowflakeError.InvalidDataConversion, srcVal, srcVal.GetType().ToString(), DbType.DateTimeOffset.ToString());
+					throw new SnowflakeDbException(SnowflakeDbError.InvalidDataConversion, srcVal, srcVal.GetType().ToString(), DbType.DateTimeOffset.ToString());
 				}
 				else
 				{
@@ -384,10 +384,10 @@ static class SFDataConverter
 				}
 				break;
 
-			case SnowflakeDataType.Binary:
+			case SnowflakeDbDataType.Binary:
 				if (srcVal.GetType() != typeof(byte[]))
 				{
-					throw new SnowflakeException(SnowflakeError.InvalidDataConversion, srcVal, srcVal.GetType().ToString(), DbType.Binary.ToString());
+					throw new SnowflakeDbException(SnowflakeDbError.InvalidDataConversion, srcVal, srcVal.GetType().ToString(), DbType.Binary.ToString());
 				}
 				else
 				{
@@ -396,8 +396,8 @@ static class SFDataConverter
 				break;
 
 			default:
-				throw new SnowflakeException(
-					SnowflakeError.UnsupportedSnowflakeTypeForParam, sfDataType.ToString());
+				throw new SnowflakeDbException(
+					SnowflakeDbError.UnsupportedSnowflakeTypeForParam, sfDataType.ToString());
 		}
 		return destVal;
 	}

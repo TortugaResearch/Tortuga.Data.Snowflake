@@ -7,13 +7,13 @@ using System.Data.Common;
 
 namespace Tortuga.Data.Snowflake;
 
-public class SnowflakeTransaction : DbTransaction
+public class SnowflakeDbTransaction : DbTransaction
 {
-	readonly SnowflakeConnection m_Connection;
+	readonly SnowflakeDbConnection m_Connection;
 	bool m_Disposed;
 	readonly IsolationLevel m_IsolationLevel;
 
-	public SnowflakeTransaction(IsolationLevel isolationLevel, SnowflakeConnection connection)
+	public SnowflakeDbTransaction(IsolationLevel isolationLevel, SnowflakeDbConnection connection)
 	{
 		if (isolationLevel != IsolationLevel.ReadCommitted)
 			throw new ArgumentOutOfRangeException(nameof(isolationLevel), isolationLevel, "Only IsolationLevel.ReadCommitted is supported.");

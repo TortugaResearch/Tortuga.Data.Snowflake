@@ -16,7 +16,7 @@ class SFConnectionIT : SFBaseTest
 	[Test]
 	public void TestBasicConnection()
 	{
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
@@ -24,9 +24,9 @@ class SFConnectionIT : SFBaseTest
 
 			Assert.AreEqual(120, conn.ConnectionTimeout);
 			// Data source is empty string for now
-			Assert.AreEqual("", ((SnowflakeConnection)conn).DataSource);
+			Assert.AreEqual("", ((SnowflakeDbConnection)conn).DataSource);
 
-			var serverVersion = ((SnowflakeConnection)conn).ServerVersion;
+			var serverVersion = ((SnowflakeDbConnection)conn).ServerVersion;
 			if (!string.Equals(serverVersion, "Dev"))
 			{
 				var versionElements = serverVersion.Split('.');
@@ -47,7 +47,7 @@ class SFConnectionIT : SFBaseTest
 		// Valid names
 		foreach (var appName in validApplicationNames)
 		{
-			using (var conn = new SnowflakeConnection())
+			using (var conn = new SnowflakeDbConnection())
 			{
 				conn.ConnectionString = ConnectionString;
 				conn.ConnectionString += $"application={appName}";
@@ -62,7 +62,7 @@ class SFConnectionIT : SFBaseTest
 		// Invalid names
 		foreach (var appName in invalidApplicationNames)
 		{
-			using (var conn = new SnowflakeConnection())
+			using (var conn = new SnowflakeDbConnection())
 			{
 				conn.ConnectionString = ConnectionString;
 				conn.ConnectionString += $"application={appName}";
@@ -71,7 +71,7 @@ class SFConnectionIT : SFBaseTest
 					conn.Open();
 					Assert.Fail();
 				}
-				catch (SnowflakeException e)
+				catch (SnowflakeDbException e)
 				{
 					// Expected
 					Assert.AreEqual("08006", e.SqlState); // Connection failure
@@ -85,7 +85,7 @@ class SFConnectionIT : SFBaseTest
 	[Test]
 	public void TestIncorrectUserOrPasswordBasicConnection()
 	{
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = $"scheme={TestConfig.Protocol};host={TestConfig.Host};port={TestConfig.Port};" +
 		$"account={TestConfig.Account};role={TestConfig.Role};db={TestConfig.Database};schema={TestConfig.Schema};warehouse={TestConfig.Warehouse};user={"unknown"};password={TestConfig.Password};";
@@ -96,7 +96,7 @@ class SFConnectionIT : SFBaseTest
 				conn.Open();
 				Assert.Fail();
 			}
-			catch (SnowflakeException e)
+			catch (SnowflakeDbException e)
 			{
 				// Expected
 				Assert.AreEqual("08006", e.SqlState); // Connection failure
@@ -108,42 +108,42 @@ class SFConnectionIT : SFBaseTest
 
 	public void TestCrlCheckSwitchConnection()
 	{
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString + ";INSECUREMODE=true";
 			conn.Open();
 			Assert.AreEqual(ConnectionState.Open, conn.State);
 		}
 
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 			Assert.AreEqual(ConnectionState.Open, conn.State);
 		}
 
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString + ";INSECUREMODE=false";
 			conn.Open();
 			Assert.AreEqual(ConnectionState.Open, conn.State);
 		}
 
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 			conn.Open();
 			Assert.AreEqual(ConnectionState.Open, conn.State);
 		}
 
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString + ";INSECUREMODE=false";
 			conn.Open();
 			Assert.AreEqual(ConnectionState.Open, conn.State);
 		}
 
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString + ";INSECUREMODE=true";
 			conn.Open();
@@ -156,7 +156,7 @@ class SFConnectionIT : SFBaseTest
 	{
 		var connEntries = ConnectionString.Split(';');
 		var connectionStringWithoutPassword = "";
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			var password = new System.Security.SecureString();
 			foreach (var entry in connEntries)
@@ -205,9 +205,9 @@ class SFConnectionIT : SFBaseTest
 					conn.Open();
 					Assert.Fail("Timeout exception did not occur");
 				}
-				catch (SnowflakeException e)
+				catch (SnowflakeDbException e)
 				{
-					Assert.AreEqual(SnowflakeError.RequestTimeout, e.SnowflakeError);
+					Assert.AreEqual(SnowflakeDbError.RequestTimeout, e.SnowflakeError);
 				}
 				stopwatch.Stop();
 
@@ -239,9 +239,9 @@ class SFConnectionIT : SFBaseTest
 					await conn.OpenAsync().ConfigureAwait(false);
 					Assert.Fail("Connection did not timeout");
 				}
-				catch (SnowflakeException e)
+				catch (SnowflakeDbException e)
 				{
-					Assert.AreEqual(SnowflakeError.RequestTimeout, e.SnowflakeError);
+					Assert.AreEqual(SnowflakeDbError.RequestTimeout, e.SnowflakeError);
 				}
 				stopwatch.Stop();
 
@@ -271,9 +271,9 @@ class SFConnectionIT : SFBaseTest
 				conn.Open();
 				Assert.Fail("Connection did not timeout");
 			}
-			catch (SnowflakeException e)
+			catch (SnowflakeDbException e)
 			{
-				Assert.AreEqual(SnowflakeError.RequestTimeout, e.SnowflakeError);
+				Assert.AreEqual(SnowflakeDbError.RequestTimeout, e.SnowflakeError);
 
 				stopwatch.Stop();
 				// Should timeout after the default timeout (120 sec)
@@ -287,7 +287,7 @@ class SFConnectionIT : SFBaseTest
 	[Test]
 	public void TestConnectionFailFast()
 	{
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			// Just a way to get a 404 on the login request and make sure there are no retry
 			var invalidConnectionString = "host=docs.microsoft.com;connection_timeout=0;account=testFailFast;user=testFailFast;password=testFailFast;";
@@ -300,9 +300,9 @@ class SFConnectionIT : SFBaseTest
 				conn.Open();
 				Assert.Fail();
 			}
-			catch (SnowflakeException e)
+			catch (SnowflakeDbException e)
 			{
-				Assert.AreEqual(SnowflakeError.InternalError, e.SnowflakeError);
+				Assert.AreEqual(SnowflakeDbError.InternalError, e.SnowflakeError);
 			}
 
 			Assert.AreEqual(ConnectionState.Closed, conn.State);
@@ -316,7 +316,7 @@ class SFConnectionIT : SFBaseTest
 		$"account={TestConfig.Account};role={TestConfig.Role};db={TestConfig.Database};schema={TestConfig.Schema};warehouse={"WAREHOUSE_NEVER_EXISTS"};user={TestConfig.User};password={TestConfig.Password};";
 
 		// By default should validate parameters
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			try
 			{
@@ -324,14 +324,14 @@ class SFConnectionIT : SFBaseTest
 				conn.Open();
 				Assert.Fail();
 			}
-			catch (SnowflakeException e)
+			catch (SnowflakeDbException e)
 			{
 				Assert.AreEqual(390201, e.ErrorCode);
 			}
 		}
 
 		// This should succeed
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = connectionString + ";VALIDATE_DEFAULT_PARAMETERS=false";
 			conn.Open();
@@ -349,9 +349,9 @@ class SFConnectionIT : SFBaseTest
 			"complete_invalid_string",
 		};
 
-		var expectedErrorCode = new[] { SnowflakeError.MissingConnectionProperty, SnowflakeError.InvalidConnectionString, SnowflakeError.InvalidConnectionString };
+		var expectedErrorCode = new[] { SnowflakeDbError.MissingConnectionProperty, SnowflakeDbError.InvalidConnectionString, SnowflakeDbError.InvalidConnectionString };
 
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			for (var i = 0; i < invalidStrings.Length; i++)
 			{
@@ -361,7 +361,7 @@ class SFConnectionIT : SFBaseTest
 					conn.Open();
 					Assert.Fail();
 				}
-				catch (SnowflakeException e)
+				catch (SnowflakeDbException e)
 				{
 					Assert.AreEqual(expectedErrorCode[i], e.SnowflakeError);
 				}
@@ -372,7 +372,7 @@ class SFConnectionIT : SFBaseTest
 	[Test]
 	public void TestUnknownConnectionProperty()
 	{
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			// invalid propety will be ignored.
 			conn.ConnectionString = ConnectionString + ";invalidProperty=invalidvalue;";
@@ -387,7 +387,7 @@ class SFConnectionIT : SFBaseTest
 	[IgnoreOnEnvIs("snowflake_cloud_env", new string[] { "AZURE", "GCP" })]
 	public void TestSwitchDb()
 	{
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = ConnectionString;
 
@@ -411,7 +411,7 @@ class SFConnectionIT : SFBaseTest
 	[Test]
 	public void TestConnectWithoutHost()
 	{
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			var connStrFmt = "account={0};user={1};password={2}";
 			conn.ConnectionString = string.Format(connStrFmt, TestConfig.Account,
@@ -429,7 +429,7 @@ class SFConnectionIT : SFBaseTest
 	[Test]
 	public void TestConnectWithDifferentRole()
 	{
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			var host = TestConfig.Host;
 			if (string.IsNullOrEmpty(host))
@@ -464,7 +464,7 @@ class SFConnectionIT : SFBaseTest
 	[Test]
 	public void TestConnectionDispose()
 	{
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			// Setup
 			conn.ConnectionString = ConnectionString;
@@ -480,7 +480,7 @@ class SFConnectionIT : SFBaseTest
 			t1c1.ExecuteNonQuery();
 		}
 
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			// Previous connection would be disposed and
 			// uncommitted txn would rollback at this point
@@ -511,13 +511,13 @@ class SFConnectionIT : SFBaseTest
 		{
 			try
 			{
-				var conn = new SnowflakeConnection() { ConnectionString = "scheme=http;host=test;port=8080;user=test;password=test;account=test;authenticator=" + wrongAuthenticator };
+				var conn = new SnowflakeDbConnection() { ConnectionString = "scheme=http;host=test;port=8080;user=test;password=test;account=test;authenticator=" + wrongAuthenticator };
 				conn.Open();
 				Assert.Fail("Authentication of {0} should fail", wrongAuthenticator);
 			}
-			catch (SnowflakeException e)
+			catch (SnowflakeDbException e)
 			{
-				Assert.AreEqual(SnowflakeError.UnknownAuthenticator, e.SnowflakeError);
+				Assert.AreEqual(SnowflakeDbError.UnknownAuthenticator, e.SnowflakeError);
 			}
 		}
 	}
@@ -527,7 +527,7 @@ class SFConnectionIT : SFBaseTest
 	{
 		try
 		{
-			using (var conn = new SnowflakeConnection())
+			using (var conn = new SnowflakeDbConnection())
 			{
 				conn.ConnectionString
 					= ConnectionStringWithoutAuth
@@ -537,7 +537,7 @@ class SFConnectionIT : SFBaseTest
 				Assert.Fail();
 			}
 		}
-		catch (SnowflakeException e)
+		catch (SnowflakeDbException e)
 		{
 			// Invalid OAuth access token
 			Assert.AreEqual(390303, e.ErrorCode);
@@ -547,7 +547,7 @@ class SFConnectionIT : SFBaseTest
 	[Test]
 	public void TestInvalidProxySettingFromConnectionString()
 	{
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString =
 				ConnectionString + "connection_timeout=5;useProxy=true;proxyHost=Invalid;proxyPort=8080";
@@ -556,10 +556,10 @@ class SFConnectionIT : SFBaseTest
 				conn.Open();
 				Assert.Fail();
 			}
-			catch (SnowflakeException e)
+			catch (SnowflakeDbException e)
 			{
 				// Expected
-				Assert.AreEqual(SnowflakeError.RequestTimeout, e.SnowflakeError);
+				Assert.AreEqual(SnowflakeDbError.RequestTimeout, e.SnowflakeError);
 			}
 		}
 	}
@@ -567,7 +567,7 @@ class SFConnectionIT : SFBaseTest
 	[Test]
 	public void TestUseProxyFalseWithInvalidProxyConnectionString()
 	{
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString =
 				ConnectionString + ";useProxy=false;proxyHost=Invalid;proxyPort=8080";
@@ -579,7 +579,7 @@ class SFConnectionIT : SFBaseTest
 	[Test]
 	public void TestInvalidProxySettingWithByPassListFromConnectionString()
 	{
-		using (var conn = new SnowflakeConnection())
+		using (var conn = new SnowflakeDbConnection())
 		{
 			conn.ConnectionString = $"{ConnectionString};useProxy=true;proxyHost=Invalid;proxyPort=8080;nonProxyHosts=*.foo.com %7C{TestConfig.Account}.snowflakecomputing.com|localhost";
 			conn.Open();

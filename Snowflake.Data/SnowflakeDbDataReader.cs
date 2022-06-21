@@ -11,17 +11,17 @@ using Tortuga.Data.Snowflake.Core.ResponseProcessing;
 
 namespace Tortuga.Data.Snowflake;
 
-public class SnowflakeDataReader : DbDataReader, IEnumerable<SnowflakeDataReader>
+public class SnowflakeDbDataReader : DbDataReader, IEnumerable<SnowflakeDbDataReader>
 {
 	readonly CommandBehavior m_CommandBehavior;
-	readonly SnowflakeConnection m_Connection;
+	readonly SnowflakeDbConnection m_Connection;
 #pragma warning disable CA2213 // Disposable fields should be disposed
 	readonly DataTable m_SchemaTable;
 #pragma warning restore CA2213 // Disposable fields should be disposed
 	bool m_IsClosed;
 	readonly SFBaseResultSet m_ResultSet;
 
-	internal SnowflakeDataReader(SFBaseResultSet resultSet, SnowflakeConnection connection, CommandBehavior commandBehavior)
+	internal SnowflakeDbDataReader(SFBaseResultSet resultSet, SnowflakeDbConnection connection, CommandBehavior commandBehavior)
 	{
 		m_ResultSet = resultSet ?? throw new ArgumentNullException(nameof(resultSet), $"{nameof(resultSet)} is null."); ;
 		m_Connection = connection ?? throw new ArgumentNullException(nameof(connection), $"{nameof(connection)} is null.");
@@ -195,7 +195,7 @@ public class SnowflakeDataReader : DbDataReader, IEnumerable<SnowflakeDataReader
 		table.Columns.Add(SchemaTableColumn.NumericScale, typeof(int));
 		table.Columns.Add(SchemaTableColumn.DataType, typeof(Type));
 		table.Columns.Add(SchemaTableColumn.AllowDBNull, typeof(bool));
-		table.Columns.Add(SchemaTableColumn.ProviderType, typeof(SnowflakeDataType));
+		table.Columns.Add(SchemaTableColumn.ProviderType, typeof(SnowflakeDbDataType));
 
 		if (resultSet.SFResultSetMetaData == null)
 			throw new ArgumentException($"{nameof(resultSet.SFResultSetMetaData)} is null.", nameof(resultSet));
@@ -287,7 +287,7 @@ public class SnowflakeDataReader : DbDataReader, IEnumerable<SnowflakeDataReader
 		}
 	}
 
-	IEnumerator<SnowflakeDataReader> IEnumerable<SnowflakeDataReader>.GetEnumerator()
+	IEnumerator<SnowflakeDbDataReader> IEnumerable<SnowflakeDbDataReader>.GetEnumerator()
 	{
 		while (Read())
 		{

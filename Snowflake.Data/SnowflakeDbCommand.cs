@@ -13,18 +13,18 @@ using Tortuga.Data.Snowflake.Core.ResponseProcessing;
 namespace Tortuga.Data.Snowflake;
 
 [System.ComponentModel.DesignerCategory("Code")]
-public class SnowflakeCommand : DbCommand
+public class SnowflakeDbCommand : DbCommand
 {
-	readonly SnowflakeParameterCollection m_ParameterCollection = new();
+	readonly SnowflakeDbParameterCollection m_ParameterCollection = new();
 	string m_CommandText = "";
-	SnowflakeConnection? m_Connection;
+	SnowflakeDbConnection? m_Connection;
 	SFStatement? m_SFStatement;
 
-	public SnowflakeCommand()
+	public SnowflakeDbCommand()
 	{
 	}
 
-	public SnowflakeCommand(SnowflakeConnection connection)
+	public SnowflakeDbCommand(SnowflakeDbConnection connection)
 	{
 		m_Connection = connection;
 	}
@@ -82,7 +82,7 @@ public class SnowflakeCommand : DbCommand
 					else
 						throw new InvalidOperationException("Unsetting the connection not supported.");
 
-				case SnowflakeConnection sfc:
+				case SnowflakeDbConnection sfc:
 					m_Connection = sfc;
 					return;
 
@@ -144,18 +144,18 @@ public class SnowflakeCommand : DbCommand
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public override void Prepare() => throw new NotSupportedException();
 
-	protected override DbParameter CreateDbParameter() => new SnowflakeParameter();
+	protected override DbParameter CreateDbParameter() => new SnowflakeDbParameter();
 
 	protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
 	{
 		var resultSet = ExecuteInternal();
-		return new SnowflakeDataReader(resultSet, m_Connection!, behavior);
+		return new SnowflakeDbDataReader(resultSet, m_Connection!, behavior);
 	}
 
 	protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
 	{
 		var result = await ExecuteInternalAsync(cancellationToken).ConfigureAwait(false);
-		return new SnowflakeDataReader(result, m_Connection!, behavior);
+		return new SnowflakeDbDataReader(result, m_Connection!, behavior);
 	}
 
 	Dictionary<string, BindingDTO> ConvertToBindList()
@@ -188,7 +188,7 @@ public class SnowflakeCommand : DbCommand
 						// if the user is using interface, SFDataType will be None and there will
 						// a conversion from DbType to SFDataType
 						// if the user is using concrete class, they should specify SFDataType.
-						if (parameter.SFDataType == SnowflakeDataType.None)
+						if (parameter.SFDataType == SnowflakeDbDataType.None)
 						{
 							var typeAndVal = SFDataConverter.CSharpTypeValToSfTypeVal(parameter.DbType, val);
 
@@ -205,7 +205,7 @@ public class SnowflakeCommand : DbCommand
 				}
 				else
 				{
-					if (parameter.SFDataType == SnowflakeDataType.None)
+					if (parameter.SFDataType == SnowflakeDbDataType.None)
 					{
 						var typeAndVal = SFDataConverter.CSharpTypeValToSfTypeVal(parameter.DbType, parameter.Value);
 						bindingType = typeAndVal.Item1;

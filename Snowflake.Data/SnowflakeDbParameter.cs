@@ -9,24 +9,24 @@ using System.Globalization;
 
 namespace Tortuga.Data.Snowflake;
 
-public class SnowflakeParameter : DbParameter
+public class SnowflakeDbParameter : DbParameter
 {
 	string m_ParameterName = "";
 	string m_SourceColumn = "";
-	readonly SnowflakeDataType m_OriginType;
+	readonly SnowflakeDbDataType m_OriginType;
 
-	public SnowflakeParameter()
+	public SnowflakeDbParameter()
 	{
 	}
 
-	public SnowflakeParameter(string parameterName, SnowflakeDataType sfDataType)
+	public SnowflakeDbParameter(string parameterName, SnowflakeDbDataType sfDataType)
 	{
 		ParameterName = parameterName;
 		SFDataType = sfDataType;
 		m_OriginType = sfDataType;
 	}
 
-	public SnowflakeParameter(int parameterIndex, SnowflakeDataType sfDataType)
+	public SnowflakeDbParameter(int parameterIndex, SnowflakeDbDataType sfDataType)
 	{
 		ParameterName = parameterIndex.ToString(CultureInfo.InvariantCulture);
 		SFDataType = sfDataType;
@@ -53,7 +53,7 @@ public class SnowflakeParameter : DbParameter
 	[AllowNull]
 	public override string ParameterName { get => m_ParameterName; set => m_ParameterName = value ?? ""; }
 
-	public SnowflakeDataType SFDataType { get; set; }
+	public SnowflakeDbDataType SFDataType { get; set; }
 	public override int Size { get; set; }
 
 	[AllowNull]

@@ -7,13 +7,13 @@ using System.Data.Common;
 
 namespace Tortuga.Data.Snowflake;
 
-public class SnowflakeParameterCollection : DbParameterCollection, IList<SnowflakeParameter>
+public class SnowflakeDbParameterCollection : DbParameterCollection, IList<SnowflakeDbParameter>
 {
 	readonly object m_SyncRoot = new();
 
-	readonly List<SnowflakeParameter> m_ParameterList = new();
+	readonly List<SnowflakeDbParameter> m_ParameterList = new();
 
-	internal SnowflakeParameterCollection()
+	internal SnowflakeDbParameterCollection()
 	{
 	}
 
@@ -23,19 +23,19 @@ public class SnowflakeParameterCollection : DbParameterCollection, IList<Snowfla
 
 	public override int Add(object value)
 	{
-		m_ParameterList.Add((SnowflakeParameter)value);
+		m_ParameterList.Add((SnowflakeDbParameter)value);
 		return m_ParameterList.Count - 1;
 	}
 
-	public int Add(SnowflakeParameter value)
+	public int Add(SnowflakeDbParameter value)
 	{
 		m_ParameterList.Add(value);
 		return m_ParameterList.Count - 1;
 	}
 
-	public SnowflakeParameter Add(string parameterName, SnowflakeDataType dataType)
+	public SnowflakeDbParameter Add(string parameterName, SnowflakeDbDataType dataType)
 	{
-		var parameter = new SnowflakeParameter(parameterName, dataType);
+		var parameter = new SnowflakeDbParameter(parameterName, dataType);
 		m_ParameterList.Add(parameter);
 		return parameter;
 	}
@@ -45,7 +45,7 @@ public class SnowflakeParameterCollection : DbParameterCollection, IList<Snowfla
 		if (values == null)
 			throw new ArgumentNullException(nameof(values), $"{nameof(values)} is null.");
 
-		foreach (SnowflakeParameter? value in values)
+		foreach (SnowflakeDbParameter? value in values)
 			m_ParameterList.Add(value ?? throw new ArgumentException("The values array contains a null.", nameof(values)));
 	}
 
@@ -55,7 +55,7 @@ public class SnowflakeParameterCollection : DbParameterCollection, IList<Snowfla
 
 	public override bool Contains(object value)
 	{
-		return value is SnowflakeParameter parameter && m_ParameterList.Contains(parameter);
+		return value is SnowflakeDbParameter parameter && m_ParameterList.Contains(parameter);
 	}
 
 	public override void CopyTo(Array array, int index)
@@ -80,12 +80,12 @@ public class SnowflakeParameterCollection : DbParameterCollection, IList<Snowfla
 
 	public override int IndexOf(object value)
 	{
-		return value is not SnowflakeParameter parameter ? -1 : m_ParameterList.IndexOf(parameter);
+		return value is not SnowflakeDbParameter parameter ? -1 : m_ParameterList.IndexOf(parameter);
 	}
 
-	public override void Insert(int index, object value) => m_ParameterList.Insert(index, (SnowflakeParameter)value);
+	public override void Insert(int index, object value) => m_ParameterList.Insert(index, (SnowflakeDbParameter)value);
 
-	public override void Remove(object value) => m_ParameterList.Remove((SnowflakeParameter)value);
+	public override void Remove(object value) => m_ParameterList.Remove((SnowflakeDbParameter)value);
 
 	public override void RemoveAt(string parameterName) => m_ParameterList.RemoveAt(IndexOf(parameterName));
 
@@ -97,29 +97,29 @@ public class SnowflakeParameterCollection : DbParameterCollection, IList<Snowfla
 
 	protected override void SetParameter(string parameterName, DbParameter value)
 	{
-		m_ParameterList[IndexOf(parameterName)] = (SnowflakeParameter)value;
+		m_ParameterList[IndexOf(parameterName)] = (SnowflakeDbParameter)value;
 	}
 
 	protected override void SetParameter(int index, DbParameter value)
 	{
-		m_ParameterList[index] = (SnowflakeParameter)value;
+		m_ParameterList[index] = (SnowflakeDbParameter)value;
 	}
 
-	public int IndexOf(SnowflakeParameter item) => m_ParameterList.IndexOf(item);
+	public int IndexOf(SnowflakeDbParameter item) => m_ParameterList.IndexOf(item);
 
-	public void Insert(int index, SnowflakeParameter item) => m_ParameterList.Insert(index, item);
+	public void Insert(int index, SnowflakeDbParameter item) => m_ParameterList.Insert(index, item);
 
-	void ICollection<SnowflakeParameter>.Add(SnowflakeParameter item) => Add(item);
+	void ICollection<SnowflakeDbParameter>.Add(SnowflakeDbParameter item) => Add(item);
 
-	public bool Contains(SnowflakeParameter item) => m_ParameterList.Contains(item);
+	public bool Contains(SnowflakeDbParameter item) => m_ParameterList.Contains(item);
 
-	public void CopyTo(SnowflakeParameter[] array, int arrayIndex) => m_ParameterList.CopyTo(array, arrayIndex);
+	public void CopyTo(SnowflakeDbParameter[] array, int arrayIndex) => m_ParameterList.CopyTo(array, arrayIndex);
 
-	public bool Remove(SnowflakeParameter item) => m_ParameterList.Remove(item);
+	public bool Remove(SnowflakeDbParameter item) => m_ParameterList.Remove(item);
 
-	IEnumerator<SnowflakeParameter> IEnumerable<SnowflakeParameter>.GetEnumerator() => m_ParameterList.GetEnumerator();
+	IEnumerator<SnowflakeDbParameter> IEnumerable<SnowflakeDbParameter>.GetEnumerator() => m_ParameterList.GetEnumerator();
 
-	public new SnowflakeParameter this[int index]
+	public new SnowflakeDbParameter this[int index]
 	{
 		get => m_ParameterList[index];
 		set => m_ParameterList[index] = value;

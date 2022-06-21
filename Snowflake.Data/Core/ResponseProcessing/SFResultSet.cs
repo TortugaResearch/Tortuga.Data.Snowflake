@@ -110,7 +110,7 @@ class SFResultSet : SFBaseResultSet
 	{
 		if (m_IsClosed)
 		{
-			throw new SnowflakeException(SnowflakeError.DataReaderAlreadyClosed);
+			throw new SnowflakeDbException(SnowflakeDbError.DataReaderAlreadyClosed);
 		}
 
 		m_CurrentChunkRowIdx++;
@@ -142,7 +142,7 @@ class SFResultSet : SFBaseResultSet
 	{
 		if (m_IsClosed)
 		{
-			throw new SnowflakeException(SnowflakeError.DataReaderAlreadyClosed);
+			throw new SnowflakeDbException(SnowflakeDbError.DataReaderAlreadyClosed);
 		}
 
 		m_CurrentChunkRowIdx++;
@@ -171,7 +171,7 @@ class SFResultSet : SFBaseResultSet
 	{
 		if (m_IsClosed)
 		{
-			throw new SnowflakeException(SnowflakeError.DataReaderAlreadyClosed);
+			throw new SnowflakeDbException(SnowflakeDbError.DataReaderAlreadyClosed);
 		}
 
 		if (m_CurrentChunkRowIdx >= 0)
@@ -190,12 +190,12 @@ class SFResultSet : SFBaseResultSet
 	{
 		if (m_IsClosed)
 		{
-			throw new SnowflakeException(SnowflakeError.DataReaderAlreadyClosed);
+			throw new SnowflakeDbException(SnowflakeDbError.DataReaderAlreadyClosed);
 		}
 
 		if (columnIndex < 0 || columnIndex >= m_ColumnCount)
 		{
-			throw new SnowflakeException(SnowflakeError.ColumnIndexOutOfBound, columnIndex);
+			throw new SnowflakeDbException(SnowflakeDbError.ColumnIndexOutOfBound, columnIndex);
 		}
 
 		return m_CurrentChunk.ExtractCell(m_CurrentChunkRowIdx, columnIndex);

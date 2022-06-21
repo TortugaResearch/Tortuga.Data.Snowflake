@@ -176,7 +176,7 @@ class ExternalBrowserAuthenticator : Authenticator
 		}
 		else
 		{
-			throw new SnowflakeException(SnowflakeError.UnsupportedPlatform);
+			throw new SnowflakeDbException(SnowflakeDbError.UnsupportedPlatform);
 		}
 #endif
 	}
@@ -185,12 +185,12 @@ class ExternalBrowserAuthenticator : Authenticator
 	{
 		if (request.HttpMethod != "GET")
 		{
-			throw new SnowflakeException(SnowflakeError.BrowserResponseWrongMethod, request.HttpMethod);
+			throw new SnowflakeDbException(SnowflakeDbError.BrowserResponseWrongMethod, request.HttpMethod);
 		}
 
 		if (request.Url?.Query == null || !request.Url.Query.StartsWith(TokenRequestPrefix, StringComparison.Ordinal))
 		{
-			throw new SnowflakeException(SnowflakeError.BrowserResponseInvalidPrefix, request.Url?.Query);
+			throw new SnowflakeDbException(SnowflakeDbError.BrowserResponseInvalidPrefix, request.Url?.Query);
 		}
 
 		return Uri.UnescapeDataString(request.Url.Query.Substring(TokenRequestPrefix.Length));

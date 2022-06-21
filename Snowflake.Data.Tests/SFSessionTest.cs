@@ -15,7 +15,7 @@ class SFSessionTest
 	public void TestSessionGoneWhenClose()
 	{
 		Mock.MockCloseSessionGone restRequester = new Mock.MockCloseSessionGone();
-		SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester, SnowflakeConfiguration.Default);
+		SFSession sfSession = new SFSession("account=test;user=test;password=test", null, restRequester, SnowflakeDbConfiguration.Default);
 		sfSession.Open();
 		sfSession.Close(); // no exception is raised.
 	}

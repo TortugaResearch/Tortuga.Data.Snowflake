@@ -58,7 +58,7 @@ class MockCloseSessionException : IMockRestRequester
 		}
 		else
 		{
-			throw new SnowflakeException("", SESSION_CLOSE_ERROR, "Mock generated error", null);
+			throw new SnowflakeDbException("", SESSION_CLOSE_ERROR, "Mock generated error", null);
 		}
 	}
 

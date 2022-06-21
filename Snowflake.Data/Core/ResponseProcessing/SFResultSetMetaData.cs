@@ -24,7 +24,7 @@ class SFResultSetMetaData
 
 	internal readonly SFStatementType m_StatementType;
 
-	internal readonly List<Tuple<SnowflakeDataType, Type>> m_ColumnTypes;
+	internal readonly List<Tuple<SnowflakeDbDataType, Type>> m_ColumnTypes;
 
 	/// <summary>
 	///     This map is used to cache column name to column index. Index is 0-based.
@@ -69,13 +69,13 @@ class SFResultSetMetaData
 		m_ColumnTypes = InitColumnTypes();
 	}
 
-	List<Tuple<SnowflakeDataType, Type>> InitColumnTypes()
+	List<Tuple<SnowflakeDbDataType, Type>> InitColumnTypes()
 	{
-		var types = new List<Tuple<SnowflakeDataType, Type>>();
+		var types = new List<Tuple<SnowflakeDbDataType, Type>>();
 		for (var i = 0; i < m_ColumnCount; i++)
 		{
 			var column = m_RowTypes[i];
-			var dataType = SnowflakeDataTypeExtensions.FromSql(column.Type!);
+			var dataType = SnowflakeDbDataTypeExtensions.FromSql(column.Type!);
 			var nativeType = GetNativeTypeForColumn(dataType, column);
 
 			types.Add(Tuple.Create(dataType, nativeType));
@@ -108,55 +108,55 @@ class SFResultSetMetaData
 		return -1;
 	}
 
-	internal SnowflakeDataType GetColumnTypeByIndex(int targetIndex)
+	internal SnowflakeDbDataType GetColumnTypeByIndex(int targetIndex)
 	{
 		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
-			throw new SnowflakeException(SnowflakeError.ColumnIndexOutOfBound, targetIndex);
+			throw new SnowflakeDbException(SnowflakeDbError.ColumnIndexOutOfBound, targetIndex);
 
 		return m_ColumnTypes[targetIndex].Item1;
 	}
 
-	internal Tuple<SnowflakeDataType, Type> GetTypesByIndex(int targetIndex)
+	internal Tuple<SnowflakeDbDataType, Type> GetTypesByIndex(int targetIndex)
 	{
 		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
-			throw new SnowflakeException(SnowflakeError.ColumnIndexOutOfBound, targetIndex);
+			throw new SnowflakeDbException(SnowflakeDbError.ColumnIndexOutOfBound, targetIndex);
 
 		return m_ColumnTypes[targetIndex];
 	}
 
-	static Type GetNativeTypeForColumn(SnowflakeDataType sfType, ExecResponseRowType col)
+	static Type GetNativeTypeForColumn(SnowflakeDbDataType sfType, ExecResponseRowType col)
 	{
 		switch (sfType)
 		{
-			case SnowflakeDataType.Fixed:
+			case SnowflakeDbDataType.Fixed:
 				return col.Scale == 0 ? typeof(long) : typeof(decimal);
 
-			case SnowflakeDataType.Real:
+			case SnowflakeDbDataType.Real:
 				return typeof(double);
 
-			case SnowflakeDataType.Text:
-			case SnowflakeDataType.Variant:
-			case SnowflakeDataType.Object:
-			case SnowflakeDataType.Array:
+			case SnowflakeDbDataType.Text:
+			case SnowflakeDbDataType.Variant:
+			case SnowflakeDbDataType.Object:
+			case SnowflakeDbDataType.Array:
 				return typeof(string);
 
-			case SnowflakeDataType.Date:
-			case SnowflakeDataType.Time:
-			case SnowflakeDataType.TimestampNtz:
+			case SnowflakeDbDataType.Date:
+			case SnowflakeDbDataType.Time:
+			case SnowflakeDbDataType.TimestampNtz:
 				return typeof(DateTime);
 
-			case SnowflakeDataType.TimestampLtz:
-			case SnowflakeDataType.TimestampTz:
+			case SnowflakeDbDataType.TimestampLtz:
+			case SnowflakeDbDataType.TimestampTz:
 				return typeof(DateTimeOffset);
 
-			case SnowflakeDataType.Binary:
+			case SnowflakeDbDataType.Binary:
 				return typeof(byte[]);
 
-			case SnowflakeDataType.Boolean:
+			case SnowflakeDbDataType.Boolean:
 				return typeof(bool);
 
 			default:
-				throw new SnowflakeException(SnowflakeError.InternalError,
+				throw new SnowflakeDbException(SnowflakeDbError.InternalError,
 					$"Unknow column type: {sfType}");
 		}
 	}
@@ -164,7 +164,7 @@ class SFResultSetMetaData
 	internal Type GetCSharpTypeByIndex(int targetIndex)
 	{
 		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
-			throw new SnowflakeException(SnowflakeError.ColumnIndexOutOfBound, targetIndex);
+			throw new SnowflakeDbException(SnowflakeDbError.ColumnIndexOutOfBound, targetIndex);
 
 		var sfType = GetColumnTypeByIndex(targetIndex);
 		return GetNativeTypeForColumn(sfType, m_RowTypes[targetIndex]);
@@ -173,7 +173,7 @@ class SFResultSetMetaData
 	internal string? getColumnNameByIndex(int targetIndex)
 	{
 		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
-			throw new SnowflakeException(SnowflakeError.ColumnIndexOutOfBound, targetIndex);
+			throw new SnowflakeDbException(SnowflakeDbError.ColumnIndexOutOfBound, targetIndex);
 
 		return m_RowTypes[targetIndex].Name;
 	}

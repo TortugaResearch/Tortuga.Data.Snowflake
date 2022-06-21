@@ -30,7 +30,7 @@ abstract class SFBaseResultSet
 	/// <returns>True if it works, false otherwise.</returns>
 	internal abstract bool Rewind();
 
-	protected SFBaseResultSet(SnowflakeConfiguration configuration)
+	protected SFBaseResultSet(SnowflakeDbConfiguration configuration)
 	{
 		Configuration = configuration;
 	}
@@ -53,7 +53,7 @@ abstract class SFBaseResultSet
 		var type = SFResultSetMetaData.GetColumnTypeByIndex(columnIndex);
 		switch (type)
 		{
-			case SnowflakeDataType.Date:
+			case SnowflakeDbDataType.Date:
 				var val = GetValue(columnIndex);
 				if (val == DBNull.Value)
 					return null;
@@ -82,7 +82,7 @@ abstract class SFBaseResultSet
 
 	internal void Close() => m_IsClosed = true;
 
-	internal SnowflakeConfiguration Configuration { get; }
+	internal SnowflakeDbConfiguration Configuration { get; }
 
 	internal int CalculateUpdateCount()
 	{

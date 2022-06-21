@@ -74,7 +74,7 @@ class ReusableChunkParser : ChunkParser
 							break;
 
 						case -1:
-							throw new SnowflakeException(SnowflakeError.InternalError, $"Unexpected end of stream in escape sequence");
+							throw new SnowflakeDbException(SnowflakeDbError.InternalError, $"Unexpected end of stream in escape sequence");
 					}
 					ms.WriteByte((byte)c);
 				}
@@ -85,7 +85,7 @@ class ReusableChunkParser : ChunkParser
 			}
 		}
 		if (inString)
-			throw new SnowflakeException(SnowflakeError.InternalError, $"Unexpected end of stream in string");
+			throw new SnowflakeDbException(SnowflakeDbError.InternalError, $"Unexpected end of stream in string");
 	}
 
 	public override async Task ParseChunkAsync(IResultChunk chunk)
