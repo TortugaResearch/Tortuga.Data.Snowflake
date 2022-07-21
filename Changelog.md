@@ -10,8 +10,7 @@ Revert names of public classes to `SnowflakeDbXxx` insead of `SFXxxx`. This was 
 
 ### Features
 
-[Support AnsiString, AnsiStringFixedLength when converting DbType to SFDataType #3
-](https://github.com/TortugaResearch/Tortuga.Data.Snowflake/issues/3)
+[#3 Support AnsiString, AnsiStringFixedLength when converting DbType to SFDataType](https://github.com/TortugaResearch/Tortuga.Data.Snowflake/issues/3)
 
 ANSI strings are fully supported by `SnowflakeDbDataType.Text`.
 
@@ -19,6 +18,10 @@ ANSI strings are fully supported by `SnowflakeDbDataType.Text`.
 
 These constructors are standard for ADO.NET implementations.
 
-[Add asynchronous query abilities #5](https://github.com/TortugaResearch/Tortuga.Data.Snowflake/issues/5)
+[#5 Add asynchronous query abilities](https://github.com/TortugaResearch/Tortuga.Data.Snowflake/issues/5)
 
 This allows queries to continue to run after a connection is close. Later the result can be read from a separate connection.
+
+
+#10 Add strongly named properties to SnowflakeDbConnectionStringBuilder](https://github.com/TortugaResearch/Tortuga.Data.Snowflake/issues/10)
+
