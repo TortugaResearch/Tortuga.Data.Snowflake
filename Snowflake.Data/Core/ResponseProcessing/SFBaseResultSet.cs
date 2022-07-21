@@ -24,15 +24,18 @@ abstract class SFBaseResultSet
 
 	protected abstract UTF8Buffer? getObjectInternal(int columnIndex);
 
+	internal SnowflakeDbQueryStatus? QueryStatus { get; }
+
 	/// <summary>
 	/// Move cursor back one row.
 	/// </summary>
 	/// <returns>True if it works, false otherwise.</returns>
 	internal abstract bool Rewind();
 
-	protected SFBaseResultSet(SnowflakeDbConfiguration configuration)
+	protected SFBaseResultSet(SnowflakeDbConfiguration configuration, SnowflakeDbQueryStatus? queryStatus)
 	{
 		Configuration = configuration;
+		QueryStatus = queryStatus;
 	}
 
 	internal T GetValue<T>(int columnIndex)

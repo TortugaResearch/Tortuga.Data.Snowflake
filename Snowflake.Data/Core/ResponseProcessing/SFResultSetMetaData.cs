@@ -20,7 +20,7 @@ class SFResultSetMetaData
 
 	internal readonly string? m_TimestampeTZOutputFormat;
 
-	internal List<ExecResponseRowType> m_RowTypes;
+	internal List<ExecResponseRowType>? m_RowTypes;
 
 	internal readonly SFStatementType m_StatementType;
 
@@ -33,13 +33,13 @@ class SFResultSetMetaData
 
 	internal SFResultSetMetaData(QueryExecResponseData queryExecResponseData)
 	{
-		if (queryExecResponseData.RowType == null)
-			throw new ArgumentException($"queryExecResponseData.rowType is null", nameof(queryExecResponseData));
+		//if (queryExecResponseData.RowType == null)
+		//	throw new ArgumentException($"queryExecResponseData.rowType is null", nameof(queryExecResponseData));
 		if (queryExecResponseData.Parameters == null)
 			throw new ArgumentException($"queryExecResponseData.parameters is null", nameof(queryExecResponseData));
 
 		m_RowTypes = queryExecResponseData.RowType;
-		m_ColumnCount = m_RowTypes.Count;
+		m_ColumnCount = m_RowTypes?.Count ?? 0;
 		m_StatementType = FindStatementTypeById(queryExecResponseData.StatementTypeId);
 		m_ColumnTypes = InitColumnTypes();
 
@@ -71,10 +71,13 @@ class SFResultSetMetaData
 
 	List<Tuple<SnowflakeDbDataType, Type>> InitColumnTypes()
 	{
+		if (m_RowTypes == null && m_ColumnCount > 0)
+			throw new InvalidOperationException($"{nameof(m_RowTypes)} is null");
+
 		var types = new List<Tuple<SnowflakeDbDataType, Type>>();
 		for (var i = 0; i < m_ColumnCount; i++)
 		{
-			var column = m_RowTypes[i];
+			var column = m_RowTypes![i]; //this is not null if m_ColumnCount >= 1
 			var dataType = SnowflakeDbDataTypeExtensions.FromSql(column.Type!);
 			var nativeType = GetNativeTypeForColumn(dataType, column);
 
@@ -94,6 +97,9 @@ class SFResultSetMetaData
 		}
 		else
 		{
+			if (m_RowTypes == null)
+				throw new InvalidOperationException($"{nameof(m_RowTypes)} is null");
+
 			var indexCounter = 0;
 			foreach (var rowType in m_RowTypes)
 			{
@@ -166,6 +172,9 @@ class SFResultSetMetaData
 		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
 			throw new SnowflakeDbException(SnowflakeDbError.ColumnIndexOutOfBound, targetIndex);
 
+		if (m_RowTypes == null)
+			throw new InvalidOperationException($"{nameof(m_RowTypes)} is null");
+
 		var sfType = GetColumnTypeByIndex(targetIndex);
 		return GetNativeTypeForColumn(sfType, m_RowTypes[targetIndex]);
 	}
@@ -174,6 +183,9 @@ class SFResultSetMetaData
 	{
 		if (targetIndex < 0 || targetIndex >= m_ColumnCount)
 			throw new SnowflakeDbException(SnowflakeDbError.ColumnIndexOutOfBound, targetIndex);
+
+		if (m_RowTypes == null)
+			throw new InvalidOperationException($"{nameof(m_RowTypes)} is null");
 
 		return m_RowTypes[targetIndex].Name;
 	}
