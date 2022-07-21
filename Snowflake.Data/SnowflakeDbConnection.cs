@@ -102,7 +102,7 @@ public class SnowflakeDbConnection : DbConnection
 
 	public override void Close()
 	{
-		if (m_ConnectionState != ConnectionState.Closed && SfSession != null)
+		if (m_ConnectionState != ConnectionState.Closed && SfSession != null && SfSession.IsSafeToClose())
 			SfSession.Close();
 		m_ConnectionState = ConnectionState.Closed;
 	}

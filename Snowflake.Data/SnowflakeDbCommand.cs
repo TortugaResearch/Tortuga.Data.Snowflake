@@ -65,6 +65,35 @@ public class SnowflakeDbCommand : DbCommand
 		set => throw new NotSupportedException($"The {nameof(UpdatedRowSource)} property is not supported.");
 	}
 
+	/// <summary>
+	/// When true, will expect the CommandText to have the query id and will get a result from an existing query
+	/// </summary>
+	internal bool HandleAsyncResponse;
+
+	/// <summary>
+	/// Starts a query asynchronously.
+	/// </summary>
+	/// <returns>The query id.</returns>
+	public SnowflakeDbQueryStatus StartAsynchronousQuery()
+	{
+		SFBaseResultSet resultSet = ExecuteInternal(asyncExec: true);
+		return resultSet.QueryStatus!;
+	}
+
+	/// <summary>
+	/// Starts a query asynchronously.
+	/// </summary>
+	/// <param name="cancellationToken"></param>
+	/// <returns>The query id.</returns>
+	public async Task<SnowflakeDbQueryStatus> StartAsynchronousQueryAsync(CancellationToken cancellationToken)
+	{
+		if (cancellationToken.IsCancellationRequested)
+			throw new TaskCanceledException();
+
+		var resultSet = await ExecuteInternalAsync(cancellationToken, asyncExec: true).ConfigureAwait(false);
+		return resultSet.QueryStatus!;
+	}
+
 	protected override DbConnection? DbConnection
 	{
 		get => m_Connection;
@@ -226,18 +255,39 @@ public class SnowflakeDbCommand : DbCommand
 		}
 	}
 
-	SFBaseResultSet ExecuteInternal(bool describeOnly = false)
+	SFBaseResultSet ExecuteInternal(bool describeOnly = false, bool asyncExec = false)
 	{
 		if (CommandText == null)
 			throw new InvalidOperationException($"{nameof(CommandText)} is null");
-		return SetStatement().Execute(CommandTimeout, CommandText, ConvertToBindList(), describeOnly);
+
+		SetStatement(); //this will ensure m_SFStatement is not null
+
+		if (HandleAsyncResponse)
+		{
+			//TODO-JLA - Don't call .Result
+			return m_SFStatement!.GetQueryResultAsync(CommandTimeout, CommandText, CancellationToken.None).Result;
+		}
+		else
+		{
+			return m_SFStatement!.Execute(CommandTimeout, CommandText, ConvertToBindList(), describeOnly, asyncExec: asyncExec);
+		}
 	}
 
-	Task<SFBaseResultSet> ExecuteInternalAsync(CancellationToken cancellationToken, bool describeOnly = false)
+	Task<SFBaseResultSet> ExecuteInternalAsync(CancellationToken cancellationToken, bool describeOnly = false, bool asyncExec = false)
 	{
 		if (CommandText == null)
 			throw new InvalidOperationException($"{nameof(CommandText)} is null");
-		return SetStatement().ExecuteAsync(CommandTimeout, CommandText, ConvertToBindList(), describeOnly, cancellationToken);
+
+		SetStatement(); //this will ensure m_SFStatement is not null
+
+		if (HandleAsyncResponse)
+		{
+			return m_SFStatement!.GetQueryResultAsync(CommandTimeout, CommandText, cancellationToken);
+		}
+		else
+		{
+			return m_SFStatement!.ExecuteAsync(CommandTimeout, CommandText, ConvertToBindList(), describeOnly, asyncExec, cancellationToken);
+		}
 	}
 
 	SFStatement SetStatement()

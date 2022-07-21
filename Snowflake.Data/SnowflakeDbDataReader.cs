@@ -199,6 +199,8 @@ public class SnowflakeDbDataReader : DbDataReader, IEnumerable<SnowflakeDbDataRe
 
 		if (resultSet.SFResultSetMetaData == null)
 			throw new ArgumentException($"{nameof(resultSet.SFResultSetMetaData)} is null.", nameof(resultSet));
+		if (resultSet.SFResultSetMetaData.m_RowTypes == null)
+			throw new ArgumentException($"{nameof(resultSet.SFResultSetMetaData.m_RowTypes)} is null.", nameof(resultSet));
 
 		var columnOrdinal = 0;
 		var sfResultSetMetaData = resultSet.SFResultSetMetaData;

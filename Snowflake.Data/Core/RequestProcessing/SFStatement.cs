@@ -63,7 +63,7 @@ class SFStatement
 			m_RequestId = null;
 	}
 
-	private SFRestRequest BuildQueryRequest(string sql, Dictionary<string, BindingDTO>? bindings, bool describeOnly)
+	private SFRestRequest BuildQueryRequest(string sql, Dictionary<string, BindingDTO>? bindings, bool describeOnly, bool asyncExec)
 	{
 		AssignQueryRequestId();
 
@@ -83,6 +83,7 @@ class SFStatement
 			SqlText = sql,
 			ParameterBindings = bindings,
 			DescribeOnly = describeOnly,
+			asyncExec = asyncExec
 		};
 
 		return new SFRestRequest
@@ -129,7 +130,7 @@ class SFStatement
 	private SFBaseResultSet BuildResultSet(QueryExecResponse response, CancellationToken cancellationToken)
 	{
 		if (response.Success)
-			return new SFResultSet(response.Data!, this, cancellationToken);
+			return new SFResultSet(response, this, cancellationToken);
 
 		throw new SnowflakeDbException(response.Data!.sqlState!, response.Code, response.Message, response.Data!.QueryId!);
 	}
@@ -166,10 +167,105 @@ class SFStatement
 
 	static bool SessionExpired(BaseRestResponse? r) => r?.Code == SF_SESSION_EXPIRED_CODE;
 
-	internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly, CancellationToken cancellationToken)
+	static string BuildQueryResultUrl(string queryId)
+	{
+		return $"/queries/{queryId}/result";
+	}
+
+	internal async Task<SnowflakeDbQueryStatus> CheckQueryStatusAsync(int timeout, string queryId, CancellationToken cancellationToken)
 	{
 		RegisterQueryCancellationCallback(timeout, cancellationToken);
-		var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
+		// rest api
+		var lastResultUrl = BuildQueryResultUrl(queryId);
+		//// sql api
+		//var lastResultUrl = $"/api/statements/{queryId}";
+		try
+		{
+			QueryExecResponse? response = null;
+			bool receivedFirstQueryResponse = false;
+			while (!receivedFirstQueryResponse)
+			{
+				var req = BuildResultRequest(lastResultUrl);
+				response = await m_RestRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
+				if (SessionExpired(response))
+				{
+					SFSession.renewSession();
+				}
+				else
+				{
+					receivedFirstQueryResponse = true;
+				}
+			}
+
+			var d = BuildQueryStatusFromQueryResponse(response!);
+			SFSession.UpdateAsynchronousQueryStatus(queryId, d);
+			return d;
+		}
+		finally
+		{
+			CleanUpCancellationTokenSources();
+			ClearQueryRequestId();
+		}
+	}
+
+	internal static SnowflakeDbQueryStatus BuildQueryStatusFromQueryResponse(QueryExecResponse response)
+	{
+		var isDone = !RequestInProgress(response);
+		var d = new SnowflakeDbQueryStatus(response.Data!.QueryId!
+			, isDone
+			// only consider to be successful if also done
+			, isDone && response.Success);
+		return d;
+	}
+
+	/// <summary>
+	/// Fetches the result of a query that has already been executed.
+	/// </summary>
+	/// <param name="timeout"></param>
+	/// <param name="queryId"></param>
+	/// <param name="cancellationToken"></param>
+	/// <returns></returns>
+	internal async Task<SFBaseResultSet> GetQueryResultAsync(int timeout, string queryId
+											  , CancellationToken cancellationToken)
+	{
+		RegisterQueryCancellationCallback(timeout, cancellationToken);
+		// rest api
+		var lastResultUrl = BuildQueryResultUrl(queryId);
+		try
+		{
+			QueryExecResponse? response = null;
+
+			bool receivedFirstQueryResponse = false;
+
+			while (!receivedFirstQueryResponse || RequestInProgress(response) || SessionExpired(response))
+			{
+				var req = BuildResultRequest(lastResultUrl);
+				response = await m_RestRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
+				receivedFirstQueryResponse = true;
+
+				if (SessionExpired(response))
+				{
+					SFSession.renewSession();
+				}
+				else
+				{
+					lastResultUrl = response.Data?.GetResultUrl!;
+				}
+			}
+
+			return BuildResultSet(response!, cancellationToken);
+		}
+		finally
+		{
+			CleanUpCancellationTokenSources();
+			ClearQueryRequestId();
+		}
+	}
+
+	internal async Task<SFBaseResultSet> ExecuteAsync(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly, bool asyncExec, CancellationToken cancellationToken)
+	{
+		RegisterQueryCancellationCallback(timeout, cancellationToken);
+		var queryRequest = BuildQueryRequest(sql, bindings, describeOnly, asyncExec);
 		try
 		{
 			QueryExecResponse? response = null;
@@ -188,20 +284,30 @@ class SFStatement
 				}
 			}
 
-			var lastResultUrl = response!.Data!.GetResultUrl;
-
-			while (RequestInProgress(response) || SessionExpired(response))
+			SFBaseResultSet? result = null;
+			if (!asyncExec)
 			{
-				var req = BuildResultRequest(lastResultUrl!);
-				response = await m_RestRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
+				var lastResultUrl = response!.Data!.GetResultUrl;
 
-				if (SessionExpired(response))
-					SFSession.renewSession();
-				else
-					lastResultUrl = response.Data?.GetResultUrl;
+				while (RequestInProgress(response) || SessionExpired(response))
+				{
+					var req = BuildResultRequest(lastResultUrl!);
+					response = await m_RestRequester.GetAsync<QueryExecResponse>(req, cancellationToken).ConfigureAwait(false);
+
+					if (SessionExpired(response))
+						SFSession.renewSession();
+					else
+						lastResultUrl = response.Data?.GetResultUrl;
+				}
 			}
-
-			return BuildResultSet(response, cancellationToken);
+			else
+			{
+				// if this was an asynchronous query, need to track it with the session
+				result = BuildResultSet(response!, cancellationToken);
+				var d = BuildQueryStatusFromQueryResponse(response!);
+				SFSession.AddAsynchronousQueryStatus(result.m_QueryId!, d);
+			}
+			return result ?? BuildResultSet(response!, cancellationToken);
 		}
 		finally
 		{
@@ -210,7 +316,7 @@ class SFStatement
 		}
 	}
 
-	internal SFBaseResultSet Execute(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly)
+	internal SFBaseResultSet Execute(int timeout, string sql, Dictionary<string, BindingDTO> bindings, bool describeOnly, bool asyncExec)
 	{
 		// Trim the sql query and check if this is a PUT/GET command
 		var trimmedSql = TrimSql(sql);
@@ -233,7 +339,7 @@ class SFStatement
 			else
 			{
 				RegisterQueryCancellationCallback(timeout, CancellationToken.None);
-				var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
+				var queryRequest = BuildQueryRequest(sql, bindings, describeOnly, asyncExec);
 				QueryExecResponse? response = null;
 
 				var receivedFirstQueryResponse = false;
@@ -251,22 +357,34 @@ class SFStatement
 					}
 				}
 
-				var lastResultUrl = response?.Data?.GetResultUrl;
-				while (RequestInProgress(response) || SessionExpired(response))
+				SFBaseResultSet? result = null;
+				if (!asyncExec)
 				{
-					var req = BuildResultRequest(lastResultUrl!);
-					response = m_RestRequester.Get<QueryExecResponse>(req);
+					var lastResultUrl = response?.Data?.GetResultUrl;
+					while (RequestInProgress(response) || SessionExpired(response))
+					{
+						var req = BuildResultRequest(lastResultUrl!);
+						response = m_RestRequester.Get<QueryExecResponse>(req);
 
-					if (SessionExpired(response))
-					{
-						SFSession.renewSession();
-					}
-					else
-					{
-						lastResultUrl = response.Data?.GetResultUrl;
+						if (SessionExpired(response))
+						{
+							SFSession.renewSession();
+						}
+						else
+						{
+							lastResultUrl = response.Data?.GetResultUrl;
+						}
 					}
 				}
-				return BuildResultSet(response!, CancellationToken.None);
+				else
+				{
+					// if this was an asynchronous query, need to track it with the session
+					result = BuildResultSet(response!, CancellationToken.None);
+					var d = BuildQueryStatusFromQueryResponse(response!);
+					SFSession.AddAsynchronousQueryStatus(result.m_QueryId!, d);
+				}
+
+				return result ?? BuildResultSet(response!, CancellationToken.None);
 			}
 		}
 		finally
@@ -332,7 +450,7 @@ class SFStatement
 		where U : IQueryExecResponseData
 	{
 		RegisterQueryCancellationCallback(timeout, CancellationToken.None);
-		var queryRequest = BuildQueryRequest(sql, bindings, describeOnly);
+		var queryRequest = BuildQueryRequest(sql, bindings, describeOnly, asyncExec: false);
 		try
 		{
 			T? response = null;
